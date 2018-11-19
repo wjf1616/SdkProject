@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/hs__msgDatePreferredPaddingBottom"
+    android:paddingTop="@dimen/hs__msgDatePreferredPaddingTop" >
+
+    <TextView
+        android:id="@+id/sendDateLabel"
+        style="@style/chat_text_date_style"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="@dimen/hs__msgDatePreferredPaddingBottom"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:id="@+id/msg_layout_center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0.05" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.9"
+            android:gravity="center" >
+
+            <TextView
+                android:id="@+id/messageText_center"
+                style="@style/chat_text_date_style"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:gravity="center"
+                android:text="@string/cs__chat_message_sample"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textSize="@dimen/cs__textSizeName" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0.05" />
+    </LinearLayout>
+
+</LinearLayout>

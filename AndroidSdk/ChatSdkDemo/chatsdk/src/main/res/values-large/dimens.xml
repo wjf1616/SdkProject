@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <dimen name="cs__actionBarHeight">75dp</dimen>
+  
+  <dimen name="cs__textTitle">18sp</dimen>
+  <dimen name="cs__textSummary">13sp</dimen>
+  <dimen name="cs__textContent">14sp</dimen>
+  <dimen name="cs__textSmall">13sp</dimen>
+  
+  <dimen name="cs__rewardIconSize">30dp</dimen>
+  
+  <dimen name="cs__mailButtonBarIconSize">50dp</dimen>
+  <dimen name="cs__mailButtonBarMaxWidth">200dp</dimen>
+</resources>

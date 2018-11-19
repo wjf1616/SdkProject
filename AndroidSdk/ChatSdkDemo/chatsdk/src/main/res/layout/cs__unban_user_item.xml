@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@drawable/cell_bg"
+    android:padding="10dp"
+    android:layout_height="wrap_content"
+    android:gravity="center" >
+    <FrameLayout
+        android:layout_marginLeft="5dp"
+        android:id="@+id/headImageContainer"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:background="@drawable/icon_kuang"
+        android:paddingBottom="5dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp" >
+
+        <ImageView
+            android:id="@+id/user_headImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:layout_marginTop="3dp"
+            android:contentDescription="@string/cs__content_description_head_picture"
+            android:src="@drawable/g026" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/headImageContainer"
+        android:orientation="vertical"
+        android:layout_centerVertical="true">
+        <TextView
+            android:id="@+id/user_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:text="John Snow"
+            android:textColor="#FFFFFF"
+            android:textSize="17dip" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/unbanBtn"
+        android:layout_width="wrap_content"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:layout_height="30dp"
+        android:layout_marginRight="20dp"
+        android:autoText="true"
+        android:background="@drawable/btn_green3"
+        android:text="解除禁言"
+        android:gravity="center"
+        android:textColor="#d4bfa4"
+        android:textSize="14sp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+</RelativeLayout>

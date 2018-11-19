@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- S3属于此类 -->
+  <dimen name="cs__actionBarHeight">50dp</dimen>
+  
+  <dimen name="cs__textTitle">16sp</dimen>
+  <dimen name="cs__textSummary">12sp</dimen>
+  <dimen name="cs__textContent">13sp</dimen>
+  <dimen name="cs__textSmall">12sp</dimen>
+  
+  <dimen name="cs__rewardIconSize">30dp</dimen>
+  
+  <dimen name="cs__mailButtonBarIconSize">40dp</dimen>
+  <dimen name="cs__mailButtonBarMaxWidth">100dp</dimen>
+</resources>

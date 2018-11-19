@@ -1,0 +1,100 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+	<style name="chat_text_date_style">
+	    <item name="android:paddingTop">2dp</item>
+	    <item name="android:paddingBottom">2dp</item>
+	    <item name="android:paddingLeft">15dp</item>
+	    <item name="android:paddingRight">15dp</item>
+		<item name="android:textColor">#656665</item>
+		<item name="android:textSize">@dimen/cs__textSizeName</item>
+		<item name="android:clickable">false</item>
+		<item name="android:background">@drawable/time_text_bg</item>
+	</style>
+
+    <style name="chat_text_ad_style">
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:paddingLeft">15dp</item>
+        <item name="android:paddingRight">15dp</item>
+        <item name="android:textColor">#FF0000</item>
+        <item name="android:textSize">@dimen/cs__textSendButton</item>
+        <item name="android:clickable">false</item>
+        <item name="android:background">@drawable/time_text_bg</item>
+    </style>
+	
+	<style name="new_msg_tooltip_style">
+	    <item name="android:layout_marginRight">-2dp</item>
+		<item name="android:textColor">#ffffff</item>
+		<item name="android:textSize">@dimen/cs__textSizeName</item>
+		<item name="android:clickable">false</item>
+		<item name="android:background">@drawable/new_msg_tooltip_bg</item>
+	</style>
+	
+	<style name="chat_content_date_style">
+	    <!-- <item name="android:minHeight">50dp</item> -->
+	    <item name="android:gravity">left|center</item>    
+		<item name="android:textColor">#FFFFFF</item>   
+		<item name="android:textSize">@dimen/cs__textMessage</item>      
+		<item name="android:lineSpacingExtra">2dp</item>   
+		<item name="android:clickable">true</item>   
+		<item name="android:focusable">true</item>   
+		<!-- <item name="android:background">#bfbfbf</item> -->
+	</style>
+
+    <style name="ar_chat_content_date_style">
+        <!-- <item name="android:minHeight">50dp</item> -->
+        <item name="android:gravity">right|center</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">@dimen/cs__textMessage</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <!-- <item name="android:background">#bfbfbf</item> -->
+    </style>
+
+    <style name="ChatServiece__Transparent">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+        <!-- <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item> -->
+        <item name="android:windowBackground">@color/cs__transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:colorForeground">#fff</item>
+    </style>
+    
+    <!-- fade out 后会闪一下 -->
+    <style name="FadeWindowAnimation">
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
+    </style>
+    
+    <style name="Activity.Theme" mce_bogus="1" parent="@android:style/Animation.Activity">  
+        <item name="android:windowAnimationStyle">@style/anim_activity</item>
+        <!-- <item name="actionBarSize">100dp</item> -->
+		<!-- <item name="@android:attr/actionBarSize" tools:targetApi="honeycomb">@dimen/cs__actionBarHeight</item> -->
+    </style>
+    
+    <style name="anim_activity" mce_bogus="1" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/in_from_right</item>
+        <item name="android:activityOpenExitAnimation">@anim/out_to_left</item>
+        <item name="android:activityCloseEnterAnimation">@anim/in_from_left</item>
+        <item name="android:activityCloseExitAnimation">@anim/out_to_right</item>
+    </style>
+    
+    
+    <style name="Activity.Theme.Fullscreen">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@style/anim_activity</item>
+    </style>
+    
+    <!-- 自定义ActionBar样式，重设ActionBar背景，隐藏actionbar左侧的应用图标和标题 -->
+    <!-- 在样式里面直接替换掉actionbar的背景，避免在有的窗口进入慢时导致进入时显示系统默认的actionbar -->
+    <!-- 在样式里面去掉acionbar的应用图标和标题 -->
+    <!-- <style name="actionbar_def_style" parent="@android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">@drawable/ui_gray_biaotilan</item>
+        <item name="android:displayOptions">useLogo</item>
+    </style>
+    <style name="ActivityTheme_Light" parent="android:Theme.Holo.Light">
+        <item name="android:actionBarStyle">@style/actionbar_def_style</item>
+    </style> -->
+</resources>

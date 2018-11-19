@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_marginLeft="0dp"
+    android:layout_marginRight="0dp"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp" >
+
+    <FrameLayout
+        android:id="@+id/banConfirmFrameLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:background="@drawable/tishikuang_full"
+        android:clickable="true"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dp" >
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/textView1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:gravity="center"
+                android:text="是否禁言player1?"
+                android:textColor="#ffffff"
+                android:textSize="@dimen/cs__textSizeMedium" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp" >
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="0.12" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.35"
+                android:gravity="left"
+                android:orientation="vertical"
+                android:paddingRight="20dp" >
+
+                <CheckBox
+                    android:id="@+id/checkBox1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:autoText="true"
+                    android:button="@drawable/checkbox"
+                    android:checked="true"
+                    android:text="1小时"
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/cs__textSendButton" />
+
+                <CheckBox
+                    android:id="@+id/checkBox3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:button="@drawable/checkbox"
+                    android:text="24小时"
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/cs__textSendButton" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="0.06" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.35"
+                android:gravity="left"
+                android:orientation="vertical"
+                android:paddingLeft="20dp" >
+
+                <CheckBox
+                    android:id="@+id/checkBox2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:button="@drawable/checkbox"
+                    android:text="4小时"
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/cs__textSendButton" />
+
+                <CheckBox
+                    android:id="@+id/checkBox4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:button="@drawable/checkbox"
+                    android:text="永久"
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/cs__textSendButton" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="0.12" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="25dp"
+            android:layout_marginTop="25dp" >
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/okBanBtn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:background="@drawable/btn_green3"
+                android:gravity="center"
+                android:onClick="exitbutton0"
+                android:paddingBottom="15dp"
+                android:paddingTop="15dp"
+                android:text="确定"
+                android:textColor="#ffffff"
+                android:textSize="@dimen/cs__textSizeMedium" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="0.6" />
+
+            <Button
+                android:id="@+id/cancelBanBtn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:background="@drawable/btn_green3"
+                android:gravity="center"
+                android:onClick="exitbutton1"
+                android:paddingBottom="15dp"
+                android:paddingTop="15dp"
+                android:text="取消"
+                android:textColor="#ffffff"
+                android:textSize="@dimen/cs__textSizeMedium" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ui_paper_3c"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="10dp"
+    android:scrollbars="none" >
+
+    <EditText
+        android:id="@+id/name_edit"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_toLeftOf="@+id/btn_change_name"
+        android:background="@drawable/text_field_bg2"
+        android:gravity="center_vertical|left"
+        android:imeOptions="actionSend"
+        android:maxLength="500"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:text=""
+        android:textColor="@color/hs__messages_text_color"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/btn_change_name"
+        android:layout_width="wrap_content"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:layout_height="40dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="10dp"
+        android:background="@drawable/btn_green3"
+        android:text="更改名称"
+        android:gravity="center"
+        android:textColor="#d4bfa4"
+        android:textSize="14sp" />
+
+</RelativeLayout>

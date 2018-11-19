@@ -1,0 +1,42 @@
+<resources>
+  <dimen name="hs__listPreferredItemPaddingLeft">5dip</dimen>
+  <dimen name="hs__listPreferredItemPaddingRight">5dip</dimen>
+  <dimen name="hs__listPreferredItemPaddingTop">12dp</dimen>
+  <dimen name="hs__listPreferredItemPaddingBottom">12dp</dimen>
+  <dimen name="hs__marginLeft">8dp</dimen>
+  <dimen name="hs__button_padding_right">17dp</dimen>
+
+  <dimen name="hs__msgDatePreferredPaddingTop">15dp</dimen>
+  <dimen name="hs__msgDatePreferredPaddingBottom">15dp</dimen>
+  <dimen name="hs__msgPreferredItemPaddingTop">5dp</dimen>
+  <dimen name="hs__msgPreferredItemPaddingBottom">5dp</dimen>
+  <dimen name="hs__msgPreferredItemPaddingRight">8dp</dimen>
+  <dimen name="hs__msgPreferredItemPaddingLeft">8dp</dimen>
+  <dimen name="hs__msgActionButtonPadding">8dp</dimen>
+
+  <dimen name="cs__textSizeSmall">12sp</dimen>
+  <dimen name="cs__textSizeName">14sp</dimen>
+  <dimen name="cs__textSendButton">16sp</dimen>
+  <dimen name="cs__textMessage">16sp</dimen>
+  <dimen name="cs__textSizeMedium">18sp</dimen>
+  <dimen name="cs__textButtonTitle">22sp</dimen>
+  <dimen name="cs__textTranslateButton">20sp</dimen>
+  <dimen name="cs__textAllianceReward">35sp</dimen>
+
+  <dimen name="hs__listPreferredItemHeightSmall">48dp</dimen>
+
+  <dimen name="hs__content_wrapper_top_padding">30dp</dimen>
+  <dimen name="hs__content_wrapper_padding">10dp</dimen>
+  <dimen name="hs__question_text_padding">10dp</dimen>
+
+  <dimen name="hs__msg_margin_top">2dp</dimen>
+  <dimen name="hs__msg_block_margin_top">-3dp</dimen>
+  <dimen name="cs__margin_bettwen_translate_label_and_button">3dp</dimen>
+  <dimen name="hs__msg_name_padding">10dp</dimen>
+  <dimen name="hs__msg_timestamp_padding">13dp</dimen>
+  <dimen name="hs__actionbar_compat_height">48dp</dimen>
+  <dimen name="hs__actionbar_compat_button_width">48dp</dimen>
+  <dimen name="hs__actionbar_compat_button_home_width">56dp</dimen>
+  <dimen name="hs__actionbar_compat_icon_vertical_padding">8dip</dimen>
+  <item name="hs__msg_timestamp_alpha" format="float" type="dimen">0.5</item>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="hs_packagename">
+        <item>anning</item>
+        <item>aimingsuo</item>
+        <item>fusheng</item>
+        <item>zhangkankan</item>
+        <item>lishuaizhe</item>
+        <item>dongjunjie</item>
+        <item>sudong</item>
+        <item>xuzhigang</item>
+    </string-array>
+</resources>

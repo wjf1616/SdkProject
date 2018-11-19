@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/hs__msgDatePreferredPaddingBottom"
+    android:paddingTop="@dimen/hs__msgDatePreferredPaddingTop" >
+
+    <TextView
+        android:id="@+id/sendDateLabel"
+        style="@style/chat_text_date_style"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="@dimen/hs__msgDatePreferredPaddingBottom"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:id="@+id/msg_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingRight="@dimen/hs__listPreferredItemPaddingRight"
+        android:visibility="visible" >
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0.20" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.80"
+            android:baselineAligned="false"
+            android:gravity="end"
+            android:orientation="horizontal" >
+
+            <!-- 只有一个控件有layout_weight时，其具体值无意义，作用是wrap_content，不会超出边界被截断 -->
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_weight="0.6"
+                android:gravity="end"
+                android:orientation="vertical" >
+
+                <LinearLayout
+                    android:id="@+id/name_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:paddingRight="16dp" >
+
+                    <TextView
+                        android:id="@+id/nameLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:autoLink="none"
+                        android:text="@string/cs__chat_name_sample"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:textColor="@color/hs__messages_name_color"
+                        android:textSize="@dimen/cs__textSizeName" />
+
+                    <TextView
+                        android:id="@+id/allianceLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:autoLink="none"
+                        android:layout_marginRight="2dp"
+                        android:text="@string/cs__chat_alliance_sample"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:textColor="@color/hs__messages_name_color"
+                        android:textSize="@dimen/cs__textSizeName" />
+
+                    <ImageView
+                        android:id="@+id/privilegeImage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|right"
+                        android:layout_marginTop="-2dp"
+                        android:layout_marginRight="-2dp"
+                        android:contentDescription="@string/cs__content_description_head_picture"
+                        android:src="@drawable/tmod" />
+
+                    <TextView
+                        android:id="@+id/vipLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:autoLink="none"
+                        android:layout_marginLeft="4dp"
+                        android:text="@string/cs__chat_vip_sample"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:textColor="@color/hs__messages_vip_color"
+                        android:textSize="@dimen/cs__textSizeName"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <com.elex.chatservice.util.gif.GifMovieView
+                    android:id="@+id/gifMovieView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginTop="5dp"
+                    android:visibility="visible" >
+                </com.elex.chatservice.util.gif.GifMovieView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical" >
+
+                <ImageView
+                    android:id="@+id/headImageKingIcon"
+                    android:layout_width="40dp"
+                    android:layout_height="22dp"
+                    android:layout_marginBottom="-2dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/g026"
+                    android:visibility="visible" />
+
+                <FrameLayout
+                    android:id="@+id/headImageContainer"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/icon_kuang"
+                    android:paddingBottom="5dp"
+                    android:paddingLeft="5dp"
+                    android:paddingRight="5dp" >
+
+                    <ImageView
+                        android:id="@+id/headImage"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:contentDescription="@string/cs__content_description_head_picture"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/g044" />
+                </FrameLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

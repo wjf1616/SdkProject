@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Change these two color properties to theme the Helpshift SDK according to your app -->
+  <color name="hs__actionBarStackedColor">#000000</color>
+  <color name="hs__actionBarTabIndicatorColor">#33b5e5</color>
+  <color name="hs__actionBarTextColorPrimary">#F3F3F3</color>
+  <color name="hs__actionBarTextColorSecondary">#000000</color>
+  <color name="hs__notificationIconColor">#FF4444</color>
+
+  <color name="hs__confirmationAcceptedTextColor">#669900</color>
+  <color name="hs__confirmationRejectedTextColor">#cc0000</color>
+  <color name="hs__light_horizontal_stub_bg">#B1B1B1</color>
+  <color name="hs__msg_user_chat_bubble_separator">#0099cc</color>
+  <color name="hs__my_messages_text_color">#E6DACA</color>
+  <color name="hs__messages_link_color">#0090ff</color>
+  <color name="hs__messages_text_color">#4f4f4f</color>
+  <color name="hs__messages_name_color">#482c13</color>
+  <color name="hs__messages_time_color">#303030</color>
+  <color name="hs__messages_vip_color">#FECF57</color>
+  <color name="cs__mail_text_color">#3E2100</color>
+  <color name="hs__send_reply_icon_color">#0099CC</color>
+  <color name="hs__question_footer_color">#D6D6DB</color>
+  <color name="hs__header_button_text_color">#605041</color>
+  <color name="hs__header_button_text_highlight_color">#FECF57</color>
+  <color name="cs__transparent">#90000000</color>
+  <color name="cs__white">#ffffff</color>
+  <color name="emoji_pressed">#5B5656</color>
+   <color name="emoji_normal">#ddd</color>
+  <color name="hs__writeMailPropertyColorPrimary">#FF0000</color>
+</resources>

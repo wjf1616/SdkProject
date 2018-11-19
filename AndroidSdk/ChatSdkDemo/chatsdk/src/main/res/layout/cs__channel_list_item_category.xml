@@ -1,0 +1,247 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+	<LinearLayout
+	    android:id="@+id/divider_title_layout"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="vertical" >
+
+	    <!-- <LinearLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" >
+
+	        <com.elex.chatservice.util.FixedAspectRatioFrameLayout
+	            android:layout_width="0dp"
+	            android:layout_height="1dp"
+	            android:layout_weight="18" >
+	        </com.elex.chatservice.util.FixedAspectRatioFrameLayout>
+
+	        <View
+	            android:layout_width="0dp"
+	            android:layout_height="1dp"
+	            android:layout_weight="622" >
+	        </View>
+	    </LinearLayout> -->
+
+	    <LinearLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="0.91"
+	        android:background="@drawable/mail_list_divider_title_bg" >
+
+	        <View
+	            android:layout_width="0dp"
+	            android:layout_height="1dp"
+	            android:layout_weight="16" >
+	        </View>
+
+	        <TextView
+	            android:id="@+id/divideText"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="624"
+	            android:ellipsize="end"
+	            android:singleLine="true"
+	            android:text="Report"
+	            android:textColor="@color/cs__white"
+	            android:textSize="@dimen/cs__textTitle" />
+	    </LinearLayout>
+
+	    <LinearLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" >
+
+	        <com.elex.chatservice.util.FixedAspectRatioFrameLayout
+	            android:layout_width="0dp"
+	            android:layout_height="1dp"
+	            android:layout_weight="4" >
+	        </com.elex.chatservice.util.FixedAspectRatioFrameLayout>
+
+	        <View
+	            android:layout_width="0dp"
+	            android:layout_height="1dp"
+	            android:layout_weight="636" >
+	        </View>
+	    </LinearLayout>
+	</LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <com.elex.chatservice.util.FixedAspectRatioFrameLayout
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="14" >
+        </com.elex.chatservice.util.FixedAspectRatioFrameLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="630" >
+        </View>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/channel_item_1_content_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal" >
+
+        <LinearLayout
+            android:id="@+id/channel_item_checkbox_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="64"
+            android:gravity="center_vertical"
+            android:orientation="horizontal" >
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="12"
+                android:visibility="visible" >
+            </View>
+
+            <com.elex.chatservice.util.FixedAspectRatioFrameLayout
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="40" >
+
+                <CheckBox
+                    android:id="@+id/channel_checkBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/mail_list_edit_checkbox"
+                    android:button="@null"
+                    android:checked="false"
+                    android:visibility="visible" />
+            </com.elex.chatservice.util.FixedAspectRatioFrameLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="12" >
+            </View>
+        </LinearLayout>
+
+        <View
+            android:id="@+id/channel_leading_space"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="16" >
+        </View>
+
+        <com.elex.chatservice.util.FixedAspectRatioFrameLayout
+            android:id="@+id/channel_pic_layout"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="66" >
+
+            <ImageView
+                android:id="@+id/channel_icon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:scaleType="fitXY"
+                android:src="@drawable/mail_list_main_icon_chat" />
+        </com.elex.chatservice.util.FixedAspectRatioFrameLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="32" >
+        </View>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="466" >
+
+            <TextView
+                android:id="@+id/channel_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="20dp"
+                android:layout_toLeftOf="@+id/channel_unread_count"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="Inboxes"
+                android:textColor="#474747"
+                android:textSize="@dimen/cs__textTitle" />
+
+            <TextView
+                android:id="@+id/channel_unread_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:text="15"
+                android:textColor="#474747"
+                android:textSize="@dimen/cs__textTitle" />
+        </RelativeLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="22" >
+        </View>
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:layout_weight="16"
+            android:scaleType="fitCenter"
+            android:src="@drawable/mail_list_arrow" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="22" >
+        </View>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/channel_item_1_bottom_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <com.elex.chatservice.util.FixedAspectRatioFrameLayout
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="9" >
+        </com.elex.chatservice.util.FixedAspectRatioFrameLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="87" >
+        </View>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom"
+            android:layout_weight="544" >
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/mail_list_divider" />
+        </RelativeLayout>
+    </LinearLayout>
+
+</LinearLayout>

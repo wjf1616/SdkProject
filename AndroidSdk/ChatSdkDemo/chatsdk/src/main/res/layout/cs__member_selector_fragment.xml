@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragmentLayout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:clickable="true" >
+
+    <LinearLayout
+        android:id="@+id/ui_huitiao"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="0dp"
+            android:layout_marginRight="0dp"
+            android:layout_marginTop="0dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/ui_huitiao1" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/buttonsLinearLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_below="@+id/ui_huitiao"
+        android:layout_marginTop="2dp"
+        android:background="@drawable/ui_paper_3c"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/buttonAlliance"
+            android:layout_width="fill_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="1dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="2dp"
+            android:layout_marginTop="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_qieye_01"
+            android:text="联盟"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/cs__textButtonTitle" />
+        <!-- android:textStyle="bold" -->
+
+        <Button
+            android:id="@+id/buttonSearch"
+            android:layout_width="fill_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="1dp"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_qieye_01"
+            android:text="搜索"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/cs__textButtonTitle" />
+        <!-- android:textStyle="bold" -->
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/selectedMemberTipView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_below="@+id/buttonsLinearLayout"
+        android:background="#ff2a1604"
+        android:gravity="center"
+        android:text="已选成员1"
+        android:textColor="@color/cs__white"
+        android:visibility="gone" />
+
+    <HorizontalScrollView
+        android:id="@+id/selectMemberScrollView"
+        android:layout_below="@id/selectedMemberTipView"
+        android:layout_width="match_parent"
+        android:visibility="gone"
+        android:layout_height="90dp">
+        <LinearLayout
+            android:id="@+id/cs__selectedMemberLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <com.elex.chatservice.view.NewGridView
+                android:id="@+id/topMemberGridView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
+            </com.elex.chatservice.view.NewGridView>
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+    <LinearLayout
+        android:id="@+id/headerRelativeLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/selectMemberScrollView"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:id="@+id/chatroom_name_layout"
+            android:layout_width="fill_parent"
+            android:layout_height="70dp"
+            android:background="@drawable/ui_paper_3c"
+            android:orientation="vertical"
+            android:padding="5dp"
+            android:visibility="visible" >
+
+            <TextView
+                android:id="@+id/chatroom_name"
+                android:layout_width="fill_parent"
+                android:layout_height="24dp"
+                android:background="#ff2a1604"
+                android:paddingLeft="6dp"
+                android:text="聊天室名称"
+                android:textColor="#d4bba3"
+                android:textSize="17dp" />
+
+            <EditText
+                android:id="@+id/chatroom_input"
+                android:layout_width="fill_parent"
+                android:layout_height="32dp"
+                android:layout_marginTop="5dp"
+                android:autoText="true"
+                android:background="@drawable/chatroom_name_input"
+                android:inputType="textMultiLine"
+                android:lines="1"
+                android:maxLength="50"
+                android:maxLines="1"
+                android:paddingLeft="4dp"
+                android:singleLine="true"
+                android:textAppearance="?android:attr/textAppearance"
+                android:textColor="@color/hs__messages_text_color" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/search_name_layout"
+            android:layout_width="fill_parent"
+            android:layout_height="70dp"
+            android:background="@drawable/ui_paper_3c"
+            android:orientation="vertical"
+            android:padding="5dp"
+            android:visibility="visible" >
+
+            <TextView
+                android:id="@+id/search_name"
+                android:layout_width="fill_parent"
+                android:layout_height="24dp"
+                android:background="#ff2a1604"
+                android:paddingLeft="6dp"
+                android:text="搜索"
+                android:textColor="#d4bba3"
+                android:textSize="17dp" />
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="32dp"
+                android:layout_marginTop="5dp" >
+
+                <EditText
+                    android:id="@+id/search_name_input"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_marginRight="90dp"
+                    android:autoText="true"
+                    android:background="@drawable/chatroom_name_input"
+                    android:inputType="textMultiLine"
+                    android:lines="1"
+                    android:maxLength="50"
+                    android:maxLines="1"
+                    android:paddingLeft="4dp"
+                    android:singleLine="true"
+                    android:textAppearance="?android:attr/textAppearance"
+                    android:textColor="@color/hs__messages_text_color" />
+
+                <Button
+                    android:id="@+id/search_btn"
+                    android:layout_width="80dp"
+                    android:layout_height="fill_parent"
+                    android:layout_alignParentRight="true"
+                    android:background="@drawable/btn_green3"
+                    android:text="搜索"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/hs__actionBarTextColorPrimary"
+                    android:textSize="@dimen/cs__textSendButton" />
+            </RelativeLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/headerRelativeLayout"
+        android:src="@drawable/line_grey02" />
+    <ExpandableListView
+        android:id="@+id/cs__myExpandableListView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_above="@+id/relativeLayout1"
+        android:layout_below="@+id/imageView1"
+        android:background="@drawable/ui_paper_3c"
+        android:paddingBottom="3dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingTop="3dp"
+        android:visibility="gone" >
+    </ExpandableListView>
+
+    <com.lee.pullrefresh.ui.PullToRefreshListView
+        android:id="@+id/cs__selectedListView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_above="@+id/relativeLayout1"
+        android:layout_below="@+id/imageView1"
+        android:background="@drawable/ui_paper_3c"
+        android:paddingBottom="3dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingTop="3dp"
+        android:visibility="gone" >
+    </com.lee.pullrefresh.ui.PullToRefreshListView>
+
+    <ExpandableListView
+        android:id="@+id/cs__friendListView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_above="@+id/relativeLayout1"
+        android:layout_below="@+id/imageView1"
+        android:background="@drawable/ui_paper_3c"
+        android:paddingBottom="3dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingTop="3dp" >
+    </ExpandableListView>
+    <TextView
+        android:id="@+id/searchedUserTipView"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:layout_below="@+id/headerRelativeLayout"
+        android:layout_above="@+id/relativeLayout1"
+        android:gravity="center"
+        android:textSize="@dimen/cs__textContent"
+        android:textColor="#FFFFFF"
+        android:text="输入指挥官名字,点击搜索，可以查找指挥官，将他加入聊天室"
+        android:src="@drawable/line_grey02" />
+    <RelativeLayout
+        android:id="@+id/relativeLayout1"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/ui_paper_3c" >
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:src="@drawable/line_grey02" />
+
+        <LinearLayout
+            android:id="@+id/cs__BottomBtnLinearLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="5dp"
+            android:gravity="center"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/cs__cancelBtn"
+                android:layout_width="80dp"
+                android:layout_height="40dp"
+                android:layout_marginRight="15dp"
+                android:background="@drawable/btn_green3"
+                android:text="取消"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/hs__actionBarTextColorPrimary"
+                android:textSize="@dimen/cs__textSendButton"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/cs__quitBtn"
+                android:layout_width="100dp"
+                android:layout_height="40dp"
+                android:background="@drawable/btn_green3"
+                android:text="退出群组"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/hs__actionBarTextColorPrimary"
+                android:textSize="@dimen/cs__textSendButton"
+                android:visibility="gone"/>
+
+            <View
+                android:layout_width="30dp"
+                android:layout_height="40dp"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/cs__okBtn"
+                android:layout_width="100dp"
+                android:layout_height="40dp"
+                android:layout_marginRight="15dp"
+                android:background="@drawable/btn_green3"
+                android:text="确定"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/hs__actionBarTextColorPrimary"
+                android:textSize="@dimen/cs__textSendButton" />
+        </LinearLayout>
+    </RelativeLayout>
+
+</RelativeLayout>

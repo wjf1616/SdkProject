@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- gt_s5360	3英寸 320x240 属于此类 -->
+  <dimen name="cs__actionBarHeight">50dp</dimen>
+  
+  <dimen name="cs__textTitle">16sp</dimen>
+  <dimen name="cs__textSummary">13sp</dimen>
+  <dimen name="cs__textContent">14sp</dimen>
+  <dimen name="cs__textSmall">13sp</dimen>
+  
+  <dimen name="cs__rewardIconSize">25dp</dimen>
+  
+  <dimen name="cs__mailButtonBarIconSize">35dp</dimen>
+  <dimen name="cs__mailButtonBarMaxWidth">100dp</dimen>
+</resources>

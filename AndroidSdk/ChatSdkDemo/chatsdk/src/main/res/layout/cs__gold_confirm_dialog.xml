@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_marginLeft="0dp"
+    android:layout_marginRight="0dp"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp" >
+
+    <FrameLayout
+        android:id="@+id/goldConfirmFrameLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+    </FrameLayout>
+    
+    <LinearLayout
+        android:id="@+id/exit_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:background="@drawable/tishikuang_full"
+        android:clickable="true"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dp" >
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/alertTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:padding="10dp"
+                android:text="是否要屏蔽player1，屏蔽后你将不会收到该玩家的任何聊天信息和邮件，但是你可以通过设置来解除对该玩家的屏蔽。"
+                android:textColor="#ffffff"
+                android:textSize="@dimen/cs__textSizeMedium" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="25dp"
+            android:layout_marginTop="30dp" >
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1" />
+
+            <LinearLayout
+                android:id="@+id/confirm_layout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:background="@drawable/btn_green3"
+                android:onClick="exitbutton0"
+                android:orientation="vertical" >
+
+                <TextView
+                    android:id="@+id/ok_btn_text"
+                    android:layout_width="fill_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.5"
+                    android:gravity="center_horizontal|bottom"
+                    android:paddingTop="5dp"
+                    android:text="确定"
+                    android:textColor="#ffffff"
+                    android:textSize="@dimen/cs__textSizeMedium" />
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.5"
+                    android:orientation="horizontal" >
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
+                        android:layout_height="fill_parent"
+                        android:layout_weight="0.5"
+                        android:gravity="right|top" >
+
+                        <ImageView
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:scaleType="fitStart"
+                            android:src="@drawable/ui_gold_coin" />
+                    </RelativeLayout>
+
+                    <TextView
+                        android:id="@+id/confirm_coin_count"
+                        android:layout_width="0dp"
+                        android:layout_height="fill_parent"
+                        android:layout_weight="0.5"
+                        android:gravity="left|top"
+                        android:text="200"
+                        android:textColor="#ffffff" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!--
+              Button
+            android:id="@+id/exitBtn0"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:background=""
+            android:gravity="center"
+            android:onClick="exitbutton0"
+            android:text="确定"
+            android:textColor="#ffffff"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:textSize="@dimen/cs__textSizeMedium" />
+            -->
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="0.6" />
+
+            <Button
+                android:id="@+id/exitBtn1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:background="@drawable/btn_green3"
+                android:gravity="center"
+                android:onClick="exitbutton1"
+                android:paddingBottom="15dp"
+                android:paddingTop="15dp"
+                android:text="取消"
+                android:textColor="#ffffff"
+                android:textSize="@dimen/cs__textSizeMedium" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>

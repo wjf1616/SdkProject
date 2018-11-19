@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="60dp"
+    android:gravity="center"
+    android:paddingTop="10dp"
+    android:orientation="vertical" >
+
+    <ProgressBar
+        style="?android:progressBarStyleSmallInverse"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:indeterminateDrawable="@anim/update_loading_progressbar_anim"
+        android:id="@+id/chatting_load_progress"/>
+
+</LinearLayout>

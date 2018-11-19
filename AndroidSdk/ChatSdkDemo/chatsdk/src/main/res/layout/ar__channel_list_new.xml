@@ -1,0 +1,141 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/channelListFragmentLayout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <FrameLayout android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_above="@+id/mailButtonBarLayout">
+
+        <com.lee.pullrefresh.ui.PullToRefreshSwipeListView
+            android:id="@+id/channelList_PullView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+
+            android:cacheColorHint="#00000000" >
+
+            <!--
+                 <com.swipemenulistview.SwipeMenuListView
+                android:id="@+id/channelListView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:cacheColorHint="#00000000"
+                android:divider="@drawable/mail_separate3" />
+            -->
+        </com.lee.pullrefresh.ui.PullToRefreshSwipeListView>
+
+        <TextView android:id="@+id/tip_no_mail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:visibility="gone"
+            android:text="没有邮件了fdsfwerw发生地方eqfdsfewrwefwdfqwerqdfdafe"
+            android:textSize="20sp"
+            android:textColor="#000000"/>
+
+
+    </FrameLayout>
+
+
+
+    <RelativeLayout
+        android:id="@+id/mailButtonBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/cs__actionBarHeight"
+        android:layout_centerVertical="true"
+        android:layout_alignParentBottom="true"
+        android:background="#303030"
+        android:gravity="center_vertical">
+        <!--@drawable/mail_list_edit_buttonbar_bg-->
+
+        <LinearLayout
+            android:id="@+id/channel_item_checkbox_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:padding="10dp">
+
+            <com.elex.chatservice.util.FixedAspectRatioFrameLayout
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center_vertical" >
+
+                <CheckBox
+                    android:id="@+id/mailButtonBarAll"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/mail_list_edit_checkbox"
+                    android:button="@null"
+                    android:checked="false"
+                    android:visibility="visible" />
+            </com.elex.chatservice.util.FixedAspectRatioFrameLayout>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/checkboxLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/channel_item_checkbox_layout"
+            android:text="Check all"
+            android:textColor="@color/cs__white"
+            android:textSize="@dimen/cs__textTitle" />
+
+        <ImageView
+            android:id="@+id/mailButtonBarDelete"
+            android:layout_width="@dimen/cs__rewardIconSize"
+            android:layout_height="@dimen/cs__rewardIconSize"
+            android:layout_centerInParent="true"
+            android:src="@drawable/mail_list_edit_delete"
+            android:background="@null"/>
+
+        <Button
+            android:id="@+id/mailButtonBarReadAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/btn_onkey_readall"
+            android:textColor="@color/cs__white"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="onekey_readall"
+            android:textSize="@dimen/cs__textSmall" />
+
+        <Button
+            android:id="@+id/cs__action_enterEditButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/cs__white"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:background="@drawable/mail_bar_editmod_setting"/>
+
+        <Button
+            android:id="@+id/cs__action_returnEditButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/cs__white"
+            android:gravity="center"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="10dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:background="@drawable/mail_bar_editmod_return"/>
+
+
+    </RelativeLayout>
+
+</RelativeLayout>

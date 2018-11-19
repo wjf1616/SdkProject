@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:layout_gravity="center_vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/reward_item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:gravity="center_vertical">
+        <View
+            android:layout_width="0dp"
+            android:layout_weight="0.3"
+            android:layout_height="match_parent"/>
+        <TextView
+            android:id="@+id/reward_name_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:layout_marginLeft="10dp"
+            android:textColor="@color/cs__white"
+            android:text="chooseServersa"
+            android:textSize="11dp"
+            />
+        <TextView
+            android:id="@+id/reward_num_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.2"
+            android:layout_marginLeft="10dp"
+            android:textColor="#909368"
+            android:gravity="center"
+            android:text="999999"
+            android:textSize="11dp"
+            />
+        <View
+            android:layout_width="0dp"
+            android:layout_weight="0.1"
+            android:layout_height="match_parent"/>
+
+    </LinearLayout>
+
+
+
+</RelativeLayout>
