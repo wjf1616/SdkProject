@@ -11,6 +11,7 @@ import com.chatsdk.model.LanguageKeys;
 import com.chatsdk.model.LanguageManager;
 import com.chatsdk.model.mail.MailData;
 import com.chatsdk.util.LogUtil;
+import android.util.Log;
 
 public class MonsterMailData extends MailData
 {
@@ -62,26 +63,33 @@ public class MonsterMailData extends MailData
 				setTotalNum(1);
 				monster = new ArrayList<MonsterMailContents>();
 				MonsterMailContents detail = JSON.parseObject(getContents(), MonsterMailContents.class);
-				if (detail == null)
+				if (detail == null) {
+					Log.i("tttt", "detail == null");
 					return;
+				}
 				detail.setUid(getUid());
 				long time = ((long) getCreateTime()) * 1000;
 				detail.setCreateTime("" + time);
 				detail.setType(getType());
 				monster.add(detail);
 				hasMailOpend = true;
-				if (detail == null || needParseByForce)
+				if (detail == null || needParseByForce) {
+					Log.i("tttt", "needParseByForce return");
 					return;
+				}
 
 				DefParams def = detail.getDef();
-				if (def == null)
+				if (def == null) {
+					Log.i("tttt", "def == null");
 					return;
+				}
 				String name = "";
 				String level = "";
 				if (StringUtils.isNotEmpty(def.getId()))
 				{
-					name = JniController.getInstance().excuteJNIMethod("getNameById", new Object[] { def.getId() });
-					level = JniController.getInstance().excuteJNIMethod("getPropById", new Object[] { def.getId(), "level" });
+					name = JniController.getInstance().excuteJNIMethod("getPropByIdType", new Object[] { def.getId(),"name","field_monster",273 });
+					name = LanguageManager.getLangByKey(name);
+					level = JniController.getInstance().excuteJNIMethod("getPropByIdType", new Object[] { def.getId(), "level","field_monster",273 });
 				}
 				name += " Lv.";
 				name += level;
@@ -133,6 +141,8 @@ public class MonsterMailData extends MailData
 			}
 			catch (Exception e)
 			{
+				Log.i("tttt", "[MonsterMailData parseContents error]: contents:" + getContents());
+
 				LogUtil.trackMessage("[MonsterMailData parseContents error]: contents:" + getContents());
 			}
 		}

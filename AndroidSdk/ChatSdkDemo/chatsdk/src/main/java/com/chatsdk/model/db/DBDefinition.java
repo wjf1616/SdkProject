@@ -14,14 +14,11 @@ public class DBDefinition
 	public static final String	CHANNEL_ID_POSTFIX_CHATROOM	= "@chatroom";
 	public static final String	CHANNEL_ID_POSTFIX_OFFICIAL	= "@official";
 	public static final String	CHANNEL_ID_POSTFIX_MOD		= "@mod";
-	public static final String	CHANNEL_ID_POSTFIX_EVENT		= "_event";
 	public static final int		CHANNEL_TYPE_COUNTRY		= 0;
 	public static final int		CHANNEL_TYPE_ALLIANCE		= 1;
 	public static final int		CHANNEL_TYPE_USER			= 2;
 	public static final int		CHANNEL_TYPE_CHATROOM		= 3;
 	public static final int		CHANNEL_TYPE_OFFICIAL		= 4;
-
-	public static final int		CHANNEL_TYPE_EVENT		    = 5; //活动分类
 
 	public static String getPostfixForType(int type)
 	{
@@ -60,6 +57,8 @@ public class DBDefinition
 	public static final String	USER_COLUMN_USER_ID				= "UserID";
 	/** 用户名（群名） */
 	public static final String	USER_COLUMN_NICK_NAME			= "NickName";
+	/** 职业名 */
+	public static final String	USER_COLUMN_CAREER_NAME			= "CareerName";
 	/** 联盟ID */
 	public static final String	USER_COLUMN_ALLIANCE_ID			= "AllianceId";
 	/** 联盟名称 */
@@ -81,11 +80,11 @@ public class DBDefinition
 	/** vip等级 */
 	public static final String	USER_COLUMN_VIP_LEVEL			= "VipLevel";
 	public static final String	USER_COLUMN_SVIP_LEVEL			= "SvipLevel";
+    public static final String  USER_COLUMN_VIP_FRAME            = "VipFrame";
 	/** vip结束时间，结束后vip信息显示为空 */
 	public static final String	USER_COLUMN_VIP_END_TIME		= "VipEndTime";
 	/** 上次更新时间 */
 	public static final String	USER_COLUMN_LAST_UPDATE_TIME	= "LastUpdateTime";
-	public static final String	USER_COLUMN_LAST_ANIMATE_TIME	= "LastAnimateTime";
 	/** 上次聊天时间 */
 	public static final String	USER_COLUMN_LAST_CHAT_TIME		= "LastChatTime";
 	/** 月卡 */
@@ -100,7 +99,8 @@ public class DBDefinition
 																		+ " INT4 DEFAULT " + DBHelper.CURRENT_DATABASE_VERSION + ", "
 																		+ USER_COLUMN_USER_ID
 																		+ " TEXT NOT NULL UNIQUE ON CONFLICT IGNORE , "
-																		+ USER_COLUMN_NICK_NAME + " TEXT , " + USER_COLUMN_ALLIANCE_ID
+																		+ USER_COLUMN_NICK_NAME + " TEXT , " + USER_COLUMN_CAREER_NAME
+																		+ " TEXT , " + USER_COLUMN_ALLIANCE_ID
 																		+ " TEXT , " + USER_COLUMN_ALLIANCE_NAME + " TEXT , "
 																		+ USER_COLUMN_ALLIANCE_RANK + " INTEGER DEFAULT -1 , "
 																		+ USER_COLUMN_SERVER_ID + " INTEGER DEFAULT -1 , "
@@ -110,9 +110,9 @@ public class DBDefinition
 																		+ " INTEGER DEFAULT -1 , " + USER_COLUMN_PRIVILEGE
 																		+ " INTEGER DEFAULT -1 , " + USER_COLUMN_VIP_LEVEL
 																		+ " INTEGER DEFAULT -1 , " + USER_COLUMN_SVIP_LEVEL
+																		+ " INTEGER DEFAULT -1 , " + USER_COLUMN_VIP_FRAME
 																		+ " INTEGER DEFAULT -1 , " + USER_COLUMN_VIP_END_TIME
 																		+ " INTEGER DEFAULT 0 , " + USER_COLUMN_LAST_UPDATE_TIME
-																		+ " INTEGER DEFAULT 0 , " + USER_COLUMN_LAST_ANIMATE_TIME
 																		+ " INTEGER DEFAULT 0 , " + USER_COLUMN_LAST_CHAT_TIME
 			                                                            + " INTEGER DEFAULT 0 , " + USER_COLUMN_MONTHCARD
 																		+ " INTEGER DEFAULT 0 , " + USER_COLUMN_LANG + " TEXT )";
@@ -137,8 +137,6 @@ public class DBDefinition
 	public static final String	CHAT_COLUMN_CHANNEL_TYPE		= "ChannelType";
 	/** 消息内容 */
 	public static final String	CHAT_COLUMN_MSG					= "Msg";
-	/** 分享评论内容 */
-	public static final String	CHAT_COLUMN_SHARECOMMENT		= "ShareComment";
 	/** 翻译后的消息内容 */
 	public static final String	CHAT_COLUMN_TRANSLATION			= "Translation";
 	/** 源语言 */
@@ -164,7 +162,7 @@ public class DBDefinition
 																		+ CHAT_COLUMN_CREATE_TIME + " INTEGER DEFAULT 0 , "
 																		+ CHAT_COLUMN_LOCAL_SEND_TIME + " INTEGER DEFAULT 0 , "
 																		+ CHAT_COLUMN_TYPE + " INTEGER DEFAULT -1 , " + CHAT_COLUMN_MSG
-																		+ " TEXT , " + CHAT_COLUMN_SHARECOMMENT+ " TEXT , " + CHAT_COLUMN_TRANSLATION + " TEXT , "
+																		+ " TEXT , " + CHAT_COLUMN_TRANSLATION + " TEXT , "
 																		+ CHAT_COLUMN_ORIGINAL_LANGUAGE + " TEXT , "
 																		+ CHAT_COLUMN_TRANSLATED_LANGUAGE + " TEXT , " + CHAT_COLUMN_STATUS
 																		+ " INTEGER DEFAULT -1 , " + CHAT_COLUMN_ATTACHMENT_ID + " TEXT , "
@@ -249,6 +247,8 @@ public class DBDefinition
 	public static final String	PARSE_VERSION					= "ParseVersion";
 	public static final String	MAIL_FLAG					    = "Flag";
 	public static final String	MAIL_FAIL_TIME					= "FailTime";
+	public static final String	MAIL_REPLY_TEXT					= "replyText";
+
 
 	public static final String	CREATE_TABEL_MAIL				= "CREATE TABLE IF NOT EXISTS " + TABEL_MAIL + "(" + BaseColumns._ID
 																		+ " INTEGER PRIMARY KEY AUTOINCREMENT , " + COLUMN_TABLE_VER
@@ -267,6 +267,6 @@ public class DBDefinition
 																		+ MAIL_TRANSLATION + " TEXT , " + MAIL_TITLE_TEXT + " TEXT , "
 																		+ MAIL_SUMMARY + " TEXT , " + MAIL_LANGUAGE + " TEXT , "
 																		+ PARSE_VERSION + " INTEGER DEFAULT -1 , "
-																		+ MAIL_FLAG + " INTEGER DEFAULT -1 , "
-			                                                            + MAIL_FAIL_TIME + " INTEGER DEFAULT 0 "+" )";
+																		+ MAIL_FLAG + " INTEGER DEFAULT -1 , " + MAIL_REPLY_TEXT + " TEXT , "
+																		+ MAIL_FAIL_TIME + " INTEGER DEFAULT 0 "+" )";
 }

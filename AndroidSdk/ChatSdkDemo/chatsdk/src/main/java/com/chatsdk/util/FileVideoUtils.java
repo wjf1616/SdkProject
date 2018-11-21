@@ -107,13 +107,13 @@ public class FileVideoUtils {
                     file.getAbsolutePath(), fileName, null);
             if(saveImg != null)
             {
-//                Toast toast=Toast.makeText(context,    "保存成功", Toast.LENGTH_LONG);
+//                Toast toast=ToastCompat.makeText(context,    "保存成功", Toast.LENGTH_LONG);
 //                toast.setGravity(Gravity.CENTER, 0, 0);
 //                toast.show();
             	Log.d("warz", "savePicture success");
             }
             else {
-//                Toast toast=Toast.makeText(context,    "保存失败", Toast.LENGTH_LONG);
+//                Toast toast=ToastCompat.makeText(context,    "保存失败", Toast.LENGTH_LONG);
 //                toast.setGravity(Gravity.CENTER, 0, 0);
 //                toast.show();
             	Log.d("warz", "savePicture fail");

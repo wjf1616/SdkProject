@@ -1,12 +1,12 @@
 package com.chatsdk.util;
 
-import com.chatsdk.controller.ChatServiceController;
-import com.chatsdk.model.db.DBHelper;
-
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import com.chatsdk.controller.ChatServiceController;
+import com.chatsdk.model.db.DBHelper;
 
 public class HeadPicUtil
 {
@@ -19,9 +19,8 @@ public class HeadPicUtil
 		{
 			return "";
 		}
-		String url = "http://img.im30app.com/az/img/";
-		if(picVer > 100000)
-			url = "http://img.im30app.com/az/photo/";
+		String url = "https://im30-i.akamaized.net/fb/img/";
+
 		String md5Str = uid + "_" + picVer;
 
 		String tempStr = uid;
@@ -32,18 +31,9 @@ public class HeadPicUtil
 
 	public static String getCustomPic(String url)
 	{
-		if( ChatServiceController.hostActivity != null ) {
-			try
-			{
-				String path = DBHelper.getHeadDirectoryPath(ChatServiceController.hostActivity);
-				path += "cache_" + MD5.getMD5Str(url) + ".png";
-				return path;
-			}
-			catch (Exception e){
-
-			}
-		}
-		return "";
+		String path = DBHelper.getHeadDirectoryPath(ChatServiceController.hostActivity);
+		path += "cache_" + MD5.getMD5Str(url) + ".png";
+		return path;
 	}
 
 	public static class MD5

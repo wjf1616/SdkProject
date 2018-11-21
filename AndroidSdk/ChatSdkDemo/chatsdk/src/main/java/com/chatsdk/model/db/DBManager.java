@@ -1,33 +1,19 @@
 package com.chatsdk.model.db;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.lang.StringUtils;
-
 import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Pair;
 
 import com.alibaba.fastjson.JSON;
 import com.chatsdk.controller.ChatServiceController;
 import com.chatsdk.controller.JniController;
-import com.chatsdk.controller.MenuController;
 import com.chatsdk.model.ChannelManager;
 import com.chatsdk.model.ChatChannel;
 import com.chatsdk.model.DetectMailInfo;
-import com.chatsdk.model.LanguageKeys;
-import com.chatsdk.model.LanguageManager;
 import com.chatsdk.model.MailManager;
 import com.chatsdk.model.MsgItem;
 import com.chatsdk.model.TimeManager;
@@ -35,9 +21,19 @@ import com.chatsdk.model.UserInfo;
 import com.chatsdk.model.UserManager;
 import com.chatsdk.model.mail.MailData;
 import com.chatsdk.model.mail.detectreport.DetectReportMailContents;
+import com.chatsdk.model.mail.fbscoutreport.FBDetectReportMailContents;
 import com.chatsdk.net.WebSocketManager;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.PermissionManager;
+
+import org.apache.commons.lang.StringUtils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class DBManager
 {
@@ -542,56 +538,6 @@ public class DBManager
 		}
 	}
 
-	public void updateDBMsgs(MsgItem[] msgs, ChatTable chatTable) {
-		if (StringUtils.isEmpty(chatTable.channelID) || !isDBAvailable())
-			return;
-
-		String tableName = chatTable.getTableNameAndCreate();
-
-		try
-		{
-			db.beginTransaction();
-		}
-		catch (Exception e)
-		{
-			LogUtil.printException(e);
-			return;
-		}
-
-		try
-		{
-			for (MsgItem msg : msgs)
-			{
-				try
-				{
-					String where = String.format(Locale.US, "%s = %s AND %s = '%s'", DBDefinition.CHAT_COLUMN_LOCAL_SEND_TIME, msg.sendLocalTime,
-							DBDefinition.CHAT_COLUMN_USER_ID, msg.uid);
-					db.update(chatTable.getTableNameAndCreate(), msg.getContentValues(), where, null);
-				}
-				catch (Exception e)
-				{
-					LogUtil.trackMessage("MsgItem is not Valid sequenceId=" + msg.sequenceId + " channelType=" + msg.channelType);
-					LogUtil.printException(e);
-				}
-			}
-			db.setTransactionSuccessful();
-		}
-		catch (Exception e)
-		{
-			LogUtil.printException(e);
-		}
-		finally
-		{
-			try
-			{
-				db.endTransaction();
-			}
-			catch (Exception e)
-			{
-				LogUtil.printException(e);
-			}
-		}
-	}
 	private void checkChannel(MsgItem msg, ChatTable chatTable)
 	{
 		ChatChannel channel = ChannelManager.getInstance().getChannel(chatTable);
@@ -916,7 +862,7 @@ public class DBManager
 			db.setTransactionSuccessful();
 
 			MailData deleteMail = getSysMailByID(mailId);
-			if (deleteMail != null && (deleteMail.getType() == MailManager.MAIL_DETECT_REPORT||deleteMail.getType() == MailManager.Mail_DETECT_REPORT_ARENA))
+			if (deleteMail != null && (deleteMail.getType() == MailManager.MAIL_DETECT_REPORT||deleteMail.getType() == MailManager.Mail_NEW_SCOUT_REPORT_FB))
 			{
 				getDetectMailInfo();
 			}
@@ -1035,7 +981,7 @@ public class DBManager
 			db.setTransactionSuccessful();
 
 			MailData deleteMail = getSysMailByID(mailId);
-			if (deleteMail != null && (deleteMail.getType() == MailManager.MAIL_DETECT_REPORT||deleteMail.getType() == MailManager.Mail_DETECT_REPORT_ARENA))
+			if (deleteMail != null && (deleteMail.getType() == MailManager.MAIL_DETECT_REPORT||deleteMail.getType() == MailManager.Mail_NEW_SCOUT_REPORT_FB))
 			{
 				getDetectMailInfo();
 			}
@@ -1127,6 +1073,46 @@ public class DBManager
 		}
 
 		return count > 0;
+	}
+
+	public boolean isMsgExistsLoad(ChatTable chatTable, int seqId,int maxSeqId, long createTime)
+	{
+		if (chatTable == null || StringUtils.isEmpty(chatTable.getTableNameAndCreate()) || !isDBAvailable())
+			return false;
+
+		int count = 0;
+		Cursor c = null;
+		try
+		{
+			String sql;
+//			sql = String.format(Locale.US, "SELECT * FROM %s WHERE %s = %d", chatTable.getTableNameAndCreate(),
+//					DBDefinition.CHAT_COLUMN_SEQUENCE_ID, seqId);
+			sql = String.format(Locale.US, "SELECT * FROM %s WHERE %s >= %d AND %s < %d ORDER BY %s DESC",
+					chatTable.getTableNameAndCreate(), DBDefinition.CHAT_COLUMN_SEQUENCE_ID,
+					seqId, DBDefinition.CHAT_COLUMN_SEQUENCE_ID,maxSeqId,DBDefinition.CHAT_COLUMN_SEQUENCE_ID);
+			c = db.rawQuery(sql, null);
+			while (c != null && c.moveToNext())
+			{
+				long createTimeDB = c.getLong(c.getColumnIndex(DBDefinition.CHAT_COLUMN_CREATE_TIME));
+				if(createTimeDB + ChannelManager.DURATIONTIME >= createTime){
+					count += 1;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LogUtil.printException(e);
+		}
+		finally
+		{
+			if (c != null)
+				c.close();
+			if (count >=18 && count <= 20 ) {
+				return true;//从数据库拉取数据
+			}else{
+				return false;//从服务器拉取数据
+			}
+		}
 	}
 
 	public boolean isMessageChannelExist()
@@ -1399,7 +1385,7 @@ public class DBManager
 				while (c != null && c.moveToNext())
 				{
 					MsgItem msg = new MsgItem(c);
-					if (msg != null && msg.sequenceId > maxSequeueId && !msg.isInRestrictList())
+					if (msg != null && msg.sequenceId > maxSequeueId)
 					{
 						latestMsgItem = msg;
 						maxSequeueId = msg.sequenceId;
@@ -1410,7 +1396,7 @@ public class DBManager
 				while (c != null && c.moveToNext())
 				{
 					MsgItem msg = new MsgItem(c);
-					if (msg != null && msg._id > id && !msg.isInRestrictList())
+					if (msg != null && msg._id > id)
 					{
 						latestMsgItem = msg;
 						id = msg._id;
@@ -1855,6 +1841,40 @@ public class DBManager
 		return msg;
 	}
 
+	public MsgItem getChatBySequeueIdAndCreatTime(ChatTable chatTable, int seqId ,int minCreatTime)
+	{
+		MsgItem msg = null;
+		if (StringUtils.isEmpty(chatTable.channelID) || !isDBAvailable() || seqId < 1)
+			return msg;
+
+		Cursor c = null;
+		try
+		{
+			String sql = String.format(Locale.US, "SELECT * FROM %s WHERE %s = %d AND %s >= %d AND %s <= %d", chatTable.getTableNameAndCreate(),
+					DBDefinition.CHAT_COLUMN_SEQUENCE_ID, seqId,DBDefinition.CHAT_COLUMN_CREATE_TIME,minCreatTime - ChannelManager.DURATIONTIME,DBDefinition.CHAT_COLUMN_CREATE_TIME,minCreatTime);
+			c = db.rawQuery(sql, null);
+			if (!c.moveToFirst())
+			{
+				return msg;
+			}
+			else
+			{
+				msg = new MsgItem(c);
+			}
+		}
+		catch (Exception e)
+		{
+			LogUtil.printException(e);
+		}
+		finally
+		{
+			if (c != null)
+				c.close();
+		}
+
+		return msg;
+	}
+
 	public List<MsgItem> getMsgsByTime(ChatTable chatTable, int createTime, int countLimit)
 	{
 		ArrayList<MsgItem> msgs = new ArrayList<MsgItem>();
@@ -1937,7 +1957,7 @@ public class DBManager
 		return c;
 	}
 
-	public List<MsgItem> getChatMsgBySection(ChatTable chatTable, int upperId, int lowerId)
+	public List<MsgItem> getChatMsgBySection(ChatTable chatTable, int upperId, int lowerId,int minCreateTime)
 	{
 		ArrayList<MsgItem> msgs = new ArrayList<MsgItem>();
 		if (StringUtils.isEmpty(chatTable.channelID) || !isDBAvailable())
@@ -1946,7 +1966,7 @@ public class DBManager
 		Cursor c = null;
 		try
 		{
-			c = queryChatBySection(chatTable, upperId, lowerId);
+			c = queryChatBySection(chatTable, upperId, lowerId,minCreateTime);
 			while (c != null && c.moveToNext())
 			{
 				MsgItem msg = new MsgItem(c);
@@ -1983,6 +2003,51 @@ public class DBManager
 			String sql = String.format(Locale.US, "SELECT %s FROM %s WHERE %s < %d AND %s > 0 ORDER BY %s DESC LIMIT %d",
 					DBDefinition.CHAT_COLUMN_SEQUENCE_ID, chatTable.getTableNameAndCreate(), DBDefinition.CHAT_COLUMN_SEQUENCE_ID,
 					upperSeqId, DBDefinition.CHAT_COLUMN_SEQUENCE_ID, DBDefinition.CHAT_COLUMN_SEQUENCE_ID, count);
+			c = db.rawQuery(sql, null);
+			while (c != null && c.moveToNext())
+			{
+				int seqId = c.getInt(c.getColumnIndex(DBDefinition.CHAT_COLUMN_SEQUENCE_ID));
+				if (result == null)
+				{
+					result = new Point(seqId, seqId);
+				}
+				else
+				{
+					result.x = seqId;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LogUtil.printException(e);
+		}
+		finally
+		{
+			if (c != null)
+				c.close();
+		}
+
+		return result;
+	}
+
+	/**
+	 * 在db中查找SequenceID小于upperSeqId的至多count条消息，返回这些消息的最小和最大SequenceID值，
+	 * 如果找不到则返回null
+	 */
+	public Point getHistorySeqIAndTimedRange(ChatTable chatTable, int upperSeqId, int minCreatTime,int count)
+	{
+		Point result = null;
+		if (StringUtils.isEmpty(chatTable.channelID) || !isDBAvailable())
+			return result;
+
+		Cursor c = null;
+		try
+		{
+
+			String sql = String.format(Locale.US, "SELECT %s FROM %s WHERE %s < %d AND %s > 0 AND %s >= %d AND %s <= %d ORDER BY %s DESC LIMIT %d",
+					DBDefinition.CHAT_COLUMN_SEQUENCE_ID, chatTable.getTableNameAndCreate(), DBDefinition.CHAT_COLUMN_SEQUENCE_ID,
+					upperSeqId, DBDefinition.CHAT_COLUMN_SEQUENCE_ID,DBDefinition.CHAT_COLUMN_CREATE_TIME,minCreatTime - ChannelManager.DURATIONTIME,
+					DBDefinition.CHAT_COLUMN_CREATE_TIME,minCreatTime, DBDefinition.CHAT_COLUMN_SEQUENCE_ID, count);
 			c = db.rawQuery(sql, null);
 			while (c != null && c.moveToNext())
 			{
@@ -2050,15 +2115,15 @@ public class DBManager
 		return result;
 	}
 
-	private Cursor queryChatBySection(ChatTable chatTable, int upperId, int lowerId)
+	private Cursor queryChatBySection(ChatTable chatTable, int upperId, int lowerId, int minCreateTime)
 	{
 		if (!isDBAvailable())
 			return null;
 		int minId = Math.min(upperId, lowerId);
 		int maxId = Math.max(upperId, lowerId);
-		String sql = String.format(Locale.US, "SELECT * FROM %s WHERE %s >= %d AND %s <= %d ORDER BY %s DESC",
+		String sql = String.format(Locale.US, "SELECT * FROM %s WHERE %s >= %d AND %s <= %d AND %s >=%d AND %s < %d ORDER BY %s DESC",
 				chatTable.getTableNameAndCreate(), DBDefinition.CHAT_COLUMN_SEQUENCE_ID, minId, DBDefinition.CHAT_COLUMN_SEQUENCE_ID,
-				maxId, DBDefinition.CHAT_COLUMN_SEQUENCE_ID);
+				maxId, DBDefinition.CHAT_COLUMN_CREATE_TIME,minCreateTime - ChannelManager.DURATIONTIME,DBDefinition.CHAT_COLUMN_CREATE_TIME,minCreateTime,DBDefinition.CHAT_COLUMN_SEQUENCE_ID);
 		Cursor c = db.rawQuery(sql, null);
 		return c;
 	}
@@ -2340,8 +2405,7 @@ public class DBManager
 						MailManager.MAIL_RESOURCE, DBDefinition.MAIL_TYPE, MailManager.MAIL_ATTACKMONSTER,
 						DBDefinition.MAIL_TYPE, MailManager.MAIL_MISSILE, DBDefinition.MAIL_TYPE,
 						MailManager.MAIL_RESOURCE_HELP,DBDefinition.MAIL_TYPE,
-						MailManager.MAIL_GIFT_BUY_EXCHANGE,DBDefinition.MAIL_TYPE,
-						MailManager.MAIL_MOBILIZATION_CENTER);
+						MailManager.MAIL_GIFT_BUY_EXCHANGE);
 			}
 
 		}
@@ -2364,8 +2428,7 @@ public class DBManager
 						MailManager.MAIL_RESOURCE, DBDefinition.MAIL_TYPE, MailManager.MAIL_RESOURCE_HELP, DBDefinition.MAIL_TYPE,
 						MailManager.MAIL_ATTACKMONSTER,DBDefinition.MAIL_TYPE,
 						MailManager.MAIL_MISSILE, DBDefinition.MAIL_TYPE,
-						MailManager.MAIL_GIFT_BUY_EXCHANGE,
-						DBDefinition.MAIL_TYPE,MailManager.MAIL_MOBILIZATION_CENTER,DBDefinition.MAIL_CREATE_TIME, createTime);
+						MailManager.MAIL_GIFT_BUY_EXCHANGE,DBDefinition.MAIL_CREATE_TIME, createTime);
 			}
 
 		}
@@ -2384,7 +2447,7 @@ public class DBManager
 			return "";
 		String temp = "";
 
-		String[] specailTitle = { "114111", "105726", "105727", "105728", "105729", "105730", "115429","87003105","90100190" };
+		String[] specailTitle = { "114111", "105726", "105727", "105728", "105729", "105730", "115429","87003105","90500285","77000157","77000158"};
 
 		String allianceSpecialSql = "";
 		String systemSpecialSql = "";
@@ -2431,37 +2494,30 @@ public class DBManager
 				else if (channelId.equals(MailManager.CHANNELID_SYSTEM) && type == MailManager.MAIL_SYSTEM
 						&& StringUtils.isNotEmpty(systemSpecialSql))
 					temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + systemSpecialSql + "))";
-				else if (ChatServiceController.chat_v2_personal)
-				{
-					temp += DBDefinition.MAIL_TYPE + " = " + type;
-				}
+				else if (channelId.equals(MailManager.CHANNELID_FIGHT) && (type == MailManager.MAIL_BATTLE_REPORT||type == MailManager.MAIL_DETECT||type == MailManager.MAIL_DETECT_REPORT||type == MailManager.Mail_CASTLE_ACCOUNT)
+						&& StringUtils.isNotEmpty(fightSpecialSql))
+					temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + fightSpecialSql + "))";
+				else if (channelId.equals(MailManager.CHANNELID_KNIGHT) && type == MailManager.MAIL_BATTLE_REPORT
+						&& StringUtils.isNotEmpty(knightSpecialSql))
+					temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + knightSpecialSql + "))";
+				else if (channelId.equals(MailManager.CHANNELID_BATTLEGAME) && type == MailManager.MAIL_BATTLE_REPORT
+						&& StringUtils.isNotEmpty(battlegameSpecialSql))
+					temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + battlegameSpecialSql + "))";
+				else if (channelId.equals(MailManager.CHANNELID_EVENT) && type == MailManager.MAIL_BATTLE_REPORT
+						&& StringUtils.isNotEmpty(knightActivitySpecialSql))
+					temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + knightActivitySpecialSql + "))";
+				else if (channelId.equals(MailManager.CHANNELID_ARENAGAME) && (type == MailManager.MAIL_BATTLE_REPORT||type == MailManager.MAIL_DETECT||type == MailManager.MAIL_DETECT_REPORT)
+						&& StringUtils.isNotEmpty(arenagameSpecialSql))
+					temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + arenagameSpecialSql + "))";
+				else if (channelId.equals(MailManager.CHANNELID_SHAMOGAME) && type == MailManager.MAIL_BATTLE_REPORT
+						&& StringUtils.isNotEmpty(shamoSpecialSql))
+					temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + shamoSpecialSql + "))";
 				else
-				{
-					if (channelId.equals(MailManager.CHANNELID_FIGHT) && (type == MailManager.MAIL_BATTLE_REPORT||type == MailManager.MAIL_DETECT||type == MailManager.MAIL_DETECT_REPORT||type == MailManager.Mail_CASTLE_ACCOUNT)
-							&& StringUtils.isNotEmpty(fightSpecialSql))
-						temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + fightSpecialSql + "))";
-					else if (channelId.equals(MailManager.CHANNELID_KNIGHT) && type == MailManager.MAIL_BATTLE_REPORT
-							&& StringUtils.isNotEmpty(knightSpecialSql))
-						temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + knightSpecialSql + "))";
-					else if (channelId.equals(MailManager.CHANNELID_BATTLEGAME) && type == MailManager.MAIL_BATTLE_REPORT
-							&& StringUtils.isNotEmpty(battlegameSpecialSql))
-						temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + battlegameSpecialSql + "))";
-					else if (channelId.equals(MailManager.CHANNELID_EVENT_NORMAL) && type == MailManager.MAIL_BATTLE_REPORT
-							&& StringUtils.isNotEmpty(knightActivitySpecialSql))
-						temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + knightActivitySpecialSql + "))";
-					else if (channelId.equals(MailManager.CHANNELID_ARENAGAME) && (type == MailManager.MAIL_BATTLE_REPORT||type == MailManager.MAIL_DETECT||type == MailManager.MAIL_DETECT_REPORT)
-							&& StringUtils.isNotEmpty(arenagameSpecialSql))
-						temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + arenagameSpecialSql + "))";
-					else if (channelId.equals(MailManager.CHANNELID_SHAMOGAME) && type == MailManager.MAIL_BATTLE_REPORT
-							&& StringUtils.isNotEmpty(shamoSpecialSql))
-						temp += "(" + DBDefinition.MAIL_TYPE + " = " + type + " AND (" + shamoSpecialSql + "))";
-					else
-						temp += DBDefinition.MAIL_TYPE + " = " + type;
-				}
+					temp += DBDefinition.MAIL_TYPE + " = " + type;
 			}
 		}
 
-		if (channelId.equals(MailManager.CHANNELID_EVENT_NORMAL))
+		if (channelId.equals(MailManager.CHANNELID_EVENT))
 		{
 			if (StringUtils.isNotEmpty(temp))
 				temp += (" OR (" + DBDefinition.MAIL_TYPE + " = " + MailManager.MAIL_SYSTEM + " AND (" + DBDefinition.MAIL_TITLE
@@ -2743,8 +2799,12 @@ public class DBManager
 		try
 		{
 			String sql = "SELECT * FROM " + DBDefinition.TABEL_MAIL + " WHERE " + DBDefinition.MAIL_TYPE + " = "
-					+ MailManager.MAIL_DETECT_REPORT+" OR " + DBDefinition.MAIL_TYPE + " = "
-					+ MailManager.Mail_DETECT_REPORT_ARENA;
+					+ MailManager.MAIL_DETECT_REPORT;
+			if (ChatServiceController.scoutmail)
+			{
+				 sql = "SELECT * FROM " + DBDefinition.TABEL_MAIL + " WHERE " + DBDefinition.MAIL_TYPE + " = "
+						+ MailManager.MAIL_DETECT_REPORT +" OR "+ DBDefinition.MAIL_TYPE + " = " + MailManager.Mail_NEW_SCOUT_REPORT_FB;
+			}
 			c = db.rawQuery(sql, null);
 			List<DetectMailInfo> changedDetectMailArr = new ArrayList<DetectMailInfo>();
 			List<DetectMailInfo> deleteDetectMailArr = new ArrayList<DetectMailInfo>();
@@ -2772,12 +2832,31 @@ public class DBManager
 							e.printStackTrace();
 						}
 					}
+					else if (mail.getContents().contains("userInfo"))
+					{
+						try
+						{
+							FBDetectReportMailContents detail = JSON.parseObject(mail.getContents(), FBDetectReportMailContents.class);
+							if (detail != null && detail.getUserInfo() != null && StringUtils.isNotEmpty(detail.getUserInfo().getName())
+									&& detail.getPointType() == MailManager.CityTile)
+							{
+								String name = detail.getUserInfo().getName();
+								int creatTime = mail.getCreateTime();
+								addDetectInMap(detectMap, name, mail.getUid(), creatTime);
+							}
+						}
+						catch (Exception e)
+						{
+							e.printStackTrace();
+						}
+					}
 					else if (StringUtils.isNotEmpty(mail.getFromUid()))
 					{
 						String name = mail.getFromUid();
 						int creatTime = mail.getCreateTime();
 						addDetectInMap(detectMap, name, mail.getUid(), creatTime);
 					}
+
 				}
 			}
 

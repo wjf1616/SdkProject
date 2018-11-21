@@ -125,9 +125,6 @@ public class SysMailAdapter extends AbstractMailListAdapter
 		}
 		CategoryViewHolder holder = (CategoryViewHolder) convertView.getTag();
 		int bgColor = MailManager.getColorByChannelId(parentChannel.channelID);
-		if(mailData.issamplereport){
-			mailData.failTime = 0; //如果是简报不显示failTime
-		}
 		holder.setContent(context, mailData, false, null, mailData.nameText, mailData.contentText, mailData.getCreateTime(),
 				fragment.isInEditMode(), position, bgColor,mailData.failTime);
 		setIcon(mailData, holder.item_icon);

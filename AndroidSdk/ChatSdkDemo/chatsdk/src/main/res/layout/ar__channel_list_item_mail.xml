@@ -52,6 +52,7 @@
                     android:layout_weight="10"
                     android:scaleType="fitCenter"
                     android:scaleX="-1"
+                    android:visibility="gone"
                     android:src="@drawable/mail_list_arrow" />
 
                 <View
@@ -110,19 +111,20 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:orientation="horizontal" >
 
                 <TextView
                     android:id="@+id/channel_fail_time"
                     android:layout_width="0dp"
-                    android:layout_weight="1"
+                    android:layout_weight="1.2"
                     android:layout_height="match_parent"
                     android:gravity="bottom"
                     android:ellipsize="end"
                     android:text="20天后到期"
                     android:textColor="#464646"
-                    android:textSize="@dimen/cs__textSummary" />
+                    android:textSize="@dimen/cs__textSummary"
+                    android:layout_marginRight="-5dp"/>
 
                 <ImageView
                     android:id="@+id/channel_reward_icon"
@@ -131,42 +133,30 @@
                     android:src="@drawable/mail_list_edit_gift01"
                     android:paddingTop="5dp"
                     android:paddingLeft="5dp"
-                    android:paddingRight="5dp"/>
+                    android:paddingRight="5dp"
+                    android:layout_marginRight="-10dp"/>
 
                 <ImageView
                     android:id="@+id/channel_lock_icon"
                     android:layout_width="@dimen/cs__rewardIconSize"
                     android:layout_height="@dimen/cs__rewardIconSize"
-                    android:src="@drawable/mail_list_edit_favorite" />
+                    android:src="@drawable/mail_list_edit_favorite"
+                    android:layout_gravity="top"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginRight="-5dp"/>
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/channel_latest_msg"
                     android:layout_width="0dp"
                     android:layout_weight="3"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="bottom|right">
-
-                    <TextView
-                        android:id="@+id/channel_latest_msg_top"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:text=""
-                        android:textColor="#797373"
-                        android:textSize="@dimen/cs__textContent"/>
-                    <TextView
-                        android:id="@+id/channel_latest_msg"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:ellipsize="end"
-                        android:maxLines="@integer/cs__textSummaryMaxLine"
-                        android:text=""
-                        android:textColor="#797373"
-                        android:textSize="@dimen/cs__textContent"/>
-                </LinearLayout>
+                    android:gravity="right|bottom"
+                    android:ellipsize="end"
+                    android:maxLines="@integer/cs__textSummaryMaxLine"
+                    android:text="summary"
+                    android:textColor="#797373"
+                    android:textSize="@dimen/cs__textContent"
+                    android:layout_alignParentTop="true" />
             </LinearLayout>
 
         </LinearLayout>

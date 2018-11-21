@@ -1,16 +1,21 @@
 package com.chatsdk.view.adapter;
 
+import org.apache.commons.lang.StringUtils;
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.text.Annotation;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.chatsdk.R;
 import com.chatsdk.controller.ChatServiceController;
@@ -27,15 +32,14 @@ import com.chatsdk.util.FilterWordsManager;
 import com.chatsdk.util.HtmlTextUtil;
 import com.chatsdk.util.ScaleUtil;
 import com.chatsdk.util.animation.SwingAnimation;
-
-import org.apache.commons.lang.StringUtils;
+import com.nineoldandroids.animation.ValueAnimator;
 
 /**
  *
  */
 public class MailViewHolder extends CategoryViewHolder
 	{
-	public TextView		item_latest_msg,item_latest_msg_top;
+	public TextView		item_latest_msg;
 	public TextView		item_time;
 	public TextView     item_fail_time;
 	public LinearLayout	item_icon_layout;
@@ -48,7 +52,6 @@ public class MailViewHolder extends CategoryViewHolder
 		super(view);
 
 		item_latest_msg = (TextView) view.findViewById(R.id.channel_latest_msg);
-		item_latest_msg_top = (TextView) view.findViewById(R.id.channel_latest_msg_top);
 		item_time = (TextView) view.findViewById(R.id.channel_item_time);
 		item_fail_time = (TextView) view.findViewById(R.id.channel_fail_time);
 		item_icon_layout = (LinearLayout) view.findViewById(R.id.channel_icon_layout);
@@ -58,7 +61,7 @@ public class MailViewHolder extends CategoryViewHolder
 
 	}
 
-	public void setContent(final Context context, ChannelListItem item, boolean showUreadAsText, Drawable drawable, String title, final String summary,
+	public void setContent(Context context, ChannelListItem item, boolean showUreadAsText, Drawable drawable, String title, final String summary,
 			long time, boolean isInEditMode, int position, int bgColor,long failTime)
 	{
 		super.setContent(context, item, showUreadAsText, drawable, title, summary, time, isInEditMode, position, bgColor, failTime);//隐藏了 调用了showIcon
@@ -69,41 +72,28 @@ public class MailViewHolder extends CategoryViewHolder
 		}
 		else
 		{
-			if(ChannelManager.getInstance().currChoseChannel!=null&&ChannelManager.getInstance().currChoseChannel.channelID!=null&&
-			ChannelManager.getInstance().currChoseChannel.channelID.equals(MailManager.CHANNELID_FIGHT)&&summary.contains("\n")){//add at 20171121 for 战斗报告页面的分行处理
-				item_latest_msg_top.setVisibility(View.VISIBLE);
-				item_latest_msg_top.setText(summary.substring(0,summary.lastIndexOf("\n")).trim());
-				item_latest_msg.setText(summary.substring(summary.lastIndexOf("\n")).trim());
-				item_latest_msg.setMaxLines(1);
+			if(ChatServiceController.isNeedReplaceBadWords() && ChannelManager.getInstance().currChoseChannel!=null&&ChannelManager.getInstance().currChoseChannel.channelID!=null&&
+					ChannelManager.getInstance().currChoseChannel.channelID.equals(MailManager.CHANNELID_MESSAGE)) {
+				ChatServiceController.services.execute(new Runnable() {
+					@Override
+					public void run() {
+						final String summaryText = FilterWordsManager.replaceSensitiveWord(summary, 1, "*");
+						ChatServiceController.hostActivity.runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								item_latest_msg.setText(summaryText);
+							}
+						});
+					}
+				});
 			}else {
-				if(ChatServiceController.isNeedReplaceBadWords() && ChannelManager.getInstance().currChoseChannel!=null&&ChannelManager.getInstance().currChoseChannel.channelID!=null&&
-						ChannelManager.getInstance().currChoseChannel.channelID.equals(MailManager.CHANNELID_MESSAGE)) {
-					ChatServiceController.services.execute(new Runnable() {
-						@Override
-						public void run() {
-							final String summaryText = FilterWordsManager.replaceSensitiveWord(summary, 1, "*");
-							ChatServiceController.hostActivity.runOnUiThread(new Runnable() {
-								@Override
-								public void run() {
-									item_latest_msg_top.setVisibility(View.GONE);
-									item_latest_msg.setMaxLines(context.getResources().getInteger(R.integer.cs__textSummaryMaxLine));
-									item_latest_msg.setText(summaryText);
-								}
-							});
-						}
-					});
-				}else {
-					item_latest_msg_top.setVisibility(View.GONE);
-					item_latest_msg.setMaxLines(context.getResources().getInteger(R.integer.cs__textSummaryMaxLine));
-					item_latest_msg.setText(summary);
-				}
-
+				item_latest_msg.setText(summary);
 			}
 		}
 		item_time.setText(TimeManager.getReadableTime(time));
 		item_fail_time.setText(TimeManager.getTimeFormatWithFailTime(failTime));
-		if(failTime==0){
-			item_fail_time.setVisibility(View.INVISIBLE);
+		if(failTime==0 || (item != null && item.isLock())){
+			item_fail_time.setVisibility(View.GONE);
 		}else{
 			item_fail_time.setVisibility(View.VISIBLE);
 		}
@@ -150,13 +140,13 @@ public class MailViewHolder extends CategoryViewHolder
 		if(reward){
 			//add at 20171102
 			item_reward_icon.setVisibility(View.VISIBLE);
-//			SwingAnimation giftAnimation = new SwingAnimation(0f,-7f,7f, Animation.RELATIVE_TO_SELF,
-//				0.5f,Animation.RELATIVE_TO_SELF,0.5f);
-//			giftAnimation.setDuration(800);//设置动画持续时间
-//			giftAnimation.setRepeatCount(-1);//设置重复次数
-//			item_reward_icon.startAnimation(giftAnimation);
+			// SwingAnimation giftAnimation = new SwingAnimation(0f,-7f,7f, Animation.RELATIVE_TO_SELF,
+			// 	0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+			// giftAnimation.setDuration(800);//设置动画持续时间
+			// giftAnimation.setRepeatCount(-1);//设置重复次数
+			// item_reward_icon.startAnimation(giftAnimation);
 		}else {
-			item_reward_icon.clearAnimation();
+			// item_reward_icon.clearAnimation();
 			item_reward_icon.setVisibility(View.GONE);
 		}
 

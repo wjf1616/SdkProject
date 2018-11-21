@@ -8,7 +8,7 @@
         android:layout_height="fill_parent"
         android:layout_above="@+id/mailButtonBarLayout">
 
-        <com.lee.pullrefresh.ui.PullToRefreshSwipeListView
+        <com.pullrefresh.PullToRefreshSwipeListView
             android:id="@+id/channelList_PullView"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
@@ -23,7 +23,7 @@
                 android:cacheColorHint="#00000000"
                 android:divider="@drawable/mail_separate3" />
             -->
-        </com.lee.pullrefresh.ui.PullToRefreshSwipeListView>
+        </com.pullrefresh.PullToRefreshSwipeListView>
 
         <TextView android:id="@+id/tip_no_mail"
             android:layout_width="wrap_content"
@@ -48,9 +48,8 @@
         android:layout_height="@dimen/cs__actionBarHeight"
         android:layout_centerVertical="true"
         android:layout_alignParentBottom="true"
-        android:background="#303030"
+        android:background="@drawable/mail_list_edit_buttonbar_bg"
         android:gravity="center_vertical">
-        <!--@drawable/mail_list_edit_buttonbar_bg-->
 
         <LinearLayout
             android:id="@+id/channel_item_checkbox_layout"
@@ -79,36 +78,49 @@
         <TextView
             android:id="@+id/checkboxLabel"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_centerVertical="true"
             android:layout_toLeftOf="@+id/channel_item_checkbox_layout"
             android:text="Check all"
+            android:gravity="center_vertical"
             android:textColor="@color/cs__white"
             android:textSize="@dimen/cs__textTitle" />
 
-        <ImageView
-            android:id="@+id/mailButtonBarDelete"
-            android:layout_width="@dimen/cs__rewardIconSize"
-            android:layout_height="@dimen/cs__rewardIconSize"
+        <Button
+            android:id="@+id/mailButtonSendMail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:src="@drawable/mail_list_edit_delete"
-            android:background="@null"/>
+            android:background="@drawable/btn_blue3"
+            android:textColor="@color/cs__white"
+            android:padding="5dp"
+            android:minHeight="@dimen/cs__rewardIconSize"
+            android:minWidth="@dimen/cs__mailButtonBarMaxWidth"
+            android:text="send mail"/>
+
+        <Button
+            android:id="@+id/mailButtonBarDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/btn_blue3"
+            android:textColor="@color/cs__white"
+            android:padding="5dp"
+            android:minHeight="@dimen/cs__rewardIconSize"
+            android:minWidth="@dimen/cs__mailButtonBarMaxWidth"
+            android:text="delete"/>
 
         <Button
             android:id="@+id/mailButtonBarReadAll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:background="@drawable/btn_onkey_readall"
+            android:background="@drawable/btn_blue3"
             android:textColor="@color/cs__white"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:text="onekey_readall"
-            android:textSize="@dimen/cs__textSmall" />
+            android:padding="5dp"
+            android:minHeight="@dimen/cs__rewardIconSize"
+            android:minWidth="@dimen/cs__mailButtonBarMaxWidth"
+            android:text="onekey_readall"/>
 
         <Button
             android:id="@+id/cs__action_enterEditButton"

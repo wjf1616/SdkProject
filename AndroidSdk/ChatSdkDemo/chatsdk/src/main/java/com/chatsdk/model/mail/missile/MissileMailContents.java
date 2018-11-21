@@ -21,7 +21,6 @@ public class MissileMailContents
     private MineInfoParam           mineInfo;
     private String					isSuccess;
     private String					isAtt;
-    private String					missileAnti;
     private int						delCityDef;
     private int						missileId;
 
@@ -123,14 +122,6 @@ public class MissileMailContents
     public void setIsAtt(String isAtt)
     {
         this.isAtt = isAtt;
-    }
-
-    public String getMissileAnti() {
-        return missileAnti;
-    }
-
-    public void setMissileAnti(String missileAnti) {
-        this.missileAnti = missileAnti;
     }
 
     public int getDelCityDef()

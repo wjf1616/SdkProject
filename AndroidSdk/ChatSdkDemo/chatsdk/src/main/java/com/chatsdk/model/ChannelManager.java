@@ -18,9 +18,7 @@ import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.SortUtil;
 import com.chatsdk.view.ChannelListFragment;
 import com.chatsdk.view.ChatFragment;
-import com.chatsdk.view.MainListFragment;
 import com.chatsdk.view.SysMailListFragment;
-import com.chatsdk.view.adapter.MainChannelAdapter;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -39,9 +37,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.chatsdk.net.WebSocketManager.getWarZoneRoomId;
+
 public class ChannelManager implements Serializable
 {
 	private static final long						serialVersionUID		= 3664013024183969534L;
+	public  static final long						DURATIONTIME		= 3600*24*5;
 
 	public static final int							LOAD_MORE_COUNT			= 20;
 	public static final int							LOAD_ALL_MORE_MIN_COUNT	= 20;
@@ -60,13 +61,7 @@ public class ChannelManager implements Serializable
 	public static String							channelReadedMails;
 	public ChatChannel								countryChannel;
 	public ChatChannel								allianceChannel;
-
-	public static boolean							isDeleteAllPersonMail =false;//是否是删除删除所有个人邮件
-
-	public static boolean							isSelectAllNormalMail =false;//是否选择所有的普通邮件
-
-	public static boolean							isDeleteNormalMailByTypes =false;//是否在按类型删除邮件
-
+	public ChatChannel								warZoneChannel;
 
 	public boolean									isFetching;
 	public static int								totalUnreadCount		= 0;//所有未读邮件数,包括下面的report如missile,resource等
@@ -79,12 +74,6 @@ public class ChannelManager implements Serializable
 
 	private ArrayList<ChatChannel>					modChannelList			= null;
 	private ArrayList<ChatChannel>					messageChannelList		= null;
-
-	private ArrayList<ChatChannel>					eventChannelList		= null;
-	private ArrayList<ChatChannel>					aLLEventChannelList		= null;
-
-	private ChatChannel								eventChannel			= null;
-
 	private ArrayList<ChatChannel>					loadedModChannelList;
 	private ArrayList<ChatChannel>					loadedMessageChannelList;
 	public String									latestModChannelMsg		= "";
@@ -150,7 +139,6 @@ public class ChannelManager implements Serializable
 	 */
 	private void init()
 	{
-
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_CORE,"ChannelManger:","init");
 //		channelMap = new ConcurrentHashMap<String, ChatChannel>();
 		ArrayList<ChatChannel> dbChannels = DBManager.getInstance().getAllChannel();
@@ -239,15 +227,7 @@ public class ChannelManager implements Serializable
 				MailManager.CHANNELID_SHAMOGAME,
 				MailManager.CHANNELID_SHAMOEXPLORE,
 				MailManager.CHANNELID_BORDERFIGHT,
-				MailManager.CHANNELID_SHAMOGOLDDIGGER,
-				MailManager.CHANNELID_MOBILIZATION_CENTER,
-				MailManager.CHANNELID_EVENT_PERSONALARM,
-				MailManager.CHANNELID_EVENT_ALLIANCERAM,
-				MailManager.CHANNELID_EVENT_GREATKING,
-				MailManager.CHANNELID_EVENT_DESERT,
-				MailManager.CHANNELID_EVENT_NORMAL,
-				MailManager.CHANNELID_COMBOTFACTORY_FIRE
-
+				MailManager.CHANNELID_MANORFIGHT
 		};
 		for (int i = 0; i < channelIdArray.length; i++)
 		{
@@ -339,35 +319,6 @@ public class ChannelManager implements Serializable
 			messageChannel = parentChannel;
 	}
 
-	private void initEventChannel(ArrayList<ChatChannel> channelList)
-	{
-		ChatChannel parentChannel = eventChannel;
-		if (channelList != null && channelList.size() > 0)
-		{
-			if (parentChannel == null)
-			{
-				parentChannel = new ChatChannel();
-				parentChannel.channelType = DBDefinition.CHANNEL_TYPE_OFFICIAL;
-				parentChannel.channelID = MailManager.CHANNELID_EVENT;
-			}
-
-			int unreadCount = 0;
-
-			for (int i = 0; i < channelList.size(); i++)
-			{
-				ChatChannel channel = channelList.get(i);
-				if (channel != null)
-				{
-					if (channel.unreadCount > 0)
-						unreadCount=unreadCount + channel.unreadCount;
-
-				}
-			}
-			parentChannel.unreadCount = unreadCount;
-		}
-			eventChannel = parentChannel;
-	}
-
 	public synchronized ArrayList<ChannelListItem> getAllMailChannel()
 	{
 		ArrayList<ChannelListItem> channelList = new ArrayList<ChannelListItem>();
@@ -387,11 +338,6 @@ public class ChannelManager implements Serializable
                     messageChannelList.clear();
                 else
                     messageChannelList = new ArrayList<ChatChannel>();
-
-				if (eventChannelList != null)
-					eventChannelList.clear();
-				else
-					eventChannelList = new ArrayList<ChatChannel>();
                 
 				for (String key : keySet)
 				{
@@ -410,16 +356,11 @@ public class ChannelManager implements Serializable
 						{
 							messageChannelList.add(chatChannel);
 						}
-						else if (chatChannel.isEventChannel())
-						{
-							eventChannelList.add(chatChannel);
-						}
 						else
 						{
 							if (!chatChannel.channelID.equals(MailManager.CHANNELID_MOD)
-									&& !chatChannel.channelID.equals(MailManager.CHANNELID_MESSAGE) && !chatChannel.channelID.equals(MailManager.CHANNELID_EVENT)&& !chatChannel.channelID.contains("live_")&& !chatChannel.isEventChannel()){
+									&& !chatChannel.channelID.equals(MailManager.CHANNELID_MESSAGE))
 								channelList.add(chatChannel);
-							}
 						}
 					}
 				}
@@ -438,13 +379,6 @@ public class ChannelManager implements Serializable
                     channelList.add(messageChannel);
                     messageChannelInit = true;
                 }
-
-				initEventChannel(eventChannelList);
-				if (eventChannel != null)
-				{
-					channelList.add(eventChannel);
-				}
-
 			}
 		}
 		return channelList;
@@ -454,78 +388,6 @@ public class ChannelManager implements Serializable
 	{
 		return firstChannelID;
 	}
-
-	public boolean needParseFirstChannel(String channelId)
-	{
-		if (StringUtils.isEmpty(channelId))
-			return false;
-		if (StringUtils.isEmpty(firstChannelID))
-			return true;
-
-
-		if ((firstChannelID.equals(MailManager.CHANNELID_SHAMOGAME) && (channelId.equals(MailManager.CHANNELID_ARENAGAME)||channelId.equals(MailManager.CHANNELID_GIFT)||channelId.equals(MailManager.CHANNELID_BATTLEGAME)||channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId.equals(MailManager.CHANNELID_KNIGHT) || channelId.equals(MailManager.CHANNELID_MONSTER) ||channelId.equals(MailManager.CHANNELID_MISSILE)||channelId.equals(MailManager.CHANNELID_MOD)))
-				||(firstChannelID.equals(MailManager.CHANNELID_ARENAGAME) && (channelId.equals(MailManager.CHANNELID_GIFT)||channelId.equals(MailManager.CHANNELID_BATTLEGAME)||channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId.equals(MailManager.CHANNELID_KNIGHT) || channelId.equals(MailManager.CHANNELID_MONSTER) ||channelId.equals(MailManager.CHANNELID_MISSILE)||channelId.equals(MailManager.CHANNELID_MOD)))
-				||(firstChannelID.equals(MailManager.CHANNELID_GIFT) && (channelId.equals(MailManager.CHANNELID_BATTLEGAME)||channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId.equals(MailManager.CHANNELID_KNIGHT) || channelId.equals(MailManager.CHANNELID_MONSTER) ||channelId.equals(MailManager.CHANNELID_MISSILE)||channelId.equals(MailManager.CHANNELID_MOD)))
-				||(firstChannelID.equals(MailManager.CHANNELID_BATTLEGAME) && (channelId.equals(MailManager.CHANNELID_MISSILE) ||channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId.equals(MailManager.CHANNELID_KNIGHT) || channelId.equals(MailManager.CHANNELID_MONSTER) ||channelId.equals(MailManager.CHANNELID_MOD)))
-				||(firstChannelID.equals(MailManager.CHANNELID_MISSILE) && (channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId.equals(MailManager.CHANNELID_KNIGHT) || channelId.equals(MailManager.CHANNELID_MONSTER) ||channelId.equals(MailManager.CHANNELID_MOD)))
-				|| (firstChannelID.equals(MailManager.CHANNELID_KNIGHT) && (channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId.equals(MailManager.CHANNELID_MONSTER)  || channelId.equals(MailManager.CHANNELID_MOD)))
-				|| (firstChannelID.equals(MailManager.CHANNELID_MONSTER) && (channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId.equals(MailManager.CHANNELID_MOD)))
-				|| (firstChannelID.equals(MailManager.CHANNELID_RESOURCE) && channelId.equals(MailManager.CHANNELID_MOD))
-				)
-			return true;
-		return false;
-	}
-	public void parseFirstChannelID()
-	{
-		firstChannelID = "";
-		if (needModChannel())
-			firstChannelID = MailManager.CHANNELID_MOD;
-		else
-		{
-			ChatChannel resourceChannel = getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, MailManager.CHANNELID_RESOURCE);
-			if (resourceChannel != null && !resourceChannel.hasNoItemInChannel())
-				firstChannelID = MailManager.CHANNELID_RESOURCE;
-			else
-			{
-				ChatChannel monsterChannel = getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, MailManager.CHANNELID_MONSTER);
-				if (monsterChannel != null && !monsterChannel.hasNoItemInChannel())
-					firstChannelID = MailManager.CHANNELID_MONSTER;
-				else
-				{
-					ChatChannel knightChannel = getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, MailManager.CHANNELID_KNIGHT);
-					if (knightChannel != null && !knightChannel.hasNoItemInChannel())
-						firstChannelID = MailManager.CHANNELID_KNIGHT;
-					else
-					{
-						ChatChannel missileChannel = getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, MailManager.CHANNELID_MISSILE);
-						if (missileChannel != null && !missileChannel.hasNoItemInChannel())
-							firstChannelID = MailManager.CHANNELID_MISSILE;
-						else
-						{
-							ChatChannel giftChannel = getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, MailManager.CHANNELID_GIFT);
-							if (giftChannel != null && !giftChannel.hasNoItemInChannel())
-								firstChannelID = MailManager.CHANNELID_GIFT;
-							else
-							{
-								ChatChannel battleGameChannel = getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, MailManager.CHANNELID_BATTLEGAME);
-								if (battleGameChannel != null && !battleGameChannel.hasNoItemInChannel())
-									firstChannelID = MailManager.CHANNELID_BATTLEGAME;
-								else
-								{
-									ChatChannel arenaGameChannel = getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, MailManager.CHANNELID_ARENAGAME);
-									if (arenaGameChannel != null && !arenaGameChannel.hasNoItemInChannel())
-										firstChannelID = MailManager.CHANNELID_ARENAGAME;
-								}
-							}
-	
-	
-						}
-					}
-				}
-			}
-		}
-	}
-
 
 	public void parseFirstChannelIDNew()
 	{
@@ -547,9 +409,7 @@ public class ChannelManager implements Serializable
 					MailManager.CHANNELID_SHAMOGAME,
 					MailManager.CHANNELID_SHAMOEXPLORE,
 					MailManager.CHANNELID_BORDERFIGHT,
-					MailManager.CHANNELID_SHAMOGOLDDIGGER,
-					MailManager.CHANNELID_MOBILIZATION_CENTER,
-					MailManager.CHANNELID_COMBOTFACTORY_FIRE
+					MailManager.CHANNELID_MANORFIGHT
 			};
 			int len = channelIds.length;
 
@@ -619,11 +479,6 @@ public class ChannelManager implements Serializable
 		return modChannelList;
 	}
 
-	public List<ChatChannel> getAllEventChannel()
-	{
-		return eventChannelList;
-	}
-
 	public List<ChatChannel> getAllMessageChannel()
 	{
 		return messageChannelList;
@@ -659,7 +514,8 @@ public class ChannelManager implements Serializable
 						&& messageChannel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && messageChannel.channelID.contains("custom") )
 				{
 					// 开关关闭时，建好的竞技场聊天室不显示
-					if(isArenaChatRoom(messageChannel.channelID) && !ChatServiceController.getInstance().battlefield_chat_room){
+					if(isArenaChatRoom(messageChannel.channelID )
+							&& !ChatServiceController.getInstance().battlefield_chat_room){
 						continue;
 					}
 
@@ -667,7 +523,6 @@ public class ChannelManager implements Serializable
 					if (isLanguageChatRoom(messageChannel.channelID) && (!ChatServiceController.chat_v2_on || !ChatServiceController.chat_language_on)){
 						continue;
 					}
-
 					messageChannelArr.add(messageChannel);
 				}
 			}
@@ -856,7 +711,6 @@ public class ChannelManager implements Serializable
 		return channelList;
 	}
 
-
 	public ChatChannel getCountryChannel()
 	{
 		if (UserManager.getInstance().getCurrentUser() == null)
@@ -886,6 +740,16 @@ public class ChannelManager implements Serializable
 		return allianceChannel;
 	}
 
+	public ChatChannel getWarZoneChannel()
+	{
+		if (StringUtils.isEmpty(getWarZoneRoomId()))
+			return null;
+
+		ChatTable chatTable = ChatTable.createChatTable(DBDefinition.CHANNEL_TYPE_CHATROOM,
+				getWarZoneRoomId());
+		warZoneChannel = this.getChannel(chatTable);
+		return warZoneChannel;
+	}
 
 	private ChatChannel initChannel(int channelType, String channelID)
 	{
@@ -1144,11 +1008,9 @@ public class ChannelManager implements Serializable
 
 	private void preProcessSysMailChannel(ChatChannel channel)
 	{
-		if (channel.channelID.equals(MailManager.CHANNELID_MONSTER) || channel.channelID.equals(MailManager.CHANNELID_RESOURCE)
+		if (channel.channelID.equals(MailManager.CHANNELID_RESOURCE)
 				|| channel.channelID.equals(MailManager.CHANNELID_RESOURCE_HELP) || channel.channelID.equals(MailManager.CHANNELID_KNIGHT)
-		        ||channel.channelID.equals(MailManager.CHANNELID_MISSILE)||channel.channelID.equals(MailManager.CHANNELID_GIFT)
-				|| channel.channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER)
-				|| channel.channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE))
+		        ||channel.channelID.equals(MailManager.CHANNELID_MISSILE)||channel.channelID.equals(MailManager.CHANNELID_GIFT))
 		{
 			loadMoreSysMailFromDB(channel, -1);
 		}
@@ -1173,19 +1035,17 @@ public class ChannelManager implements Serializable
 				if (dbItemsArray.length <= 0) {
 					return false;
 				}
-
 				ServiceInterface.handleMessage(dbItemsArray, channel.channelID, channel.customName, false, false);
 			}
 		}
 		else if (channel.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY || channel.channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE
 				|| channel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM)
 		{
-			List<MsgItem> dbItems = DBManager.getInstance().getChatMsgBySection(channel.getChatTable(), maxSeqId, minSeqId);
+			List<MsgItem> dbItems = DBManager.getInstance().getChatMsgBySection(channel.getChatTable(), maxSeqId, minSeqId , minCreateTime);
 			MsgItem[] dbItemsArray = (MsgItem[]) dbItems.toArray(new MsgItem[0]);
 			if (dbItemsArray.length <= 0) {
 				return false;
 			}
-
 			ServiceInterface.handleMessage(dbItemsArray, channel.channelID, channel.customName, false, false);
 		}
 
@@ -1337,22 +1197,17 @@ public class ChannelManager implements Serializable
 
 	public void postNotifyPopup(String channelId)
 	{
-		if (channelId.equals(MailManager.CHANNELID_MONSTER) || channelId.equals(MailManager.CHANNELID_RESOURCE) ||
-				channelId.equals(MailManager.CHANNELID_KNIGHT)|| channelId.equals(MailManager.CHANNELID_MISSILE)|| channelId.equals(MailManager.CHANNELID_GIFT)
-				|| channelId.equals(MailManager.CHANNELID_MOBILIZATION_CENTER) || channelId.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE))
+		if (channelId.equals(MailManager.CHANNELID_RESOURCE) ||
+				channelId.equals(MailManager.CHANNELID_KNIGHT)|| channelId.equals(MailManager.CHANNELID_MISSILE)|| channelId.equals(MailManager.CHANNELID_GIFT))
 		{
 			ChatChannel channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, channelId);
 			MailData mail = null;
-			if (channel.channelID.equals(MailManager.CHANNELID_MONSTER))
-				mail = channel.getMonsterMailData();
-			else if (channel.channelID.equals(MailManager.CHANNELID_RESOURCE))
+			if (channel.channelID.equals(MailManager.CHANNELID_RESOURCE))
 				mail = channel.getResourceMailData();
 			else if (channel.channelID.equals(MailManager.CHANNELID_KNIGHT))
 				mail = channel.getKnightMailData();
             else if (channel.channelID.equals(MailManager.CHANNELID_MISSILE))
 				mail = channel.getMissleMailData();
-			else if (channelId.equals(MailManager.CHANNELID_MOBILIZATION_CENTER))
-				mail = channel.getMobilizationMailData();
 			else if (channel.channelID.equals(MailManager.CHANNELID_GIFT))
 				mail = channel.getGiftMailData();
 
@@ -1361,7 +1216,7 @@ public class ChannelManager implements Serializable
 				try
 				{
 					String jsonStr = JSON.toJSONString(mail);
-					MailManager.getInstance().transportMailInfo(jsonStr, false,false);
+					MailManager.getInstance().transportMailInfo(jsonStr, false);
 					// JniController.getInstance().excuteJNIVoidMethod("postNotifyMailPopup",
 					// null);
 
@@ -1412,8 +1267,12 @@ public class ChannelManager implements Serializable
 	{
 		if (channelType <= DBDefinition.CHANNEL_TYPE_ALLIANCE)
 			return channelType;
-		else if (channelType == DBDefinition.CHANNEL_TYPE_CHATROOM || channelType == DBDefinition.CHANNEL_TYPE_USER)
+		else if (channelType == DBDefinition.CHANNEL_TYPE_CHATROOM || channelType == DBDefinition.CHANNEL_TYPE_USER){
+			if(ChatServiceController.topChatRoomUid.contains("warzone")){
+				return 4;
+			}
 			return 3;
+		}
 		return 0;
 	}
 
@@ -1479,13 +1338,15 @@ public class ChannelManager implements Serializable
 	public ChatChannel getChannel(int channelType)
 	{
 		String channelId = "";
-		if (channelType == DBDefinition.CHANNEL_TYPE_COUNTRY)
+		if (channelType == DBDefinition.CHANNEL_TYPE_COUNTRY && UserManager.getInstance().getCurrentUser()!= null)
 		{
 			channelId = UserManager.getInstance().getCurrentUser().serverId + "";
 		}
-		else if (channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE)
+		else if (channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE && UserManager.getInstance().getCurrentUser()!= null)
 		{
 			channelId = UserManager.getInstance().getCurrentUser().allianceId;
+		}else if(channelType == DBDefinition.CHANNEL_TYPE_CHATROOM){
+			channelId = WebSocketManager.getWarZoneRoomId();
 		}
 		else
 		{
@@ -1699,7 +1560,8 @@ public class ChannelManager implements Serializable
 
 	public void deleteChatroomChannel(ChatTable chatTable)
 	{
-		removeChannelFromMap(chatTable.getChannelName());
+		removeChannel(chatTable.getChannelName());
+
 		DBManager.getInstance().deleteChannel(chatTable);
 	}
 
@@ -1772,6 +1634,23 @@ public class ChannelManager implements Serializable
 		calulateAllChannelUnreadNum();
 	}
 
+	/**
+	 * 删除除当前聊天室以外的所有战区聊天室
+	 */
+	public void deleteAllWarZoneChannel(){
+		// 有时还没有读出内容，导致不能删除掉数据库里缓存的聊天室，调用一下getAllMailChannel方法
+		ChannelManager.getInstance().getAllMailChannel();
+		List<ChatChannel> channelList = ChannelManager.getInstance().getAllChatRoomChannel();
+		Iterator<ChatChannel> it = channelList.iterator();
+		while(it.hasNext()) {
+			ChatChannel channel = it.next();
+			if (channel.channelID.equals(WebSocketManager.getInstance().getWarZoneRoomId()))
+				continue;
+			if (channel.channelID.contains("warzone_")){
+				ChannelManager.getInstance().deleteChannel(channel);
+			}
+		}
+	}
 	public void deleteSysMailFromChannel(ChatChannel channel, String mailId, boolean isDeleteMuti)
 	{
 		if (channel == null)
@@ -1784,7 +1663,7 @@ public class ChannelManager implements Serializable
 				MailData mailData = channel.mailDataList.get(i);
 				if (mailData != null && mailData.getUid().equals(mailId))
 				{
-					if ((mailData.getType() == MailManager.MAIL_DETECT_REPORT||mailData.getType() == MailManager.Mail_DETECT_REPORT_ARENA) && !isDeleteMuti)
+					if ((mailData.getType() == MailManager.MAIL_DETECT_REPORT||mailData.getType() == MailManager.Mail_NEW_SCOUT_REPORT_FB) && !isDeleteMuti)
 						hasDetectMail = true;
 					channel.mailDataList.remove(mailData);
 					channel.mailUidList.remove(mailData.getUid());
@@ -1900,6 +1779,7 @@ public class ChannelManager implements Serializable
 						{
 							if (mailData.getType() == MailManager.MAIL_ALLIANCEAPPLY
 									|| mailData.getType() == MailManager.MAIL_ALLIANCEINVITE
+									|| mailData.getType() == MailManager.MAIL_ALLIANCE_RECOMMEND
 									|| mailData.getType() == MailManager.MAIL_INVITE_TELEPORT
 									|| mailData.getType() == MailManager.MAIL_ALLIANCE_PACKAGE)
 							{
@@ -2024,37 +1904,23 @@ public class ChannelManager implements Serializable
 	{
 		synchronized (this) {
 			LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "isHandlingChannelInfo", isHandlingChannelInfo);
-			if (isHandlingChannelInfo) {
+			if (isHandlingChannelInfo)
 				return;
-			}
-
 			calulateAllChannelCount++;
 			List<ChannelListItem> channelList = null;
-			MainListFragment fragment = ChatServiceController.getMainListFragment();
-			if (fragment != null){
-				MainChannelAdapter adapter = fragment.getMainChannelAdapter();
-				if (adapter != null && adapter.list != null){
-					channelList = adapter.list;
-				}
-				else
-				{
-					channelList = getAllMailChannel();
-				}
-			}
-			else
-			{
+			if (ChatServiceController.getMainListFragment() != null
+					&& ChatServiceController.getMainListFragment().getMainChannelAdapter() != null
+					&& ChatServiceController.getMainListFragment().getMainChannelAdapter().list != null) {
+				channelList = ChatServiceController.getMainListFragment().getMainChannelAdapter().list;
+			} else {
 				channelList = getAllMailChannel();
-			}
-
-			//判空
-			if (channelList == null){
-				return;
 			}
 
 			int oldTotalUnreadCount = totalUnreadCount;
 			totalUnreadCount = 0;
 			totalUnreadSysCount = 0;
 			allSysCount = 0;
+			int fightNum = 0;
 			for (int i = 0; i < channelList.size(); i++) {
 				try {
 					if (channelList.get(i) != null && channelList.get(i) instanceof ChatChannel) {
@@ -2064,10 +1930,12 @@ public class ChannelManager implements Serializable
 						if ((channelId.equals(MailManager.CHANNELID_FIGHT) || channelId.equals(MailManager.CHANNELID_ALLIANCE)
 								|| channelId.equals(MailManager.CHANNELID_STUDIO) || channelId.equals(MailManager.CHANNELID_EVENT)
 								|| channelId.equals(MailManager.CHANNELID_SYSTEM) || (channelId.equals(MailManager.CHANNELID_MESSAGE) && channel.channelType == DBDefinition.CHANNEL_TYPE_USER)
-								|| channelId.equals(MailManager.CHANNELID_MISSILE)|| channelId.equals(MailManager.CHANNELID_ARENAGAME)
-								|| channelId.equals(MailManager.CHANNELID_MOBILIZATION_CENTER) || channelId.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE)))
+								|| channelId.equals(MailManager.CHANNELID_MISSILE)|| channelId.equals(MailManager.CHANNELID_ARENAGAME)))
 						{
 							totalUnreadSysCount += channel.unreadCount;
+							if(channelId.equals(MailManager.CHANNELID_FIGHT)){
+								fightNum +=channel.unreadCount;
+							}
 
 						}
 						if((channelId.equals(MailManager.CHANNELID_FIGHT) || channelId.equals(MailManager.CHANNELID_ALLIANCE)
@@ -2076,8 +1944,7 @@ public class ChannelManager implements Serializable
 								|| channelId.equals(MailManager.CHANNELID_RESOURCE_HELP)|| channelId.equals(MailManager.CHANNELID_ALLIANCE)|| channelId.equals(MailManager.CHANNELID_KNIGHT)
 								|| channelId.equals(MailManager.CHANNELID_MISSILE)|| channelId.equals(MailManager.CHANNELID_GIFT)|| channelId.equals(MailManager.CHANNELID_BATTLEGAME)
 								|| channelId.equals(MailManager.CHANNELID_ARENAGAME)|| channelId.equals(MailManager.CHANNELID_SHAMOGAME)|| channelId.equals(MailManager.CHANNELID_SHAMOEXPLORE)
-								|| channelId.equals(MailManager.CHANNELID_MISSILE)|| channelId.equals(MailManager.CHANNELID_ARENAGAME)||channelId.equals(MailManager.CHANNELID_SHAMOGOLDDIGGER)
-								|| channelId.equals(MailManager.CHANNELID_MOBILIZATION_CENTER) || channelId.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE)))
+								|| channelId.equals(MailManager.CHANNELID_MISSILE)|| channelId.equals(MailManager.CHANNELID_ARENAGAME)))
 						{
 							allSysCount+= channel.allCount;
 						}
@@ -2090,7 +1957,7 @@ public class ChannelManager implements Serializable
 			LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "totalUnreadCount", totalUnreadCount, "oldTotalUnreadCount",
 					oldTotalUnreadCount);
 			if (oldTotalUnreadCount != totalUnreadCount) {
-				JniController.getInstance().excuteJNIVoidMethod("postUnreadMailNum", new Object[]{Integer.valueOf(totalUnreadCount), Integer.valueOf(totalUnreadSysCount), Integer.valueOf(allSysCount)});
+				JniController.getInstance().excuteJNIVoidMethod("postUnreadMailNum", new Object[]{Integer.valueOf(totalUnreadCount), Integer.valueOf(totalUnreadSysCount), Integer.valueOf(allSysCount),Integer.valueOf(fightNum)});
 			}
 		}
 	}
@@ -2103,13 +1970,9 @@ public class ChannelManager implements Serializable
                     || channelId.equals(MailManager.CHANNELID_STUDIO) || channelId.equals(MailManager.CHANNELID_RESOURCE)
                     || channelId.equals(MailManager.CHANNELID_MONSTER) || channelId.equals(MailManager.CHANNELID_KNIGHT)
                     || channelId.equals(MailManager.CHANNELID_SYSTEM) || channelId.equals(MailManager.CHANNELID_EVENT)
-					|| channelId.equals(MailManager.CHANNELID_EVENT_PERSONALARM)|| channelId.equals(MailManager.CHANNELID_EVENT_ALLIANCERAM)
-					|| channelId.equals(MailManager.CHANNELID_EVENT_GREATKING)|| channelId.equals(MailManager.CHANNELID_EVENT_DESERT)
-					|| channelId.equals(MailManager.CHANNELID_EVENT_NORMAL)
                     || channelId.equals(MailManager.CHANNELID_MISSILE)|| channelId.equals(MailManager.CHANNELID_GIFT)
                     || channelId.equals(MailManager.CHANNELID_BATTLEGAME)|| channelId.equals(MailManager.CHANNELID_ARENAGAME)|| channelId.equals(MailManager.CHANNELID_SHAMOGAME)
-					||channelId.equals(MailManager.CHANNELID_SHAMOEXPLORE)||channelId.equals(MailManager.CHANNELID_BORDERFIGHT)||channelId.equals(MailManager.CHANNELID_SHAMOGOLDDIGGER)
-					|| channelId.equals(MailManager.CHANNELID_MOBILIZATION_CENTER) || channelId.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE)
+					||channelId.equals(MailManager.CHANNELID_SHAMOEXPLORE)||channelId.equals(MailManager.CHANNELID_BORDERFIGHT)
                ))
                 return true;
 		}
@@ -2268,7 +2131,38 @@ public class ChannelManager implements Serializable
 			channelReadedMails = "";
 		channelReadedMails = mailData.getUid();
 	}
-//~~~~~~~~~~~~~~~~~~~~~~~ChatServiceV2
+
+	public String getChannelIdByTabType(int tabType) {
+
+
+		String[] MAIN_CHANNEL_ORDERS = {
+				MailManager.CHANNELID_MESSAGE,
+				MailManager.CHANNELID_ALLIANCE,
+				MailManager.CHANNELID_FIGHT,
+				MailManager.CHANNELID_EVENT,
+				MailManager.CHANNELID_STUDIO,
+				MailManager.CHANNELID_SYSTEM,
+				MailManager.CHANNELID_MOD,
+				MailManager.CHANNELID_RESOURCE,
+				MailManager.CHANNELID_MONSTER,
+				MailManager.CHANNELID_KNIGHT,
+				MailManager.CHANNELID_MISSILE,
+				MailManager.CHANNELID_GIFT,
+				MailManager.CHANNELID_BATTLEGAME,
+				MailManager.CHANNELID_ARENAGAME,
+				MailManager.CHANNELID_SHAMOGAME,
+				MailManager.CHANNELID_SHAMOEXPLORE,
+				MailManager.CHANNELID_BORDERFIGHT,
+				MailManager.CHANNELID_MANORFIGHT
+		};
+
+		if (tabType < MAIN_CHANNEL_ORDERS.length) {
+			return MAIN_CHANNEL_ORDERS[tabType];
+		}
+		return "";
+	}
+
+	//chatV2
 	public ConcurrentHashMap<String, ChatChannel> getChannelMapAll()
 	{
 		return channelMap;

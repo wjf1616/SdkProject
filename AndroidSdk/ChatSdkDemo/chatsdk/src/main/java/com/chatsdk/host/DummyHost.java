@@ -23,12 +23,6 @@ public class DummyHost implements IHost
 	}
 
 	@Override
-	public  void deleteAllPersonMail()
-	{
-
-	}
-
-	@Override
 	public void postNewHornMessage(String hornJson)
 	{
 		// TODO Auto-generated method stub
@@ -220,10 +214,6 @@ public class DummyHost implements IHost
 	}
 
 	@Override
-	public void closeMailPopUpViewByX()
-	{
-	}
-	@Override
 	public void selectChatRoomMember(String roomName, String memberNameStr, String memberUidStr)
 	{
 	}
@@ -251,7 +241,7 @@ public class DummyHost implements IHost
 	}
 
 	@Override
-	public void transportMailInfo(long mailInfo, boolean isShowDetectMail,boolean isForViewChange)
+	public void transportMailInfo(long mailInfo, boolean isShowDetectMail)
 	{
 
 	}
@@ -264,12 +254,6 @@ public class DummyHost implements IHost
 
 	@Override
 	public void deleteSingleMail(int tabType, int type, String mailUid, String fromUid)
-	{
-
-	}
-
-	@Override
-	public void deleteMailsByTypes(String types)
 	{
 
 	}
@@ -299,7 +283,7 @@ public class DummyHost implements IHost
 	}
 
 	@Override
-	public void postUnreadMailNum(int unReadCount,int unSysReadCount,int allSysCount)
+	public void postUnreadMailNum(int unReadCount,int unSysReadCount,int allSysCount,int fightNum)
 	{
 
 	}
@@ -329,27 +313,23 @@ public class DummyHost implements IHost
 	}
 
 	@Override
-	public String getNPCNameById(String npcId)
-	{
-		return "";
-	}
-
-	@Override
-	public String getAllianceBossName(String npcId)
-	{
-		return "";
-	}
-
-	@Override
 	public String getPropById(String xmlId, String proName)
 	{
 		return "";
 	}
+
 	@Override
 	public String getPropByIdGroup(String xmlId, String proName,String groupId)
 	{
 		return "";
 	}
+
+	@Override
+	public String getPropByNoGroup(String xmlId, String proName,int type)
+	{
+		return "";
+	}
+
 	@Override
 	public String getPropByIdType(String xmlId, String proName,String groutId,int type)
 	{
@@ -448,11 +428,6 @@ public class DummyHost implements IHost
 
 	@Override
 	public void reportCustomHeadImg(String uid)
-	{
-	}
-
-	@Override
-	public void banPlayerPic(String uid)
 	{
 	}
 
@@ -596,12 +571,6 @@ public class DummyHost implements IHost
 	}
 
 	@Override
-	public void showGoBackGameDialog()
-	{
-
-	}
-
-	@Override
 	public int getCanCreateChatRoomNum()
 	{
 		return 0;
@@ -641,11 +610,6 @@ public class DummyHost implements IHost
 	}
 	public void postToCppBCState(boolean isAnchorHost, int status){
 	}
-	public void postToCppRefreshRoomNumber(String roomId, int roomNumber){
-	}
-	public void postToCppRefreshLiveRoomInfo(){
-	}
-
 	public int getServerPingValue(String server, String port, String protocol) {
 		return 0;
 	}
@@ -658,16 +622,33 @@ public class DummyHost implements IHost
 
 	}
 
-	public void recordChat(){}
-
 	public boolean isChina() {
 		return false;
 	}
+	public  void updateBattleBallsState(boolean isShow,int num)
+	{
 
-	public void updatePopLayout(float rate){};
-	public String getFlag(){return "";};
-	public String getNewsCenterShowMsg(String newsId, String titleParams){return "";}
-	public String getScienceSharedMsg(String scienceType){return "";}
+	}
+
+	public boolean isActivityOpen(int post){
+		return false;
+	}
+
+	public String getNPCNameById(String npcId){
+		return "";
+	};
+	public boolean isNeedAddWarZone(){
+		return false;
+	};
+
+	public String getWarZoneFilterStr(){
+		return "";
+	}
+
+	@Override
+	public String getFlag(){
+		return "";
+	}
 
 	@Override
 	public String getLanguageChatRoom(){return "";}

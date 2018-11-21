@@ -7,7 +7,6 @@ public class DefenceParams
 	private int					total;
 	private boolean				about;
 	private List<ArmsParams>	arms;
-	private List<SCDefParams>	scDefMarchList;
 
 	public int getTotal()
 	{
@@ -39,11 +38,4 @@ public class DefenceParams
 		this.arms = arms;
 	}
 
-	public List<SCDefParams> getScDefMarchList() {
-		return scDefMarchList;
-	}
-
-	public void setScDefMarchList(List<SCDefParams> scDefMarchList) {
-		this.scDefMarchList = scDefMarchList;
-	}
 }

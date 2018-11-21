@@ -1,5 +1,8 @@
 package com.chatsdk.model.mail.allianceinvite;
 
+
+import java.util.List;
+
 public class AllianceInviteMailContents
 {
 	private String	iconAlliance;
@@ -15,6 +18,17 @@ public class AllianceInviteMailContents
 	private int		curMember;
 	private String	allianceId;
 	private int		maxMember;
+
+
+	private List<AllianceRecommendParam>	allianceRecommendArr;
+
+	public List<AllianceRecommendParam> getAllianceRecommendArr() {
+		return allianceRecommendArr;
+	}
+
+	public void setAllianceRecommendArr(List<AllianceRecommendParam> allianceRecommendArr) {
+		this.allianceRecommendArr = allianceRecommendArr;
+	}
 
 	public String getIconAlliance()
 	{

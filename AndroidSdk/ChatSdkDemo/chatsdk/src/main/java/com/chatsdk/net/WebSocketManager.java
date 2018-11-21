@@ -6,7 +6,6 @@ import android.util.Log;
 import com.alibaba.fastjson.JSON;
 import com.chatsdk.controller.ChatServiceController;
 import com.chatsdk.controller.JniController;
-import com.chatsdk.controller.MenuController;
 import com.chatsdk.controller.ServiceInterface;
 import com.chatsdk.model.ChannelManager;
 import com.chatsdk.model.ChatChannel;
@@ -24,7 +23,6 @@ import com.chatsdk.util.HttpRequestUtil;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.NetworkUtil;
 
-import org.MqttClient;
 import org.WsClient;
 import org.apache.commons.lang.StringUtils;
 import org.java_websocket.WebSocket;
@@ -44,22 +42,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.chatsdk.model.MsgItem.MSG_TYPE_NEWS_CENTER_SHARE;
-
-//import com.longtech.chatservicev2.utils.AZMessageStoreController;
+import static com.chatsdk.controller.ChatServiceController.m_roomGroupKey;
 
 public class WebSocketManager {
-    private final static String APP_ID = "100001";
+    private final static String APP_ID = "100002";
     public final static String WS_SERVER_LIST_URL = "http://107.178.245.119/server/links";
     public final static String WS_ALL_SERVER_LIST_URL = "http://107.178.245.119/server/all";
     private final static WSServerInfo DEFAULT_SERVER = new WSServerInfo("ws", "169.44.70.39", "80");
 
     private static WebSocketManager instance;
 
-    static boolean isUseMqtt = false;
     private WsClient client;
-    private MqttClient mqclient = MqttClient.getInstance();
     private IWebSocketStatusListener statusListener;
     private ScheduledExecutorService getServerListService;
     private ArrayList<WSServerInfo> serversInfos;
@@ -68,7 +64,7 @@ public class WebSocketManager {
     public long networkOptimizationTestDelay = 0;
 
     private ScheduledExecutorService    heartbeatService;
-    private Boolean                     isForeground = true;
+    private AtomicBoolean               isForeground = new AtomicBoolean(true);
 
 
     private static ExecutorService closeSocket = Executors.newSingleThreadExecutor();
@@ -82,7 +78,6 @@ public class WebSocketManager {
                 if (instance == null)
                 {
                     instance = new WebSocketManager();
-//                    WebSocketHelper.getInstance();
                 }
             }
         }
@@ -100,28 +95,12 @@ public class WebSocketManager {
      * 应该只调一次，以后断线会自动触发重连
      */
     public void connect() {
+        isClearSocket.set(false);
 
-        isUseMqtt = ChatServiceController.chat_mqtt;
 
-        isClearSocket = false ;
-
-        if(mqclient != null && mqclient.getStatus() > 0 ) {
-            if( LogUtil.nativeIsFLOG()) {
-                LogUtil.nativeFLOG("CS WS:OPEN sendKeepAlive");
-            }
-            //发个心跳试试是不是真的连上的
-            sendKeepAlive();
-        }
-        boolean isSocketConnect = false;
-        if(isUseMqtt) {
-            isSocketConnect = mqclient.getStatus() > 0;
-        }
-        else {
-            isSocketConnect = client != null &&  WebSocket.READYSTATE.OPEN == client.getReadyState();
-        }
 
         //如果已经是连接状态
-        if( isSocketConnect) {
+        if( client != null &&  WebSocket.READYSTATE.OPEN == client.getReadyState()) {
 
             if( LogUtil.nativeIsFLOG()) {
                 LogUtil.nativeFLOG("CS WS:OPEN sendKeepAlive");
@@ -141,16 +120,13 @@ public class WebSocketManager {
             return;
         }
 
-        if ( !isUseMqtt && client != null && WebSocket.READYSTATE.CLOSING == client.getReadyState()){
+        if (client != null && WebSocket.READYSTATE.CLOSING == client.getReadyState()){
             if( LogUtil.nativeIsFLOG()) {
                 LogUtil.nativeFLOG("CS WS:CLOSING");
             }
             return;
-        }
-        else{
-            synchronized (this) {
-                reConnectCount = 0;
-            }
+        }else{
+            reConnectCount.set(0);
             if (statusListener == null) {
                 statusListener = WebSocketStatusHandler.getInstance();
             }
@@ -234,10 +210,6 @@ public class WebSocketManager {
             if( isChina ){
                 param += "&f=cn";
             }
-            if(isUseMqtt ) {
-                param += "$m=1";
-            }
-
             String serverListUrl =WS_SERVER_LIST_URL;
             if(LogUtil.isDebug && !ChatServiceController.isxternaletworkebug){
                 serverListUrl = "http://10.0.0.19:81/server/links";
@@ -312,7 +284,7 @@ public class WebSocketManager {
     public void connect2ws(String server, String port, String protocol) {
         try {
             connectMode = 1;
-            isClearSocket = false;
+            isClearSocket.set(false);
             currentServer = new WSServerInfo(protocol, server, port);
             Log.d("WebSocketManager", "PrimaryServer:" + currentServer.address);
             statusListener.onConsoleOutput("Connecting server: " + currentServer);
@@ -359,8 +331,6 @@ public class WebSocketManager {
         }
     }
 
-
-
     public String getCurrIPAndPortPriority(){
         String  result = " #";
 
@@ -404,33 +374,6 @@ public class WebSocketManager {
 
     private void webSocketStart()
     {
-        if( !currentServer.protocol.equals("tcp") ) {
-            isUseMqtt = false;
-        }
-        if( isUseMqtt ) {
-            short port = 1883;
-            try {
-                port = (short) Integer.parseInt(currentServer.port);
-            } catch (Exception ex) {
-
-            }
-
-            mqclient.setServerAndPort(currentServer.address, port);
-            statusListener.onConsoleOutput("Connecting");
-            String statusWord = LanguageManager.getLangByKey(LanguageKeys.WEB_SOCKET_CONNECTING);
-            statusWord = statusWord + getCurrIPAndPortPriority();
-            statusListener.onStatus(statusWord);
-            ServiceInterface.notifyWebSocketEventType(ConfigManager.WEBSOCKET_NETWORK_CONNECTING);
-            JniController.getInstance().excuteJNIVoidMethod("notifyWebSocketStatus", new Object[]{Boolean.valueOf(false)});
-            if( LogUtil.nativeIsFLOG()) {
-                LogUtil.nativeFLOG("CS webSocketStart:" + currentServer.address + ":" + currentServer.port);
-            }
-            mqclient.setUid(UserManager.getInstance().getCurrentUserId());
-            mqclient.setWebSocketManager(this);
-            mqclient.setStatusListener(statusListener);
-            mqclient.connectToServer();
-            return;
-        }
         try {
             WsClient  wsClient = new WsClient(currentServer.protocol + "://" + currentServer.address + ":" + currentServer.port, getHeader(), this, statusListener);
             client = wsClient;
@@ -455,7 +398,7 @@ public class WebSocketManager {
         Map<String, String> header = new HashMap<String, String>();
         long time = TimeManager.getInstance().getCurrentTimeMS();
         header.put("APPID", APP_ID);
-        header.put("TIME", String.valueOf(TimeManager.getInstance().getCurrentTimeMS()));
+        header.put("TIME", String.valueOf(time));
         header.put("UID", UserManager.getInstance().getCurrentUserId());
         header.put("SIGN", calcSign(APP_ID, UserManager.getInstance().getCurrentUserId(), time));
         return header;
@@ -465,12 +408,6 @@ public class WebSocketManager {
         if( LogUtil.nativeIsFLOG()) {
             LogUtil.nativeFLOG("CS closeSocket");
         }
-        if(isUseMqtt) {
-            mqclient.clearData();
-            mqclient.disconnectWithServer();
-            return;
-        }
-
         if( client == null) {
             return;
         }
@@ -500,19 +437,17 @@ public class WebSocketManager {
        if( LogUtil.nativeIsFLOG()) {
            LogUtil.nativeFLOG("CS clearSocket");
        }
-       isClearSocket = true;
-       synchronized (this) {
-           reconnectCountDown = 0;
-           reConnectCount = 0;
-       }
+       isClearSocket.set(true);
+       reconnectCountDown.set(0);
+       reConnectCount.set(0);
        closeSocket();
     }
 
 
-    private int reConnectCount = 0;
-    private boolean isClearSocket = false; //是否清除socket状态
+    private AtomicInteger reConnectCount = new AtomicInteger(0);
+    private AtomicBoolean isClearSocket = new AtomicBoolean(false); //是否清除socket状态
     private final static int RECONNECT_INTERVAL = 5;
-    private int reconnectCountDown = 0;
+    private AtomicInteger reconnectCountDown = new AtomicInteger(0);
     private int reconnectAdditionalInterval = -5;
 
     public void resetReconnectInterval() {
@@ -525,64 +460,25 @@ public class WebSocketManager {
     private TimerTask reconnectTimerTask;
 
     public synchronized void onConnectClose() {
+        //重置socket
+        if(client != null) client.setStatusListener(null);
+        if(client != null) client.setWebSocketManager(null);
+        client = null;
 
-        if(isUseMqtt) {
-            synchronized (this) {
-                //重置socket
-                if(mqclient != null) mqclient.setStatusListener(null);
-                if(mqclient != null) mqclient.setWebSocketManager(null);
-                mqclient.clearData();
-                mqclient.disconnectWithServer();
-
-
-                if (isClearSocket == false && isForeground) {
-                    startReconnect();
-                }
-            }
-            return;
+        if (isClearSocket.get() == false && isForeground.get()) {
+            startReconnect();
         }
-        synchronized (this) {
-            //重置socket
-            if(client != null) client.setStatusListener(null);
-            if(client != null) client.setWebSocketManager(null);
-            client = null;
-
-            if (isClearSocket == false && isForeground) {
-                startReconnect();
-            }
-        }
-
-
     }
 
     public synchronized void onConnectError() {
-        if(isUseMqtt) {
-            synchronized (this) {
-                //重置socket
-                if(mqclient != null) mqclient.setStatusListener(null);
-                if(mqclient != null) mqclient.setWebSocketManager(null);
-                mqclient.clearData();
-                mqclient.disconnectWithServer();
+            //重置socket
+        if(client != null) client.setStatusListener(null);
+        if(client != null) client.setWebSocketManager(null);
+        client = null;
 
-
-                if (isClearSocket == false && isForeground) {
-                    startReconnect();
-                }
-            }
+        if (isClearSocket.get() == false && isForeground.get()) {
+            startReconnect();
         }
-        else {
-            synchronized (this) {
-                //重置socket
-                if(client != null) client.setStatusListener(null);
-                if(client != null) client.setWebSocketManager(null);
-                client = null;
-
-                if (isClearSocket == false && isForeground) {
-                    startReconnect();
-                }
-            }
-        }
-
         connectMode = 0;
 
         if( currentServer != null ) {
@@ -598,7 +494,7 @@ public class WebSocketManager {
      * @time 17/3/16 下午1:16
      */
     public synchronized void onEnterForeground() {
-        isForeground = true;
+        isForeground.set(true);
     }
 
     /**
@@ -607,7 +503,7 @@ public class WebSocketManager {
      * @time 17/3/16 下午1:17
      */
     public synchronized void onEnterBackground() {
-        isForeground = false;
+        isForeground.set(false);
     }
 
     /**
@@ -617,17 +513,16 @@ public class WebSocketManager {
         if( LogUtil.nativeIsFLOG()) {
             LogUtil.nativeFLOG("CS startReconnect");
         }
-        if (reConnectCount == 0){
-            reconnectCountDown = 1;
-        }else if (reConnectCount == 1){
-            reconnectCountDown = 2;
-        } else if (reConnectCount == 2){
-            reconnectCountDown = 2;
+        if (reConnectCount.get() == 0){
+            reconnectCountDown.set(1);
+        }else if (reConnectCount.get() == 1){
+            reconnectCountDown.set(2);
+        } else if (reConnectCount.get() == 2){
+            reconnectCountDown.set(2);
         }
-        else if(reConnectCount >=3){
-            reConnectCount=0;
-            reconnectCountDown = 2;
-            ChatServiceController.isNeedJoinLive = true;
+        else if(reConnectCount.get() >=3){
+            reConnectCount.set(0);
+            reconnectCountDown.set(2);
             WSServerInfoManager.getInstance().addFailConnectServerInfoMap(currentServer);
         }
 
@@ -655,37 +550,35 @@ public class WebSocketManager {
     }
 
     private synchronized void checkReconnect() {
-        synchronized (this) {
-            if (reconnectCountDown <= 0){
-                return;
-            }
-
-            if( LogUtil.nativeIsFLOG()) {
-                LogUtil.nativeFLOG("CS checkReconnect:" + reconnectCountDown);
-            }
-            reconnectCountDown--;
-            if (reconnectCountDown <= 0) {
-                resetState();
-                reConnectCount++;
-                if (serversInfos!=null&&serversInfos.size() > 0){
-                    if( LogUtil.nativeIsFLOG()) {
-                        LogUtil.nativeFLOG("CS checkReconnect:connect2ws");
-                    }
-                    connect2ws();
-                }else {
-                    if( LogUtil.nativeIsFLOG()) {
-                        LogUtil.nativeFLOG("CS checkReconnect:startGetServerList");
-                    }
-                    startGetServerList();
-                }
-            }
-
-            String statusWord = LanguageManager.getLangByKey(LanguageKeys.WEB_SOCKET_CONNECTING);
-            statusWord = statusWord + getCurrIPAndPortPriority();
-            statusListener.onStatus(statusWord);
-            ServiceInterface.notifyWebSocketEventType(ConfigManager.WEBSOCKET_NETWORK_CONNECTING);
-            JniController.getInstance().excuteJNIVoidMethod("notifyWebSocketStatus", new Object[]{Boolean.valueOf(false)});
+        if (reconnectCountDown.get() <= 0){
+            return;
         }
+
+        if( LogUtil.nativeIsFLOG()) {
+            LogUtil.nativeFLOG("CS checkReconnect:" + reconnectCountDown.get());
+        }
+        reconnectCountDown.getAndDecrement();
+        if (reconnectCountDown.get() <= 0) {
+            resetState();
+            reConnectCount.getAndIncrement();
+            if (serversInfos!=null&&serversInfos.size() > 0){
+                if( LogUtil.nativeIsFLOG()) {
+                    LogUtil.nativeFLOG("CS checkReconnect:connect2ws");
+                }
+                connect2ws();
+            }else {
+                if( LogUtil.nativeIsFLOG()) {
+                    LogUtil.nativeFLOG("CS checkReconnect:startGetServerList");
+                }
+                startGetServerList();
+            }
+        }
+
+        String statusWord = LanguageManager.getLangByKey(LanguageKeys.WEB_SOCKET_CONNECTING);
+        statusWord = statusWord + getCurrIPAndPortPriority();
+        statusListener.onStatus(statusWord);
+        ServiceInterface.notifyWebSocketEventType(ConfigManager.WEBSOCKET_NETWORK_CONNECTING);
+        JniController.getInstance().excuteJNIVoidMethod("notifyWebSocketStatus", new Object[]{Boolean.valueOf(false)});
     }
 
     public void startPingCurrentServer()
@@ -728,9 +621,7 @@ public class WebSocketManager {
     public void onLoginSuccess(JSONObject json) {
         LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_WS_STATUS);
         statusListener.onConsoleOutput("Login success");
-        synchronized (this) {
-            reConnectCount = 0;
-        }
+        reConnectCount.set(0);
         try {
             if (json.optBoolean("enableNetworkOptimization")) {
                 enableNetworkOptimization = json.getBoolean("enableNetworkOptimization");
@@ -763,13 +654,10 @@ public class WebSocketManager {
             //加载多语言聊天室配置
             if (ChatServiceController.chat_language_on){
                 ChatServiceController.initLanguageChatRoomConfig();
-
-                //获取语言聊天室 - 人数
-                if (ServiceInterface.getServiceDelegate() != null){
-                    ServiceInterface.getServiceDelegate().loadChatRoomMembers();
-                }
             }
+
         }
+
     }
 
     private void testServerAsSupervisor() {
@@ -791,9 +679,9 @@ public class WebSocketManager {
     private final static String RECIEVE_ROOM_MSG_COMMAND = "push.chat.room";
     private final static String SET_USER_INFO_COMMAND = "user.setInfo";
     //  private final static String GET_NEW_MSGS_COMMAND                = "history.rooms";
-    private final static String GET_NEW_MSGS_BY_TIME_COMMAND = "history.roomsv2";   //刷新最新消息
+    private final static String GET_NEW_MSGS_BY_TIME_COMMAND = "history.roomsv2";
     //  private final static String GET_HISTORY_MSGS_COMMAND            = "history.room";
-    private final static String GET_HISTORY_MSGS_BY_TIME_COMMAND = "history.roomv2";    //刷新历史消息
+    private final static String GET_HISTORY_MSGS_BY_TIME_COMMAND = "history.roomv2";
     private final static String ANOTHER_LOGIN_COMMAND = "another.login";
 
     //"chat.room.mk.v2"          // 创建聊天室(sfs)
@@ -806,10 +694,6 @@ public class WebSocketManager {
     private final static String CMD_CHATOOM_CHANGENAME  = "room.changeCustomRoomName";  // 更改聊天室名称
     private final static String CMD_CHATROOM_GET_LIST   = "room.getCustomRoomList";     // 获取自己的房间信息，独立聊天接受|即使返回
     private final static String CMD_CHATROOM_BATTLE_QUIT       = "room.quitBattleFieldCustomRoom";        // 退出竞技场房间
-    private final static String CMD_CHATROOM_GETROOMMEMBERCOUNT = "room.getRoomMembersCount";
-    private final static String CMD_CHATROOM_BANUSERFORLIVE ="user.banUserForRoom";
-    private final static String CMD_CHATROOM_UNBANUSERFORLIVE ="user.unbanUserForRoom";
-    private final static String CMD_CHATROOM_GETBANUSERFORLIVE ="user.getBanUserForRoom";
     //push
     private final static String PUSH_CHATROOM_CREATE    = "push.chatroom.create";       // 创建聊天室,独立聊天push
     private final static String PUSH_CHATROOM_INVITE    = "push.room.invite";           // 邀请玩家加入,独立聊天push
@@ -818,7 +702,6 @@ public class WebSocketManager {
     private final static String PUSH_CHATROOM_KICK      = "push.room.kick";             // 聊天室踢人,独立聊天push
     private final static String PUSH_CHATOOM_CHANGENAME = "push.room.changename";       // 更改聊天室名称,独立聊天push
     private final static String PUSH_CHATROOM_GET_LIST  = "room.getCustomRoomList";     // 获取自己的房间信息，独立聊天接受|即使返回
-
 
     private final static String CMD_LANGUAGE_CHATROOM_JOIN     = "room.joinLangRoom";           // 玩家加入语言聊天室
     private final static String PUSH_LANGUAGE_CHATROOM_JOIN     = "push.room.join";             // 玩家加入语言聊天室
@@ -866,10 +749,29 @@ public class WebSocketManager {
         JSONArray roomsArr = null;
         try {
             roomsArr = new JSONArray();
-            JSONObject live = new JSONObject();
-            live.put("id", roomId);
-            live.put("group", "custom");
-            roomsArr.put(live);
+            if (!ConfigManager.isEnterArena) {//竞技场不加入国家聊天房间
+                JSONObject live = new JSONObject();
+                live.put("id", roomId);
+                live.put("group", "custom");
+                roomsArr.put(live);
+            }
+        }catch (Exception e){
+            return;
+        }
+        sendCommand(JOIN_ROOM_MULTI_COMMAND, "rooms", roomsArr);
+    }
+
+    /**
+     *
+     */
+    public void joinWarZoneRoom() {
+        JSONArray roomsArr = null;
+        try {
+            roomsArr = new JSONArray();
+            JSONObject warZone = new JSONObject();
+            warZone.put("id", getWarZoneRoomId());
+            warZone.put("group", "warzone");
+            roomsArr.put(warZone);
         }catch (Exception e){
             return;
         }
@@ -879,6 +781,7 @@ public class WebSocketManager {
     private void onJoinRoom() {
         statusListener.onStatus("");
         ServiceInterface.notifyWebSocketEventType(ConfigManager.WEBSOCKET_NETWORK_CONNECTED);
+        ChannelManager.getInstance().deleteAllWarZoneChannel(); //加入国家之后就删除无用战区聊天室
         JniController.getInstance().excuteJNIVoidMethod("notifyWebSocketStatus", new Object[] {Boolean.valueOf(true) });
         getNewMsgs();
     }
@@ -903,6 +806,12 @@ public class WebSocketManager {
                 alliance.put("group", "alliance");
                 array.put(alliance);
             }
+            if(ChatServiceController.isAddWarZoneRoom && ChatServiceController.isWarZoneRoomEnable && !getWarZoneRoomId().equals("")){
+                JSONObject warZone = new JSONObject();
+                warZone.put("id", getWarZoneRoomId());
+                warZone.put("group", "warzone");
+                array.put(warZone);
+            }
         } catch (JSONException e) {
             LogUtil.printException(e);
         }
@@ -924,6 +833,12 @@ public class WebSocketManager {
         sendCommand(LEAVE_ROOM_COMMAND, "roomId", getLiveRoomId());
     }
 
+    public void leaveWarZoneRoom(){
+        if(ChatServiceController.m_roomGroupKey.length() > 0){
+            sendCommand(LEAVE_ROOM_COMMAND, "roomId", getWarZoneRoomId());
+        }
+    }
+
     // 邀请
     public void chatRoomInvite(String roomId, String members) {
         sendCommand(CMD_CHATROOM_INVITE, "roomId", roomId, "members", members, "group", "custom");
@@ -934,27 +849,6 @@ public class WebSocketManager {
         sendCommand(CMD_CHATROOM_GET_LIST, "group", "custom");
     }
 
-    public void getRoomMembersCount(String roomId){
-        sendCommand(CMD_CHATROOM_GETROOMMEMBERCOUNT, "roomId", roomId, "group", "custom");
-        LogUtil.printVariables(100,"WB",roomId);
-    }
-
-    //roomId|roomId|...
-    public void getRoomsMembersCount(String roomids){
-        sendCommand(CMD_CHATROOMS_GETROOMMEMBERCOUNT, "roomids", roomids, "group", "custom");
-    }
-
-    public void banLiveMember(String roomId, String memberUid, long time){
-        sendCommand(CMD_CHATROOM_BANUSERFORLIVE, "roomId", roomId,"targetUid",memberUid, "time", time, "group", "custom");
-    }
-
-    public void unBanLiveMember(String roomId, String memberUid){
-        sendCommand(CMD_CHATROOM_UNBANUSERFORLIVE, "roomId", roomId,"targetUid",memberUid, "group", "custom");
-    }
-
-    public void getBanUserForRoom(String roomId){
-        sendCommand(CMD_CHATROOM_GETBANUSERFORLIVE, "roomId", roomId, "group", "custom");
-    }
     // 成员退出聊天室
     public void chatRoomQuit(String roomId) {
         sendCommand(CMD_CHATROOM_QUIT, "roomId", roomId, "group", "custom");
@@ -975,6 +869,10 @@ public class WebSocketManager {
         sendCommand(CMD_CHATROOM_KICK, "roomId", roomId, "members", members, "group", "custom");
     }
 
+    //roomId|roomId|...
+    public void getRoomsMembersCount(String roomids){
+        sendCommand(CMD_CHATROOMS_GETROOMMEMBERCOUNT, "roomids", roomids, "group", "custom");
+    }
 
     // 进入语言聊天室
     public void languageChatRoomInvite(String roomId, String roomName) {
@@ -983,8 +881,8 @@ public class WebSocketManager {
         sendCommand(CMD_LANGUAGE_CHATROOM_JOIN, "roomId", roomId, "name", roomName, "group", "custom");
     }
 
-    public void sendChatRoomMsg(String messageText, int sendLocalTime, ChatChannel channel, int post, String media, int isLiveChat) {
-        sendCommand(SEND_ROOM_MSG_COMMAND, "roomId", channel.channelID, "msg", messageText, "sendTime", sendLocalTime, "isLiveChat",isLiveChat, "extra", getMsgExtra(post, media));
+    public void sendChatRoomMsg(String messageText, int sendLocalTime, ChatChannel channel, int post, String media) {
+        sendCommand(SEND_ROOM_MSG_COMMAND, "roomId", channel.channelID, "msg", messageText, "sendTime", sendLocalTime, "extra", getMsgExtra(post, media));
     }
 
     public void sendRoomMsg(String messageText, int sendLocalTime, ChatChannel channel) {
@@ -999,16 +897,6 @@ public class WebSocketManager {
             JniController.getInstance().excuteJNIVoidMethod("nativeFbEventDone", new Object[]{"social_chat_country", ""});
         }
         sendCommand(SEND_ROOM_MSG_COMMAND, "roomId", roomId, "msg", messageText, "sendTime", sendLocalTime, "extra", getMsgExtra(post, media));
-    }
-
-    public void sendRoomMsg(String messageText, int sendLocalTime, String roomId, int post, String media) {
-//        String roomId = channel.isCountryChannel() ? getCountryRoomId() : getAllianceRoomId();
-//        if (channel.channelType == 0){
-//            JniController.getInstance().excuteJNIVoidMethod("nativeFbEventDone", new Object[]{"social_chat_alliance", ""});
-//        }else if (channel.channelType == 1){
-//            JniController.getInstance().excuteJNIVoidMethod("nativeFbEventDone", new Object[]{"social_chat_country", ""});
-//        }
-        sendCommand(SEND_ROOM_MSG_COMMAND, "roomId", getCountryRoomId(), "msg", messageText, "sendTime", sendLocalTime, "extra", getMsgExtra(post, media));
     }
 
     private JSONObject getMsgExtra(int post, String media) {
@@ -1035,6 +923,9 @@ public class WebSocketManager {
         }
     }
 
+
+
+
     private JSONObject getRoomsParams() {
         JSONObject params = null;
         try {
@@ -1042,6 +933,7 @@ public class WebSocketManager {
             ArrayList<ChatChannel> channels = new ArrayList<ChatChannel>(); // ChannelManager.getInstance().getNewServerChannels()
             channels.add(ChannelManager.getInstance().getCountryChannel());
             channels.add(ChannelManager.getInstance().getAllianceChannel());
+            channels.add(ChannelManager.getInstance().getWarZoneChannel());
             if(!ChatServiceController.curLiveRoomId.equals("")){
                 channels.clear();
                 ChatChannel channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_CHATROOM, getLiveRoomId());
@@ -1063,6 +955,9 @@ public class WebSocketManager {
                     params.put(getAllianceRoomId(), TimeManager.getTimeInMS(channel.getLatestTime()));
                 } else if (channel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM) {
                     params.put(getLiveRoomId(), TimeManager.getTimeInMS(channel.getLatestTime()));
+                    if(ChatServiceController.isAddWarZoneRoom && ChatServiceController.isWarZoneRoomEnable){
+                        params.put(getWarZoneRoomId(), TimeManager.getTimeInMS(channel.getLatestTime()));
+                    }
                 }
             }
         } catch (JSONException e) {
@@ -1100,9 +995,6 @@ public class WebSocketManager {
     }
 
     public boolean isConnected() {
-        if(isUseMqtt) {
-            return mqclient.getStatus() > 0;
-        }
         return client != null && client.isOpen();
     }
 
@@ -1141,16 +1033,9 @@ public class WebSocketManager {
         String output = String.format("%s: %s", command, jsonobj.toString());
         LogUtil.printVariables(Log.INFO, LogUtil.TAG_WS_SEND, output);
         statusListener.onConsoleOutput(output);
-
-        if(isUseMqtt) {
-            mqclient.sendDataToServer(command,jsonobj.toString());
+        if (client != null) {
+            client.send(jsonobj.toString());
         }
-        else {
-            if (client != null) {
-                client.send(jsonobj.toString());
-            }
-        }
-
     }
 
     public void handleMessage(String message) {
@@ -1167,15 +1052,8 @@ public class WebSocketManager {
             LogUtil.printVariables(Log.INFO, LogUtil.TAG_WS_RECIEVE, output);
 //          statusListener.onConsoleOutput(output);
 
-            if(isUseMqtt ) {
-                if ( mqclient.isMyMessage(json)) {
-                    return;
-                }
-            }
-            else {
-                if (client != null && client.isMyMessage(json)) {
-                    return;
-                }
+            if (client != null && client.isMyMessage(json)) {
+                return;
             }
 
             if (json.has("data")) // 由服务端主动推送的数据
@@ -1202,7 +1080,6 @@ public class WebSocketManager {
 
     private void onCommandSuccess(String message) {
         try {
-
             JSONObject json = new JSONObject(message);
             String command = json.getString("cmd");
             JSONObject result = json.getJSONObject("result");
@@ -1217,18 +1094,11 @@ public class WebSocketManager {
                 onGetOldMsg(result);
             }else if (command.equals(PUSH_CHATROOM_GET_LIST)) {
                 updateChatRoomList(result);
-            }else if (command.equals(CMD_CHATROOM_GETROOMMEMBERCOUNT)){
-                onRefreshLiveMember(result);
             }else if (command.equals(CMD_CHATROOMS_GETROOMMEMBERCOUNT)){
                 onRefreshChatRoomMember(result);
-            }else if(command.equals(CMD_CHATROOM_GETBANUSERFORLIVE)
-                    || command.equals(CMD_CHATROOM_BANUSERFORLIVE)
-                    || command.equals(CMD_CHATROOM_UNBANUSERFORLIVE)){
-                onGetLiveBanUserData(result ,command);
-            }else if(command.equals(SEND_ROOM_MSG_COMMAND)){
+            }else if (command.equals(SEND_ROOM_MSG_COMMAND)&&LogUtil.isDebug) {
                 onRecieveRoomMessage(result);
             }
-
         } catch (JSONException e) {
             LogUtil.printException(e);
         }
@@ -1285,14 +1155,7 @@ public class WebSocketManager {
                     ServiceInterface.notifyWebSocketEventType(ConfigManager.WEBSOCKET_SERVER_DISCONNECTED);
                     clearSocket();
                 } else if (command.equals(LOGIN_SUCCESS_COMMAND)) {
-                    if(isUseMqtt) {
-                        mqclient.setClientID(json);
-                    }
-                    else {
-                        client.setClientID(json);
-                    }
-
-
+                    client.setClientID(json);
                     this.onLoginSuccess(json);
                 } else if (command.equals(PUSH_CHATROOM_CREATE)
                         || command.equals(PUSH_CHATOOM_CHANGENAME)
@@ -1309,6 +1172,21 @@ public class WebSocketManager {
         }
     }
 
+    //聊天室-人数
+    public static void onRefreshChatRoomMember(JSONObject data){
+        try {
+            JSONArray array = data.getJSONArray("rooms");
+            if(array != null){
+                //加载聊天室-人数
+                if (ServiceInterface.getServiceDelegate() != null){
+                    ServiceInterface.getServiceDelegate().pushChatRoomMembers(array);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * {"cmd":"push.chat.room","serverTime":1447749281156,
      * "data":{"appId":"100001"
@@ -1318,34 +1196,18 @@ public class WebSocketManager {
     private void onRecieveRoomMessage(JSONObject data) {
         try {
 
-            if(data.getString("roomId").contains("live_") && data.has("error")){
-                long banTime = data.getLong("expireTime");
-                String tipStr = "";
-                if (banTime > 3600*24){
-                    tipStr = LanguageManager.getLangByKey("171307");
-                }else{
-                    tipStr = LanguageManager.getLangByKey("105201", "", TimeManager.getInstance().getTimeFormatWithRemainTime((int)banTime + TimeManager.getInstance().getCurrentTime()));
-                }
-                ServiceInterface.flyHint("","",tipStr,3,0,false);
-                return;
-            }
-
             // 聊天室消息单独处理
-            if ((data.getString("group").equals("custom") || data.getString("group").equals("live"))){
+            if (data.getString("group").equals("custom") || data.getString("group").equals("live")){
                 formatMsgForChatRoom(data, -1);
                 return;
             }
-
             MsgItem item = parseMsgItem(data,true);
             if (item != null) {
                 MsgItem[] dbItemsArray = {item};
                 String customName = "";
                 ChatChannel channel = getChannel(data.getString("group"));
                 if(channel!=null)
-                {
                     ServiceInterface.handleMessage(dbItemsArray, channel.channelID, customName, false, true);
-                }
-
 
                 if(item.isHornMessage())
                 {
@@ -1373,62 +1235,6 @@ public class WebSocketManager {
         }
     }
 
-    public static void onRefreshLiveMember(JSONObject data){
-        try {
-            if(data.getInt("rooms") >= 0){
-                ChatServiceController.listenRoomNumber = data.getInt("rooms");
-                ChatServiceController.postAndRefreshLiveNumber();
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    //聊天室-人数
-    public static void onRefreshChatRoomMember(JSONObject data){
-        try {
-            JSONArray array = data.getJSONArray("rooms");
-            if(array != null){
-                //加载聊天室-人数
-                if (ServiceInterface.getServiceDelegate() != null){
-                    ServiceInterface.getServiceDelegate().pushChatRoomMembers(array);
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void onGetLiveBanUserData(JSONObject data ,String command){
-        try {
-            Object result = null;
-            if(data.has("result"))
-                result = data.get("result");
-            if(result == null)
-                return;
-            if(result instanceof Boolean) {
-                return;
-            }
-            if(result instanceof String) {
-                if (command.equals(CMD_CHATROOM_BANUSERFORLIVE)) {
-                    UserManager.getInstance().addLiveBanUser(String.valueOf(result));
-                    ServiceInterface.flyHint("","",LanguageManager.getLangByKey(LanguageKeys.MENU_UNBAN),2,0,false);
-                } else if (command.equals(CMD_CHATROOM_UNBANUSERFORLIVE)) {
-                    UserManager.getInstance().removeLiveBanUser(String.valueOf(result));
-                    ServiceInterface.flyHint("","",LanguageManager.getLangByKey(LanguageKeys.TIP_UNBAN),2,0,false);
-                }
-            }
-             if (command.equals(CMD_CHATROOM_GETBANUSERFORLIVE)) {
-                 if(result instanceof JSONObject){
-                     JSONArray array = ((JSONObject)result).names();
-                    UserManager.getInstance().initLiveBanUserUid(array);
-                }
-            }
-            ChatServiceController.refreshBanListData();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
     public static boolean isStringExist(JSONObject obj, String key) {
         try {
             return obj.opt(key) != null && StringUtils.isNotEmpty(obj.getString(key));
@@ -1517,24 +1323,50 @@ public class WebSocketManager {
                 {
                     item.msg = LanguageManager.getLangByKey(item.msg);
                 }
-                if (extra.opt("shareComment") != null)
-                {
-                    item.shareComment = extra.getString("shareComment");
-                }
-                if (extra.opt("scienceType") != null)
-                {
-                    item.shareComment = extra.getString("scienceType");
-                }
+
                 if (extra.opt("media") != null) {
                     item.media = extra.getString("media");
                 }
                 try {
-                    //对extra 进行解析获得attachment
+//                    parseAttachment(extra, item);
+//                    if (item.isEquipMessage() && StringUtils.isNotEmpty(item.attachmentId)) {
+//                        item.msg = item.attachmentId;
+//                    }
+
                     if(item.isSystemMessageByKey()) {
                         parseAttachmentWithExtra(extra, item);
                     }else{
                         parseAttachment(extra, item);
+
+                        if (item.isFavourPointShare() && StringUtils.isNotEmpty(item.attachmentId))
+                        {
+                            String attachmentIdStr = item.attachmentId;
+                            if (StringUtils.isNotEmpty(attachmentIdStr))
+                            {
+                                String[] taskInfo = attachmentIdStr.split("\\|");
+                                if (StringUtils.isNotEmpty(taskInfo[0]))
+                                {
+                                    String nomalStr="(#"+taskInfo[1]+" "+taskInfo[2]+":"+taskInfo[3]+")";
+                                    if(taskInfo[0].equals("81000312")){
+                                        String msgStr = "";
+                                        if(item.msg.equals("145538")){
+                                            msgStr = LanguageManager.getLangByKey(item.msg);
+                                        }else{
+                                            msgStr = item.msg;
+                                        }
+                                        item.msg = LanguageManager.getLangByKey(taskInfo[0], msgStr, nomalStr);
+                                    }else if(taskInfo[0].equals("81000326")){
+                                        item.msg = LanguageManager.getLangByKey(taskInfo[0], taskInfo[4], taskInfo[5], nomalStr);
+                                    }else if(taskInfo[0].equals("81000324") || taskInfo[0].equals("81000325")){
+                                        String msgStr = LanguageManager.getLangByKey(taskInfo[5]);
+                                        item.msg = LanguageManager.getLangByKey(taskInfo[0], taskInfo[4], msgStr, nomalStr);
+                                    }
+                                }
+                            }
+                        }
                     }
+
+
                 } catch (Exception e) {
                     LogUtil.printException(e);
                 }
@@ -1605,66 +1437,15 @@ public class WebSocketManager {
                     item.attachmentId += "|1";//兼容老版本
                 }
             }
-            if(item.msg.equals("90100001")){
-                item.msg = LanguageManager.getLangByKey("90100001");
-            }
         }
 
-        if(item.post == MSG_TYPE_NEWS_CENTER_SHARE && extra.opt("msgarr") != null){
-            JSONArray paramsArray = extra.getJSONArray("msgarr");
-            String nameString = "";
-            String attachmentID = "";
-            int count = paramsArray.length();
-            for (int i = 0; i< count ; i++) {
-                String namesStr = paramsArray.getString(i);
-                if (nameString.length() > 0) {
-                    if(i < count-2){
-                        nameString = nameString.concat("||");
-                        nameString = nameString.concat(namesStr);
-                    }else if(i == count-2){
-                        attachmentID = attachmentID.concat(namesStr);
-                    }else if(i == count-1){
-                        attachmentID = attachmentID.concat("_");
-                        attachmentID = attachmentID.concat(namesStr);
-                    }
-
-                }else{
-                    nameString = nameString.concat(namesStr);
-                }
-            }
-            attachmentID = attachmentID + "_";
-            attachmentID = attachmentID + nameString;
-            item.attachmentId = attachmentID;
-        }
-        if (item.isFavourPointShare() && StringUtils.isNotEmpty(item.attachmentId))
-        {
-            String attachmentIdStr = item.attachmentId;
-            if (StringUtils.isNotEmpty(attachmentIdStr))
-            {
-                String[] taskInfo = attachmentIdStr.split("\\|");
-                if (StringUtils.isNotEmpty(taskInfo[0]))
-                {
-                    String nomalStr="(#"+taskInfo[1]+" "+taskInfo[2]+":"+taskInfo[3]+")";
-                    if(taskInfo[0].equals("81000312") || taskInfo[0].equals("81000327")){
-                        String msgStr = "";
-                        if(item.msg.equals("145538")){
-                            msgStr = LanguageManager.getLangByKey(item.msg);
-                        }else{
-                            msgStr = item.msg;
-                        }
-                        item.msg = LanguageManager.getLangByKey(taskInfo[0], msgStr, nomalStr);
-                    }else if(taskInfo[0].equals("81000326")){
-                        item.msg = LanguageManager.getLangByKey(taskInfo[0], taskInfo[4], taskInfo[5], nomalStr);
-                    }else if(taskInfo[0].equals("81000324") || taskInfo[0].equals("81000325")){
-                        String msgStr = LanguageManager.getLangByKey(taskInfo[5]);
-                        item.msg = LanguageManager.getLangByKey(taskInfo[0], taskInfo[4], msgStr, nomalStr);
-                    }
-                    else if (taskInfo[0].equals("99010063")) {
-                        item.msg = LanguageManager.getLangByKey(taskInfo[0], taskInfo[4], taskInfo[5], taskInfo[2],taskInfo[3]);
-                    }
-                    else if (taskInfo[0].equals("99010079")) {
-                        item.msg = LanguageManager.getLangByKey(taskInfo[0],taskInfo[2],taskInfo[3]);
-                    }
+        if (extra.opt("mailType") != null) {
+            item.attachmentId = extra.getString("reportUid") + "#" + extra.getString("mailType") + "_";
+            item.sendState = MsgItem.UNHANDLE;
+            if (extra.opt("dialog") != null && extra.opt("msgarr") != null) {
+                JSONArray paramsArray = extra.getJSONArray("msgarr");
+                if(paramsArray.length() == 1) {
+                    item.attachmentId += extra.getString("dialog") + "|" + paramsArray.getString(0);
                 }
             }
         }
@@ -1672,20 +1453,10 @@ public class WebSocketManager {
 
     private void parseAttachment(JSONObject extra, MsgItem item, String propName) throws JSONException {
         if (extra.opt(propName) != null) {
-            if(StringUtils.isNotEmpty(item.attachmentId) && item.isNeedParseAttachmentId()) {
-                item.attachmentId = extra.getString(propName).concat("__").concat(item.attachmentId);
-                ChatServiceController.isNewMsg = true;
-            }else if(StringUtils.isNotEmpty(item.attachmentId) && item.isShamoInhesionShare())
-            {
-                item.attachmentId = extra.getString(propName);
-                ChatServiceController.isNewMsg = false;
-            }
-            else if(StringUtils.isEmpty(item.attachmentId)){
-                item.attachmentId = extra.getString(propName);
-                ChatServiceController.isNewMsg = false;
-            }
+            item.attachmentId = extra.getString(propName);
         }
     }
+
 
     /**
      * @param extra extra中的参数用于拼接attachment
@@ -1774,49 +1545,24 @@ public class WebSocketManager {
             }else{
                 item.attachmentId = "102528";
             }
+        }else if(item.isFormationBattle()){
+            if (extra.opt("mailType") != null) {
+                item.attachmentId = extra.getString("reportUid") + "#" + extra.getString("mailType") + "_";
+                item.sendState = MsgItem.UNHANDLE;
+                if (extra.opt("dialog") != null && extra.opt("msgarr") != null) {
+                    JSONArray paramsArray = extra.getJSONArray("msgarr");
+                    if(paramsArray.length() == 1) {
+                        item.attachmentId += extra.getString("dialog") + "|" + paramsArray.getString(0);
+                    }
+                }
+            }
         }
 //        else if(item.isAlllianceMessage() || item.isAnnounceInvite()
 //                || item.isAllianceCreate() || item.isViewQuestionActivity()){
 //        }else if(item.isShamoInhesionShare()){
 //        }
-        else if(item.isGWSysTips() || item.isGwSysNewTips()){
-            item.attachmentId = "GWSys";
-            item.attachmentId = item.attachmentId.concat("__").concat(extra.getString("dialog"));
-            if (extra.opt("msgarr") != null) {
-                JSONArray paramsArray = extra.getJSONArray("msgarr");
-                for(int i = 0;i< paramsArray.length() ; i++){
-                    item.attachmentId = item.attachmentId.concat("|").concat(paramsArray.getString(i));
-                }
-            }
-        }
-        else if(item.isNewsCenterShare()){
-            if ( extra.opt("dialog") != null &&  extra.opt("msgarr") != null) {
-                JSONArray paramsArray = extra.getJSONArray("msgarr");
-                String nameString = "";
-                String attachmentID = "";
-                int count = paramsArray.length();
-                for (int i = 0; i< count ; i++) {
-                    String namesStr = paramsArray.getString(i);
-                    if (nameString.length() > 0) {
-                        if(i < count-2){
-                            nameString = nameString.concat("||");
-                            nameString = nameString.concat(namesStr);
-                        }else if(i == count-2){
-                            attachmentID = attachmentID.concat(namesStr);
-                        }else if(i == count-1){
-                            attachmentID = attachmentID.concat("_");
-                            attachmentID = attachmentID.concat(namesStr);
-                        }
 
-                    }else{
-                        nameString = nameString.concat(namesStr);
-                    }
-                }
-                attachmentID = attachmentID + "_";
-                attachmentID = attachmentID + nameString;
-                item.attachmentId = attachmentID;
-            }
-        }
+
 //        else if(item.isScienceMaxShare()){
 //
 //        }else if(item.isTurntableNewShare() || item.isSevenDayNewShare()){
@@ -1840,6 +1586,7 @@ public class WebSocketManager {
         }
     }
 
+
     private void parseAttachmentWithDialog(JSONObject extra, MsgItem item, String propName) throws JSONException {
         if (extra.opt(propName) != null && extra.opt("msgarr") != null) {
             JSONArray paramsArray = extra.getJSONArray("msgarr");
@@ -1849,49 +1596,16 @@ public class WebSocketManager {
             } else if (paramsArray.length() == 1) {
                 msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0));
             } else if (paramsArray.length() == 2) {
-                if(item.isGWSysTips()){
-                    item.attachmentId = "GWSys";
-                    item.attachmentId = item.attachmentId.concat("__").concat(extra.getString(propName));
-                    for(int i = 0;i< 2 ; i++){
-                        item.attachmentId = item.attachmentId.concat("|").concat(paramsArray.getString(i));
-                    }
-                    msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), LanguageManager.getLangByKey("82000992",paramsArray.getString(1)));
-                }else {
-                    msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), paramsArray.getString(1));
-                }
+                msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), paramsArray.getString(1));
             } else if (paramsArray.length() == 3) {
-                if(item.isGWSysTips()){
-                    item.attachmentId = "GWSys";
-                    item.attachmentId = item.attachmentId.concat("__").concat(extra.getString(propName));
-                    for(int i = 0;i< 3 ; i++){
-                        item.attachmentId = item.attachmentId.concat("|").concat(paramsArray.getString(i));
-                    }
-                    String cityId = paramsArray.getString(1);
-                    String name = "";
-                    if(Integer.parseInt(cityId) >1000){
-                        msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), LanguageManager.getLangByKey("82000992", String.valueOf(Integer.parseInt(cityId) - 1000)), paramsArray.getString(2));
-                    }else{
-                        name = "";
-                        msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), name, paramsArray.getString(2));
-                    }
-                }else {
-                    msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), paramsArray.getString(1), paramsArray.getString(2));
-                }
+                msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), paramsArray.getString(1), paramsArray.getString(2));
             } else if (paramsArray.length() == 4) {
                 msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), paramsArray.getString(1), paramsArray.getString(2), paramsArray.getString(3));
             } else if (paramsArray.length() == 5) {
                 msg = LanguageManager.getLangByKey(extra.getString(propName), paramsArray.getString(0), paramsArray.getString(1), paramsArray.getString(2), paramsArray.getString(3), paramsArray.getString(4));
             }
-            if(item.isNeedParseAttachmentId()) {
-                item.attachmentId = extra.getString(propName);
-                for(int i = 0;i< paramsArray.length() ; i++){
-                    item.attachmentId = item.attachmentId.concat("|").concat(paramsArray.getString(i));
-                }
-            }
             item.msg = msg;
             LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_CORE, "msg_dialog", msg);
-        }else if(extra.opt(propName) != null){
-            item.attachmentId = extra.getString(propName);
         }
     }
 
@@ -1907,14 +1621,13 @@ public class WebSocketManager {
                 JSONObject room = rooms.getJSONObject(i);
 
                 // 聊天室消息单独处理
-                String roomId = room.getString("roomId");
                 if (room.getString("group").equals("custom")){
                     JSONArray msgs = room.getJSONArray("msgs");
                     for (int j=0; j<msgs.length(); j++) {
                         JSONObject msg = msgs.getJSONObject(j);
                         formatMsgForChatRoom(msg, -1);
                     }
-
+                    String roomId = room.getString("roomId");
                     ChatChannel channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_CHATROOM, roomId);
                     if (channel != null) {
                         channel.serverMaxSeqId = room.getInt("lastSeqId");
@@ -1926,10 +1639,14 @@ public class WebSocketManager {
                     }
                     return;
                 }
+                String roomId = room.getString("roomId");
                 if(roomId.contains("live_") && StringUtils.isEmpty(room.getString("group"))) {
                     return;
                 }
-
+                if(room.getString("group").equals("warzone")){
+                    ChatServiceController.warZoneRoomId = room.getString("roomId");
+                    ChatServiceController.isAddWarZoneRoom = true;
+                }
                 ChatChannel channel = getChannel(room.getString("group"));
                 if (channel == null) {
                     continue;
@@ -2040,7 +1757,7 @@ public class WebSocketManager {
                     if(roomInfo.isNull("roomId")){
 //                        result =     {
 //                            rooms =         {
-//                                "custombattlefield_6edb1a66ade942eb8ea491f7bfb8b762" = "{\"members\":\"[\\\"716671615000291\\\",\\\"1170227292000291\\\",\\\"2222678940000273\\\"\"}";
+//                                "custombattlefield_6edb1a66ade942eb8ea491f7bfb8b762" = "{\"members\":\"[\\\"716671615000291\\\",\\\"1170227292000291\\\",\\\"2222678940000273\\\"]\"}";
 //                            };
 //                        };
                         // 如果没有roomId返回，可能服务器数据有问题，客户端发送退出
@@ -2049,10 +1766,9 @@ public class WebSocketManager {
                     }
 
                     String roomId = roomInfo.getString("roomId");
-
                     // 非debug包过滤含有test的聊天室, debug包过滤非test聊天室
-                    if(!LogUtil.isDebug && roomId.contains("test")
-                            || LogUtil.isDebug && !roomId.contains("test")){
+                    if(!ChatServiceController.hostActivity.getPackageName().contains("debug") && roomId.contains("test")
+                            || ChatServiceController.hostActivity.getPackageName().contains("debug") && !roomId.contains("test")){
                         continue;
                     }
 
@@ -2092,22 +1808,12 @@ public class WebSocketManager {
                         channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_CHATROOM, roomId);
                     }
 
-                    if (ChannelManager.getInstance().isLanguageChatRoom(roomId)){
-                        //语言聊天室
-                        channel.customName = ChannelManager.getInstance().getLanguageChatRoomName(roomId);
-                        channel.roomOwner = LanguageManager.getLangByKey(LanguageKeys.TIP_SYSTEM_PLAYER_NAME);// 170145=玛姬·格林
-                    }
-                    else if (ChannelManager.getInstance().isArenaChatRoom(roomId)) {
-                        // 竞技场聊天室
+                    channel.roomOwner = roomInfo.getString("owner");
+                    channel.customName = roomInfo.getString("name");
+                    if (ChannelManager.getInstance().isArenaChatRoom(roomId)) {// 竞技场聊天室
                         channel.customName = LanguageManager.getLangByKey(LanguageKeys.TIP_CHATROOM_ARENA_NAME);//172559=角斗场队伍聊天竞技场组队专用
                         channel.roomOwner = LanguageManager.getLangByKey(LanguageKeys.TIP_SYSTEM_PLAYER_NAME);// 170145=玛姬·格林
                     }
-                    else
-                    {
-                        channel.roomOwner = roomInfo.getString("owner");
-                        channel.customName = roomInfo.getString("name");
-                    }
-
                     channel.memberUidArray.clear();
                     String[] uidArr = members.split("_");
                     for (int index = 0; index < uidArr.length; index++)
@@ -2148,15 +1854,12 @@ public class WebSocketManager {
             String command = json.getString("cmd");
             JSONObject data = json.getJSONObject("data");
 
-            LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "push chatroom cmd:", command);
-
             JSONObject msgs = null;
             if (command.equals(PUSH_CHATROOM_CREATE) || command.equals(PUSH_CHATROOM_INVITE) || command.equals(PUSH_LANGUAGE_CHATROOM_JOIN)) {
                 if(data.isNull("roomInfo")) {
                     return;// 创建和邀请时必须有房间信息
                 }
             }
-
             String jsonMsgs = data.getString("msgs");
             msgs = new JSONObject(jsonMsgs);
             String roomId = msgs.getString("roomId");
@@ -2169,9 +1872,7 @@ public class WebSocketManager {
                 opType = 5;
                 ServiceInterface.notifyChatRoomNameChanged(msgs.getString("msg"));
                 ServiceInterface.setChannelMemberArray(DBDefinition.CHANNEL_TYPE_CHATROOM, roomId, "", msgs.getString("msg"));
-            }
-            else
-            {
+            }else{
                 String memberUids = "";
                 String jsonMsg = msgs.getString("msg");
                 if(!jsonMsg.equals("") && !jsonMsg.equals(roomId)){
@@ -2208,7 +1909,6 @@ public class WebSocketManager {
                         ServiceInterface.setChannelMemberArray(DBDefinition.CHANNEL_TYPE_CHATROOM, roomId, memberUids, roomInfo.getString("name"));
                     }else{
                         opType = 2;
-                        ChatServiceController.isNeedJoinLive = false;
                         if(!roomInfo.isNull("members")){//如果有这个字段，表示本地没有这个聊天室，需要把所有成员发过来
                             memberUids = roomInfo.getString("members");
                             memberUids = memberUids.substring(1, memberUids.length()-1);
@@ -2248,7 +1948,6 @@ public class WebSocketManager {
                             channel.roomOwner = roomInfo.getString("owner");
                             channel.customName = roomInfo.getString("name");
                         }
-
                         DBManager.getInstance().updateChannel(channel);
                     }
                     ServiceInterface.postIsChatRoomMemberFlag(roomId, true);
@@ -2290,7 +1989,7 @@ public class WebSocketManager {
 
                 }
             }
-            
+
             if(updateMsg) {
                 formatMsgForChatRoom(msgs, opType);
             }
@@ -2351,7 +2050,7 @@ public class WebSocketManager {
             // 是否在成员数组里
             Boolean isInMemberArray = false;
             String memberName = "";
-            if(op!=5 && op!=0 && op != 120) {
+            if(op!=5 && op!=0) {
                 String msgStr = msgs.getString("msg");
                 // 竞技场创建时只有队长进入
                 if(msgStr.equals(UserManager.getInstance().getCurrentUserId())){
@@ -2413,18 +2112,18 @@ public class WebSocketManager {
                         break;
                 }
             }
-            else if(roomId.contains("live_")){//直播间特殊消息处理
+            else if(ChatServiceController.curLiveRoomId.contains("live_")){//直播间特殊消息处理
                 switch (op) {
-                    case 1: //创建
+//                    case 1: //创建
 //                        tipMsg = LanguageManager.getLangByKey(LanguageKeys.TIP_CHATROOM_INVITE_2, memberName, operatorName);// {1}将{0}加入聊天
 //                        break;
-                    case 2: //邀请
+//                    case 2: //邀请
 //                        tipMsg = LanguageManager.getLangByKey(LanguageKeys.TIP_CHATROOM_INVITE_2, memberName, operatorName);// {1}将{0}加入聊天
 //                        break;
-                    case 3: //退出
+//                    case 3: //退出
 //                        tipMsg = LanguageManager.getLangByKey(LanguageKeys.TIP_CHATROOM_LOGOUT, operatorName);// {0}退出了聊天室。
 //                        break;
-                    case 4: //踢人
+//                    case 4: //踢人
 //                        if (isInMemberArray && !isOperator) {
 //                            tipMsg = LanguageManager.getLangByKey("105340", operatorName);// 您已被{0}移出聊天
 //                        } else {
@@ -2432,24 +2131,7 @@ public class WebSocketManager {
 //                        }
 //                        break;
                     case 5: //改名
-//                        tipMsg = LanguageManager.getLangByKey(LanguageKeys.TIP_CHATROOM_CHANGE_NAME, operatorName, msgs.getString("msg"));// {0}将聊天室名称修改为{1}
-//                        break;
-                        return;
-                    case 120:
-                        if(isOperator) {
-                            if(ChatServiceController.getCurrentActivity() != null){
-                                ChatServiceController.getCurrentActivity().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        MenuController.showContentConfirm(LanguageKeys.TIP_LIVE_BAN_ANCHOR_SELF);
-                                    }
-                                });
-                            }
-                            return;
-                        }else{
-                            tipMsg = LanguageManager.getLangByKey(LanguageKeys.TIP_LIVE_BAN_ANCHOR_MSG);// 特殊的聊天消息提醒，如竞技场进入提示
-                            post = 120;
-                        }
+                        tipMsg = LanguageManager.getLangByKey(LanguageKeys.TIP_CHATROOM_CHANGE_NAME, operatorName, msgs.getString("msg"));// {0}将聊天室名称修改为{1}
                         break;
                     default:
                         tipMsg = msgs.getString("msg");
@@ -2500,9 +2182,6 @@ public class WebSocketManager {
                 item.msg = tipMsg;
                 item.channelType = DBDefinition.CHANNEL_TYPE_CHATROOM;
                 item.post = post;
-                if(item.post == MsgItem.MSG_TYPE_LIVEROOM_SYS){//直播间禁止主播特殊处理
-                    item.uid = "";
-                }
                 MsgItem[] dbItemsArray = {item};
                 ChatChannel channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_CHATROOM, roomId);
                 if (channel != null)
@@ -2545,17 +2224,21 @@ public class WebSocketManager {
     }
 
     private static String roomId2channelId(String roomId) {
+        if(roomId.contains("warzone_")){
+            return roomId;
+        }
         return roomId.substring(roomId.lastIndexOf("_") + 1);
     }
 
     private static int group2channelType(String group) {
-        if(group.equals("custom")) {
-            return DBDefinition.CHANNEL_TYPE_CHATROOM;
-        }else if(group.equals("country")){
+        if(group.equals("country")){
             return DBDefinition.CHANNEL_TYPE_COUNTRY;
-        }else{
+        }else if(group.equals("alliance")){
             return DBDefinition.CHANNEL_TYPE_ALLIANCE;
+        }else if(group.equals("warzone") || group.equals("custom")){
+            return DBDefinition.CHANNEL_TYPE_CHATROOM;
         }
+        return DBDefinition.CHANNEL_TYPE_ALLIANCE;
     }
 
     public void handleDisconnect() {
@@ -2581,9 +2264,12 @@ public class WebSocketManager {
     public static String getAllianceRoomId() {
         int sid = UserManager.getInstance().getCurrentUser().crossFightSrcServerId > 0 ? UserManager.getInstance().getCurrentUser().crossFightSrcServerId
                 : UserManager.getInstance().getCurrentUser().serverId;
-        if(ConfigManager.isEnterArena || ConfigManager.isIndependentLeague){
+        if(ConfigManager.isEnterArena){
             return getRoomIdPrefix() + "alliance_" + UserManager.getInstance().getCurrentUser().allianceId;
         }else {
+            if(ConfigManager.isIndependentLeague && UserManager.getInstance().getCurrentUser().createServer > 0){
+                sid = UserManager.getInstance().getCurrentUser().createServer;
+            }
             return getRoomIdPrefix() + "alliance_" + sid + "_" + UserManager.getInstance().getCurrentUser().allianceId;
         }
     }
@@ -2592,6 +2278,21 @@ public class WebSocketManager {
         if(ChatServiceController.curLiveRoomId.equals(""))
             return "";
         return ChatServiceController.curLiveRoomId;
+    }
+
+    public static String getWarZoneRoomId(){
+        if(m_roomGroupKey.equals("")){
+            return "";
+        }
+        return getRoomIdPrefix() + "warzone_" + m_roomGroupKey;
+    }
+
+    public static String getRoomIdPrefix() {
+        if (LogUtil.isDebug && !ChatServiceController.isxternaletworkebug){
+            return "test_";
+        }
+
+        return "";
     }
 
     //请求进入默认语言聊天室
@@ -2679,15 +2380,6 @@ public class WebSocketManager {
         return getRoomIdPrefix() + "custom_LanguageChatRoom_" + xmlId;
     }
 
-
-    public static String getRoomIdPrefix() {
-        if (LogUtil.isDebug && !ChatServiceController.isxternaletworkebug){
-            return "test_";
-        }
-
-        return "";
-    }
-
     public synchronized void startKeepAlive()
     {
         if(heartbeatService != null) return;
@@ -2714,26 +2406,11 @@ public class WebSocketManager {
 
     private synchronized void sendKeepAlive()
     {
-        if(isUseMqtt) {
-            synchronized (this) {
-                if (mqclient != null) {
-                    if (mqclient.getStatus() > 0 && isForeground) {
-                        mqclient.sendDataToServer("","heartbeat");
-                    }
-                }
+        if (client != null) {
+            if (client.isOpen() && isForeground.get()) {
+                client.sendFrame(new FramedataImpl1(Framedata.Opcode.PING));
             }
         }
-        else {
-            synchronized (this) {
-                if (client != null) {
-                    if (client.isOpen() && isForeground) {
-                        client.sendFrame(new FramedataImpl1(Framedata.Opcode.PING));
-                    }
-                }
-            }
-        }
-
-
     }
 
     public void connectToWSManully(String server, String port, String protocol) {

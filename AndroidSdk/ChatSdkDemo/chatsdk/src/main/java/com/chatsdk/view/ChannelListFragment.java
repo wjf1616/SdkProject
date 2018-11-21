@@ -10,6 +10,7 @@ import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -50,10 +51,9 @@ import com.chatsdk.model.mail.MailData;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.ScaleUtil;
 import com.chatsdk.view.actionbar.ActionBarFragment;
-import com.chatsdk.view.actionbar.MyActionBarActivity;
 import com.chatsdk.view.adapter.AbstractMailListAdapter;
-import com.chatsdk.view.adapter.EventMainChannelAdapter;
 import com.chatsdk.view.adapter.MainChannelAdapter;
+import com.chatsdk.view.adapter.MsgChannelAdapter;
 import com.chatsdk.view.adapter.SysMailAdapter;
 import com.pullrefresh.PullToRefreshBase;
 import com.pullrefresh.PullToRefreshBase.OnRefreshListener;
@@ -80,12 +80,15 @@ public class ChannelListFragment extends ActionBarFragment
 	private LinearLayout					mailCheckBoxlayout;
 	private View							mailButtonBarAll;
 	private TextView						checkboxLabel;
-	private ImageView						mailButtonBarDelete;
+	private Button							mailButtonBarDelete;
 
-	private Button						mailButtonBarReadAll; //服务于一键已读
+	private ImageView						mailButtonBarDeleteAll; //服务于一键删除
+	private Button							mailButtonSendMail; //服务于一键删除
+	private Button							mailButtonBarReadAll; //服务于一键已读
 
 	public String							channelId			= "";
 	private boolean							allSelectedValue	= false;
+	private boolean							isSecondLvList = false;
 
 	protected ChannelListActivity			channelListActivity;
 
@@ -99,7 +102,7 @@ public class ChannelListFragment extends ActionBarFragment
 		return mListView;
 	}
 
-	private Button cs__action_enterEditButton ,cs__action_returnEditButton;  
+	private Button cs__action_enterEditButton ,cs__action_returnEditButton;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -131,7 +134,6 @@ public class ChannelListFragment extends ActionBarFragment
 		}else{
 			layoutId = R.layout.cs__channel_list_new;
 		}
-
 		return inflater.inflate(layoutId, container, false);
 	}
 
@@ -293,11 +295,12 @@ public class ChannelListFragment extends ActionBarFragment
 	{
 		super.onViewCreated(view, savedInstanceState);
 		Intent intent = this.getActivity().getIntent();//add at 20171031 for get isSecondLvList from intent
-		boolean isSecondLvList = false;
 		if(intent!=null){
 			isSecondLvList = intent.getBooleanExtra("isSecondLvList",false);
 		}
-
+		if(channelId.equals(MailManager.CHANNELID_MESSAGE) || channelId.equals(MailManager.CHANNELID_MOD)){
+			isSecondLvList = true;
+		}
 		channelListFragmentLayout = (RelativeLayout) view.findViewById(R.id.channelListFragmentLayout);
 
 		channelListPullView = (PullToRefreshSwipeListView) view.findViewById(R.id.channelList_PullView);
@@ -339,21 +342,18 @@ public class ChannelListFragment extends ActionBarFragment
 		mailCheckBoxlayout = (LinearLayout) view.findViewById(R.id.channel_item_checkbox_layout);
 		mailButtonBarAll = view.findViewById(R.id.mailButtonBarAll);
 		checkboxLabel = (TextView) view.findViewById(R.id.checkboxLabel);
-		mailButtonBarDelete = (ImageView) view.findViewById(R.id.mailButtonBarDelete);
+		mailButtonBarDelete = (Button) view.findViewById(R.id.mailButtonBarDelete);
+		mailButtonBarDelete.setText(LanguageManager.getLangByKey(LanguageKeys.BTN_DELETE));//删除
+		mailButtonSendMail = (Button) view.findViewById(R.id.mailButtonSendMail);
+		mailButtonSendMail.setText(LanguageManager.getLangByKey(LanguageKeys.BTN_SEND_MAIL));//删除
 		mailButtonBarReadAll= (Button) view.findViewById(R.id.mailButtonBarReadAll);
 		mailButtonBarReadAll.setText(LanguageManager.getLangByKey(LanguageKeys.MAIL_BAR_ONEKEY_READALL));//设置一键已读文字
 		cs__action_enterEditButton = (Button) view.findViewById(R.id.cs__action_enterEditButton);//进入编辑按钮实例化
 		cs__action_returnEditButton = (Button) view.findViewById(R.id.cs__action_returnEditButton);//退出编辑按钮实例化
-		if (ChatServiceController.getCurrentActivity() != null && ChatServiceController.getCurrentActivity().fragment != null
-				&& ChatServiceController.getCurrentActivity().fragment instanceof MainListFragment)
+		if (ChatServiceController.mail_all_read)
 		{
 			showBottomBar(true);//motify at 20171027
-		}else if(isSecondLvList){
-			showBottomBar(true);//motify at 20171027
-		}else if(channelId.equals(MailManager.CHANNELID_MESSAGE) || channelId.equals(MailManager.CHANNELID_EVENT)){
-			showBottomBar(true);//motify at 20171027
-		}
-		else{
+		}else{
 			showBottomBar(false);//motify at 20171027
 		}
 		refreshTitleLabel();
@@ -383,6 +383,7 @@ public class ChannelListFragment extends ActionBarFragment
 				// !ChatServiceController.isNewMailListEnable;
 //			}
 //		});
+		showEditButton(true);
 		getEditButton().setOnClickListener(new View.OnClickListener()
 		{
 			@Override
@@ -399,6 +400,7 @@ public class ChannelListFragment extends ActionBarFragment
 				refreshUI();
 			}
 		});
+		//显示返回主界面的按键
 		getReturnGameUIButton().setVisibility(View.VISIBLE);//add at 20171102
 		getReturnGameUIButton().setOnClickListener(new View.OnClickListener(){
 			@Override
@@ -456,6 +458,12 @@ public class ChannelListFragment extends ActionBarFragment
 			public void onClick(View view)
 			{
 				operateMultiple(ChannelManager.OPERATION_DELETE_MUTI);
+			}
+		});
+		mailButtonSendMail.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				writeNewMail();
 			}
 		});
 		mailButtonBarReadAll.setOnClickListener(new View.OnClickListener()
@@ -550,7 +558,7 @@ public class ChannelListFragment extends ActionBarFragment
 			public void onMenuItemClick(int position, SwipeMenu menu, int index)
 			{
 
-				if (adapter instanceof MainChannelAdapter || adapter instanceof EventMainChannelAdapter)
+				if (adapter instanceof MainChannelAdapter)
 				{
 					if (index == 0)
 					{
@@ -638,7 +646,7 @@ public class ChannelListFragment extends ActionBarFragment
 
 	protected void openContactsView()
 	{
-		ChatServiceController.doHostAction("showFrequntContactsView", "", "", "", false, true);
+		ChatServiceController.doHostAction("showFrequntContactsView", "", "", "", true, true);
 	}
 
 	public void onLoadMoreComplete()
@@ -768,19 +776,17 @@ public class ChannelListFragment extends ActionBarFragment
 		}
 	}
 
-	public void notifyDataSetChanged() {
-		if (activity != null){
-			activity.runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					if (activity != null) {
-						activity.hideProgressBar();
-					}
-
-					showEditButton(!isInEditMode);
-				}
-			});
-		}
+	public void notifyDataSetChanged()
+	{
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if(activity == null || activity.isFinishing())
+					return;
+				activity.hideProgressBar();
+				showEditButton(!isInEditMode);
+			}
+		});
 
 		try
 		{
@@ -822,7 +828,7 @@ public class ChannelListFragment extends ActionBarFragment
 			{
 				if (channel.channelID.equals(MailManager.CHANNELID_MOD) || channel.channelID.equals(MailManager.CHANNELID_MESSAGE))
 				{
-					if (ChatServiceController.chat_v2_personal){
+					if (ChatServiceController.chat_v2_on && ChatServiceController.chat_v2_personal){
 						ServiceInterface.showNewChatActivity(channelListActivity,-1,false);
 					}
 					else
@@ -863,23 +869,22 @@ public class ChannelListFragment extends ActionBarFragment
 		// 打开二级列表
 		else if (channel.channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL)
 		{
+			if(channel.channelID.equals(MailManager.CHANNELID_FIGHT)){
+				int num = channel.unreadCount;
+				JniController.getInstance().excuteJNIVoidMethod("updateBattleBallsState",new Object[]{Boolean.valueOf(false),Integer.valueOf(num)});
+			}
 			LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "channelID", channel.channelID);
-			if (channel.channelID.equals(MailManager.CHANNELID_MONSTER) || channel.channelID.equals(MailManager.CHANNELID_RESOURCE)
+			if (channel.channelID.equals(MailManager.CHANNELID_RESOURCE)
 					|| channel.channelID.equals(MailManager.CHANNELID_RESOURCE_HELP)
 					|| channel.channelID.equals(MailManager.CHANNELID_KNIGHT)
 					|| channel.channelID.equals(MailManager.CHANNELID_MISSILE)
-					|| channel.channelID.equals(MailManager.CHANNELID_GIFT)
-					|| channel.channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER))
+					|| channel.channelID.equals(MailManager.CHANNELID_GIFT))
 			{
 				MailData mail = null;
-				if (channel.channelID.equals(MailManager.CHANNELID_MONSTER))
-					mail = channel.getMonsterMailData();
-				else if (channel.channelID.equals(MailManager.CHANNELID_GIFT))
+				if (channel.channelID.equals(MailManager.CHANNELID_GIFT))
 					mail = channel.getGiftMailData();
 				else if (channel.channelID.equals(MailManager.CHANNELID_MISSILE))
 					mail = channel.getMissleMailData();
-				else if (channel.channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER))
-					mail = channel.getMobilizationMailData();
 				else if (channel.channelID.equals(MailManager.CHANNELID_RESOURCE))
 					mail = channel.getResourceMailData();
 				else if (channel.channelID.equals(MailManager.CHANNELID_KNIGHT)){
@@ -915,18 +920,8 @@ public class ChannelListFragment extends ActionBarFragment
 			}
 			else
 			{
-
-
-				if(channel.channelID.equals(MailManager.CHANNELID_EVENT))
-				{
-					ServiceInterface.showChannelListActivity(channelListActivity, false, DBDefinition.CHANNEL_TYPE_OFFICIAL, channel.channelID,
-							false);
-				}
-				else
-				{
-					ServiceInterface.showChannelListActivity(channelListActivity, true, DBDefinition.CHANNEL_TYPE_OFFICIAL, channel.channelID,
-							false);
-				}
+				ServiceInterface.showChannelListActivity(channelListActivity, true, DBDefinition.CHANNEL_TYPE_OFFICIAL, channel.channelID,
+						false);
 			}
 		}
 	}
@@ -945,7 +940,7 @@ public class ChannelListFragment extends ActionBarFragment
 			{
 				System.out.println("transportAndShowMailData not isInTransportedMailList:" + mailData.getUid());
 				MailManager.getInstance().setShowingMailUid(mailData.getUid());
-				MailManager.getInstance().transportMailData(mailData,false);
+				MailManager.getInstance().transportMailData(mailData);
 				activity.showProgressBar();
 			}
 
@@ -1000,25 +995,24 @@ public class ChannelListFragment extends ActionBarFragment
 
 	private void open(ApplicationInfo item)
 	{
-		//移除搜索应用列表的功能
-//		Intent resolveIntent = new Intent(Intent.ACTION_MAIN, null);
-//		resolveIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-//		resolveIntent.setPackage(item.packageName);
-//		List<ResolveInfo> resolveInfoList = channelListActivity.getPackageManager().queryIntentActivities(resolveIntent, 0);
-//		if (resolveInfoList != null && resolveInfoList.size() > 0)
-//		{
-//			ResolveInfo resolveInfo = resolveInfoList.get(0);
-//			String activityPackageName = resolveInfo.activityInfo.packageName;
-//			String className = resolveInfo.activityInfo.name;
-//
-//			Intent intent = new Intent(Intent.ACTION_MAIN);
-//			intent.addCategory(Intent.CATEGORY_LAUNCHER);
-//			ComponentName componentName = new ComponentName(activityPackageName, className);
-//
-//			intent.setComponent(componentName);
-//			startActivity(intent);
-//			channelListActivity.overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
-//		}
+		Intent resolveIntent = new Intent(Intent.ACTION_MAIN, null);
+		resolveIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+		resolveIntent.setPackage(item.packageName);
+		List<ResolveInfo> resolveInfoList = channelListActivity.getPackageManager().queryIntentActivities(resolveIntent, 0);
+		if (resolveInfoList != null && resolveInfoList.size() > 0)
+		{
+			ResolveInfo resolveInfo = resolveInfoList.get(0);
+			String activityPackageName = resolveInfo.activityInfo.packageName;
+			String className = resolveInfo.activityInfo.name;
+
+			Intent intent = new Intent(Intent.ACTION_MAIN);
+			intent.addCategory(Intent.CATEGORY_LAUNCHER);
+			ComponentName componentName = new ComponentName(activityPackageName, className);
+
+			intent.setComponent(componentName);
+			startActivity(intent);
+			channelListActivity.overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
+		}
 	}
 
 	public boolean handleBackPressed()
@@ -1040,53 +1034,50 @@ public class ChannelListFragment extends ActionBarFragment
 	public void showEditButton(boolean show)
 	{
 		try{
-			cs__action_enterEditButton.setVisibility(show ? View.VISIBLE : View.GONE);
-			cs__action_returnEditButton.setVisibility(!show ? View.VISIBLE : View.GONE);
+
+			cs__action_enterEditButton.setVisibility(show && isSecondLvList ? View.VISIBLE : View.GONE);
+			cs__action_returnEditButton.setVisibility(!show && isSecondLvList ? View.VISIBLE : View.GONE);
 //		getEditButton().setVisibility(show ? View.VISIBLE : View.GONE);
 //		getReturnButton().setVisibility(!show ? View.VISIBLE : View.GONE);
-			mailButtonBarAll.setVisibility(!show ? View.VISIBLE : View.GONE);//add at 20171027
-			checkboxLabel.setVisibility(!show ? View.VISIBLE : View.GONE);//add at 20171027
-			if(show && !channelId.equals(MailManager.CHANNELID_EVENT) &&
-					ChannelManager.getInstance().currChoseChannel != null &&
-					(ChannelManager.getInstance().currChoseChannel.hasReward() ||
-							ChannelManager.getInstance().currChoseChannel.isUnread())){//add at 20171027
-				if(!ChatServiceController.mail_button_hide && channelId.equals(MailManager.CHANNELID_MESSAGE) ){
-					mailButtonBarReadAll.setVisibility(View.GONE);
-				}else{
+			mailButtonBarAll.setVisibility(!show && isSecondLvList ? View.VISIBLE : View.GONE);//add at 20171027
+			checkboxLabel.setVisibility(!show && isSecondLvList ? View.VISIBLE : View.GONE);//add at 20171027
+			mailButtonBarReadAll.setVisibility(View.GONE);
+			if(isSecondLvList) {
+				if (show &&
+						ChannelManager.getInstance().currChoseChannel != null &&
+						(ChannelManager.getInstance().currChoseChannel.hasReward() ||
+								ChannelManager.getInstance().currChoseChannel.isUnread())) {//add at 20171027
 					mailButtonBarReadAll.setVisibility(View.VISIBLE);
-				}
-			}else{
+				} else {
 //				ChatChannel msgChannel = ChannelManager.getInstance().getMessageChannel();
 //				if(ChatServiceController.mail_button_hide && channelId.equals(MailManager.CHANNELID_MESSAGE) && msgChannel!=null
 //						&& (msgChannel.hasReward()||msgChannel.isUnread())){
 //					mailButtonBarReadAll.setVisibility(View.VISIBLE);
 //				}else{
-					mailButtonBarReadAll.setVisibility(View.GONE);
 
-				if((channelId.equals(MailManager.CHANNELID_EVENT) || ChatServiceController.mail_all_read)&& adapter != null && adapter.list.size() > 0){
-					if(channelId.equals(MailManager.CHANNELID_EVENT)){
-						cs__action_enterEditButton.setVisibility(View.GONE);
-					}
-					int count = adapter.list.size();
-					for (int i= 0;i< count ;i++) {
-						ChannelListItem channel = adapter.list.get(i);
-						if(channel instanceof ChatChannel) {
-							List<String> mailDatas = ((ChatChannel) channel).getMailUidArrayByConfigType(DBManager.CONFIG_TYPE_REWARD);
-							if (channel.unreadCount > 0 || mailDatas.size() > 0) {
-								mailButtonBarReadAll.setVisibility(View.VISIBLE);
-								return;
+					if ( ChatServiceController.mail_all_read && adapter != null && adapter.list.size() > 0) {
+						int count = adapter.list.size();
+						for (int i = 0; i < count; i++) {
+							ChannelListItem channel = adapter.list.get(i);
+							if (channel instanceof ChatChannel) {
+								List<String> mailDatas = ((ChatChannel) channel).getMailUidArrayByConfigType(DBManager.CONFIG_TYPE_REWARD);
+								if (channel.unreadCount > 0 || mailDatas.size() > 0) {
+									mailButtonBarReadAll.setVisibility(View.VISIBLE);
+									return;
+								}
 							}
 						}
 					}
-				}
 
-				//判断是否有未领取奖励邮件
+					//判断是否有未领取奖励邮件
 
 //				}
+				}
 			}
 			if(mailButtonBarDelete == null)
-				mailButtonBarDelete = (ImageView) getActivity().findViewById(R.id.mailButtonBarDelete);
-			mailButtonBarDelete.setVisibility(!show ? View.VISIBLE : View.GONE);//add at 20171027
+				mailButtonBarDelete = (Button) getActivity().findViewById(R.id.mailButtonBarDelete);
+			mailButtonBarDelete.setVisibility(!show && isSecondLvList ? View.VISIBLE : View.GONE);//add at 20171027
+			mailButtonSendMail.setVisibility(show && !isSecondLvList ? View.VISIBLE : View.GONE);//add at 20171027
 		}catch (Exception e){
 			e.printStackTrace();
 		}
@@ -1145,6 +1136,7 @@ public class ChannelListFragment extends ActionBarFragment
 	{
 	}
 
+
 	protected void readChannel(int position)
 	{
 		ChatChannel channel = (ChatChannel) adapter.getItem(position);
@@ -1156,7 +1148,6 @@ public class ChannelListFragment extends ActionBarFragment
 		if (channel.channelType == DBDefinition.CHANNEL_TYPE_USER)
 		{
 			ChatServiceController.getChannelListFragment().actualReadSingleChannel(channel);
-			adapter.refreshOrder();
 		}
 		else if (channel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM)
 		{
@@ -1287,39 +1278,6 @@ public class ChannelListFragment extends ActionBarFragment
 		}
 		else
 		{
-			boolean doAllPersonMailDelete=false;
-
-			boolean doAllNormalMailDelete=false;
-
-			boolean doAllNormalMailDeleteByType=false;
-
-			if(type == ChannelManager.OPERATION_DELETE_MUTI && adapter.list.size() > 0)
-			{
-				ChannelListItem item_test = adapter.list.get(0);
-
-				if (item_test instanceof ChatChannel)
-				{
-					ChatChannel channel = (ChatChannel) item_test;
-					if(channel.channelType == DBDefinition.CHANNEL_TYPE_USER)
-					{
-						doAllPersonMailDelete=true;
-					}
-				}
-				else if(item_test instanceof MailData)
-				{
-					MailData mail = (MailData) item_test;
-
-
-					if(mail.channelId == MailManager.CHANNELID_SHAMOEXPLORE||mail.channelId == MailManager.CHANNELID_BORDERFIGHT||mail.channelId == MailManager.CHANNELID_SHAMOGOLDDIGGER)
-					{
-						doAllNormalMailDeleteByType=true;
-
-						doAllNormalMailDelete=true;
-					}
-				}
-
-			}
-
 			for (Iterator<?> iterator = adapter.list.iterator(); iterator.hasNext();)
 			{
 				ChannelListItem item = (ChannelListItem) iterator.next();
@@ -1330,47 +1288,9 @@ public class ChannelListFragment extends ActionBarFragment
 				{
 					checkedItems.add(item);
 				}
-				else
-				{
-					if(doAllPersonMailDelete)
-					{
-						doAllPersonMailDelete=false;
-					}
-					if(doAllNormalMailDelete)
-					{
-						doAllNormalMailDelete=false;
-					}
-					if(doAllNormalMailDeleteByType)
-					{
-						doAllNormalMailDeleteByType=false;
-					}
-				}
 			}
-			if(doAllPersonMailDelete)
-			{
-				if (ChatServiceController.deleteAllPersonCmd==true)
-				{
-					ChannelManager.isDeleteAllPersonMail=true;
-				}
-			}
-			if(doAllNormalMailDelete)
-			{
-				//是否选择所有的普通邮件
-				if (ChatServiceController.deleteMailByAllSelect==true)
-				{
-					ChannelManager.isSelectAllNormalMail=true;
-				}
-			}
-			if(doAllNormalMailDeleteByType)
-			{
-				//是否在按类型删除邮件
-				if (ChatServiceController.deleteMailByType==true)
-				{
-					ChannelManager.isDeleteNormalMailByTypes=true;
-				}
-			}
-
 		}
+
 
 
 		String content = "";
@@ -1455,7 +1375,11 @@ public class ChannelListFragment extends ActionBarFragment
 		{
 			if (type == ChannelManager.OPERATION_REWARD_MUTI)
 			{
-				content = LanguageManager.getLangByKey(LanguageKeys.TIP_REWARD_THESE_MAIL);
+//				content = LanguageManager.getLangByKey(LanguageKeys.TIP_REWARD_THESE_MAIL);
+                if (ChatServiceController.getChannelListFragment() != null) {
+                    ChatServiceController.getChannelListFragment().comfirmOperateMutiMail(checkedItems, type);
+                }
+                return;
 			}
 			else if (type == ChannelManager.OPERATION_DELETE_MUTI)
 			{
@@ -1529,9 +1453,6 @@ public class ChannelListFragment extends ActionBarFragment
 	protected void actualDeleteChannels(List<ChannelListItem> channels)
 	{
 		String uids = "";
-
-		boolean isDoingForPersionChat=false;
-
 		for (int i = 0; i < channels.size(); i++)
 		{
 			if (channels.get(i) != null && channels.get(i) instanceof ChatChannel)
@@ -1542,18 +1463,12 @@ public class ChannelListFragment extends ActionBarFragment
 
 				if (channel.channelType == DBDefinition.CHANNEL_TYPE_USER)
 				{
-					isDoingForPersionChat=true;
-					String channelIDStr = channel.channelID;
-
-					if(ChannelManager.isDeleteAllPersonMail==false)
-
+					List<String> uidArray = channel.getChannelDeleteUidArray();
+					if (uidArray.size() > 0)
 					{
-						if (StringUtils.isNotEmpty(channelIDStr))
-						{
-							uids = appendStr(uids, channelIDStr);
-						}
+						String mailUid = uidArray.get(0);
+						uids = appendStr(uids, mailUid);
 					}
-
 
 					ChannelManager.getInstance().deleteChannel(channel);
 					adapter.list.remove(channel);
@@ -1565,46 +1480,29 @@ public class ChannelListFragment extends ActionBarFragment
 				}
 				else if (channel.channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL)
 				{
+					List<String> uidArray = channel.getChannelDeleteUidArray();
+					String mailUids = getUidsByArray(uidArray);
+					uids = appendStr(uids, mailUids);
 
-					if(ChannelManager.isSelectAllNormalMail)
+					boolean hasCannotDeleteMail = channel.cannotOperatedForMuti(ChannelManager.OPERATION_DELETE_MUTI);
+					if (hasCannotDeleteMail)
 					{
-						if (ChannelManager.isDeleteNormalMailByTypes)
+						for (int j = 0; j < uidArray.size(); j++)
 						{
-							ChannelManager.getInstance().deleteChannel(channel);
-							channel.querySysMailCountFromDB();
-							ChannelManager.getInstance().calulateAllChannelUnreadNum();
+							String mailUid = uidArray.get(j);
+							if (!mailUid.equals(""))
+								ChannelManager.getInstance().deleteSysMailFromChannel(channel, mailUid, true);
 						}
+						DBManager.getInstance().deleteSysMailChannel(channel.getChatTable());
+						channel.querySysMailCountFromDB();
+						ChannelManager.getInstance().calulateAllChannelUnreadNum();
+
 					}
 					else
 					{
-
-						List<String> uidArray = channel.getChannelDeleteUidArray();
-						String mailUids = getUidsByArray(uidArray);
-						uids = appendStr(uids, mailUids);
-
-						boolean hasCannotDeleteMail = channel.cannotOperatedForMuti(ChannelManager.OPERATION_DELETE_MUTI);
-						if (hasCannotDeleteMail)
-						{
-							for (int j = 0; j < uidArray.size(); j++)
-							{
-								String mailUid = uidArray.get(j);
-								if (!mailUid.equals(""))
-									ChannelManager.getInstance().deleteSysMailFromChannel(channel, mailUid, true);
-							}
-							DBManager.getInstance().deleteSysMailChannel(channel.getChatTable());
-							channel.querySysMailCountFromDB();
-							ChannelManager.getInstance().calulateAllChannelUnreadNum();
-
-						}
-						else
-						{
-							ChannelManager.getInstance().deleteChannel(channel);
-							adapter.list.remove(channel);
-						}
-
+						ChannelManager.getInstance().deleteChannel(channel);
+						adapter.list.remove(channel);
 					}
-
-
 
 				}
 			}
@@ -1613,67 +1511,12 @@ public class ChannelListFragment extends ActionBarFragment
 		afterDeleteMsgChannel();
 
 		adapter.notifyDataSetChangedOnUI();
-
-		if(isDoingForPersionChat==true)
+		if (StringUtils.isNotEmpty(uids))
 		{
-			//删除个人邮件
-			if (StringUtils.isNotEmpty(uids))
-			{
-				if(ChannelManager.isDeleteAllPersonMail==true)
-				{
-					JniController.getInstance().excuteJNIVoidMethod("deleteAllPersonMail", new Object[] {});
-					ChannelManager.isDeleteAllPersonMail=false;
-				}
-				else
-				{
-					JniController.getInstance().excuteJNIVoidMethod("deleteSingleMail",
-							new Object[] { Integer.valueOf(0), Integer.valueOf(0), "", uids});
-				}
-			}
-		}
-		else {
-
-			if(ChannelManager.isSelectAllNormalMail&&ChannelManager.isDeleteNormalMailByTypes)
-			{
-				List<Integer> typeArray = MailManager.getInstance().getChannelTypeArrayByChannel(channelId);
-				if (typeArray == null || typeArray.size() <= 0)
-					return ;
-
-
-				String types ="";
-				for (int i=0;i<typeArray.size();i++)
-				{
-					int type = typeArray.get(i).intValue();
-					String temp = "";
-
-					temp=temp+type;
-					if (StringUtils.isNotEmpty(temp))
-					{
-						types = appendStr(uids, temp);
-					}
-				}
-				ChannelManager.isSelectAllNormalMail=false;
-				ChannelManager.isDeleteNormalMailByTypes=false;
-
-				JniController.getInstance().excuteJNIVoidMethod("deleteMailsByTypes",
-						new Object[] {types});
-			}
-			else
-			{
-				if (StringUtils.isNotEmpty(uids)) {
-					JniController.getInstance().excuteJNIVoidMethod("deleteMutiMail", new Object[]{uids, ""});
-				}
-			}
-		}
-
-		if(ChannelManager.isSelectAllNormalMail||ChannelManager.isDeleteNormalMailByTypes||ChannelManager.isDeleteAllPersonMail)
-		{
-			ChannelManager.isSelectAllNormalMail=false;
-			ChannelManager.isDeleteNormalMailByTypes=false;
-			ChannelManager.isDeleteAllPersonMail=false;
+			JniController.getInstance().excuteJNIVoidMethod("deleteMutiMail", new Object[] { uids, "" });
 		}
 	}
-	
+
 	private void afterDeleteMsgChannel()
 	{
 		boolean hasMoreData = false;
@@ -1745,7 +1588,7 @@ public class ChannelListFragment extends ActionBarFragment
 					uids = appendStr(uids, mailData.getUid());
 					if (channel != null && StringUtils.isNotEmpty(mailData.getUid()))
 					{
-						if (!hasDetectMail && (mailData.getType() == MailManager.MAIL_DETECT_REPORT||mailData.getType() == MailManager.Mail_DETECT_REPORT_ARENA))
+						if (!hasDetectMail && (mailData.getType() == MailManager.MAIL_DETECT_REPORT||mailData.getType() == MailManager.Mail_NEW_SCOUT_REPORT_FB))
 							hasDetectMail = true;
 						ChannelManager.getInstance().deleteSysMailFromChannel(channel, mailData.getUid(), true);
 					}
@@ -1815,32 +1658,29 @@ public class ChannelListFragment extends ActionBarFragment
 		String readUids = "";
 		if (ChatServiceController.mail_all_read && type == ChannelManager.OPERATION_REWARD_MUTI ) {
 			if(sysMails.size() >=0) {
-				ChannelListItem data = sysMails.get(0);
-				if (data != null && data instanceof MailData){
-					MailData mailData = (MailData) data;
-					String uidsOne = mailData.channel.getMailUidsByConfigType(DBManager.CONFIG_TYPE_READ);
-					if (StringUtils.isNotEmpty(uidsOne)) {
-						readUids = uidsOne;
-					}
-					String uidsTwo = mailData.channel.getMailUidsByConfigType(DBManager.CONFIG_TYPE_REWARD);
-					if (StringUtils.isNotEmpty(uidsTwo)) {
-						uids = uidsTwo;
-					}
+				MailData mailData = (MailData) sysMails.get(0);
+				String uidsOne = mailData.channel.getMailUidsByConfigType(DBManager.CONFIG_TYPE_READ);
+				if (StringUtils.isNotEmpty(uidsOne)) {
+					readUids = uidsOne;
+				}
+				String uidsTwo = mailData.channel.getMailUidsByConfigType(DBManager.CONFIG_TYPE_REWARD);
+				if (StringUtils.isNotEmpty(uidsTwo)) {
+					uids = uidsTwo;
 				}
 			}
 		}else{
 			for (int i = 0; i < sysMails.size(); i++)
 			{
-				ChannelListItem data = sysMails.get(i);
-				if (data != null && data instanceof MailData) {
-					MailData mailData = (MailData) data;
-					if (mailData != null && mailData.channel != null && mailData.channel.channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL) {
-						if (mailData.hasReward()) {
-							uids = appendStr(uids, mailData.getUid());
-						}
-						if (mailData.isUnread()) {
-							readUids = appendStr(readUids, mailData.getUid());
-						}
+				MailData mailData = (MailData) sysMails.get(i);
+				if (mailData != null && mailData.channel != null && mailData.channel.channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL)
+				{
+					if (mailData.hasReward())
+					{
+						uids = appendStr(uids, mailData.getUid());
+					}
+					if (mailData.isUnread())
+					{
+						readUids = appendStr(readUids, mailData.getUid());
 					}
 				}
 			}
@@ -1951,6 +1791,10 @@ public class ChannelListFragment extends ActionBarFragment
 //			mailButtonBarWrite.setOnClickListener(null);
 //			mailButtonBarWrite = null;
 //		}
+		if(mailCheckBoxlayout != null){
+			mailButtonBarLayout.setOnClickListener(null);
+			mailButtonBarLayout = null;
+		}
 		if (checkboxLabel != null)
 		{
 			checkboxLabel.setOnClickListener(null);

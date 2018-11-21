@@ -42,12 +42,6 @@ public class MailNewUI
 		newUIMap.put("CHANNEL_ICON_FAVORITE", "mail_list_main_icon_favorite");
 		newUIMap.put("CHANNEL_ICON_EVENT", "mail_list_main_icon_activity");
 
-		newUIMap.put("CHANNEL_ICON_EVENT_P", "mail_list_main_icon_activity_p");
-		newUIMap.put("CHANNEL_ICON_EVENT_A", "mail_list_main_icon_activity_a");
-		newUIMap.put("CHANNEL_ICON_EVENT_G", "mail_list_main_icon_activity_g");
-		newUIMap.put("CHANNEL_ICON_EVENT_D", "mail_list_main_icon_activity_d");
-		newUIMap.put("CHANNEL_ICON_EVENT_N", "mail_list_main_icon_activity_n");
-
 		// 新邮件UI邮件ICON
 		newUIMap.put("MAIL_ICON_ANNOUNCEMENT", "mail_list_icon_announcement");
 		newUIMap.put("MAIL_ICON_BATTLE_EXPLORE", "mail_list_icon_battle_explore");
@@ -80,11 +74,14 @@ public class MailNewUI
 		newUIMap.put("CHANNEL_ICON_ARENAGAME", "mail_list_main_icon_arenagame");
 		newUIMap.put("CHANNEL_ICON_SHAMOGAME", "mail_list_main_icon_shamogame");
 
+		newUIMap.put("CHANNEL_ICON_MANOR", "mail_list_main_icon_shamogame");
+
 		newUIMap.put("MAIL_ICON_BATTLE_FUBAO_WIN", "mail_list_icon_battle_fubao_win");
 		newUIMap.put("MAIL_ICON_BATTLE_FUBAO_FAIL", "mail_list_icon_battle_fubao_fail");
-		newUIMap.put("CHANNEL_ICON_MOBILIZATION", "mail_list_main_icon_mobilization_center");
 
-		newUIMap.put("MAIL_ICON_WORLDCUP", "mail_list_icon_worldcup");
+		newUIMap.put("CHANNEL_ICON_MONSTER_FAIL", "fb_monster_fu");
+		newUIMap.put("CHANNEL_ICON_MONSTER_VICTOR", "fb_monster_sheng");
+
 	}
 
 }

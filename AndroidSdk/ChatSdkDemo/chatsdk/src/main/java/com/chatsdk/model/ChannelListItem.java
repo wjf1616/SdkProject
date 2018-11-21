@@ -30,5 +30,4 @@ public class ChannelListItem
 	public String getSetting(){
 		return "";
 	}
-
 }

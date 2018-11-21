@@ -7,7 +7,6 @@ import android.provider.BaseColumns;
 import android.util.Log;
 import android.widget.TextView;
 
-import com.chatsdk.R;
 import com.chatsdk.controller.ChatServiceController;
 import com.chatsdk.controller.JniController;
 import com.chatsdk.model.db.DBDefinition;
@@ -17,14 +16,14 @@ import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.ResUtil;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+import static com.chatsdk.R.drawable.item;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
+
 
 public final class MsgItem
 {
@@ -50,6 +49,7 @@ public final class MsgItem
 	public final static int	MSG_TYPE_INVESTIGATEREPORT		= 5;
 	public final static int	MSG_TYPE_LOUDSPEAKER			= 6;
 	public final static int	MSG_TYPE_EQUIPSHARE				= 7;
+	
 	public final static int	MSG_TYPE_ALLIANCE_JOIN			= 8;
 	public final static int	MSG_TYPE_ALLIANCE_RALLY			= 9;
 	public final static int	MSG_TYPE_LOTTERY_SHARE			= 10;
@@ -72,20 +72,22 @@ public final class MsgItem
 	public final static int MSG_TYPE_WOUNDED_SHARE		    = 27;//联盟庇护所伤兵分享
 	public final static int MSG_TYPE_MEDAL_SHARE		    = 28;//第八件装备勋章分享
 	public final static int MSG_TYPE_SHAMO_INHESION_SHARE   = 29;//天赋沙漠分享
-	public final static int MSG_TYPE_GW_SYS				    = 30;//全面战争系统提示
-	public final static int MSG_TYPE_QUESTION_ACTIVITY		= 31;//查看答题活动界面
-	public final static int MSG_TYPE_NEWS_CENTER_SHARE		= 32;//查看新闻中心界面
-	public final static int MSG_TYPE_SCIENCE_MAX__SHARE		= 33;//科技MAX分享
-	public final static int MSG_TYPE_ALLIANCE_COMMON_SHARE	= 34;//新联盟转盘等带有多语言ID的
-	public final static int MSG_TYPE_SEVENDAY_NEW_SHARE		= 35;//新末日投资
-    public final static int MSG_TYPE_GW_SYS_NEW_SHARE        = 36;//新世界争霸
+	public final static int MSG_TYPE_SHAMO_FORMATION_BATTLE_SHARE   = 30;//天赋沙漠分享
+	public final static int MSG_TYPE_FB_SCOUT_REPORT_SHARE   = 31;//新侦查邮件分享
 
+	public final static int MSG_TYPE_FB_ACTIVITY_HERO_SHARE   = 32;//查看自由城建积分兑换英雄活动
+	public final static int MSG_TYPE_FB_FORMATION_SHARE  = 33;//查看自由城建编队分享
 
+	public final static int MSG_TYPE_SCIENCE_MAX__SHARE		= 34;//科技MAX分享
+	public final static int MSG_TYPE_ALLIANCE_COMMON_SHARE	= 35;//新联盟转盘等带有多语言ID的
+	public final static int MSG_TYPE_SEVENDAY_NEW_SHARE		= 36;//新末日投资
+	public final static int MSG_TYPE_ALLIANCE_ATTACT_SHARE		= 37;//联盟集结BOSS
+	public final static int MSG_TYPE_ALLIANCE_ARMS_RACE_SHARE		= 38;//联盟军备竞赛活动类型
+	public final static int MSG_TYPE_ENEMY_PUTDOWN_POINT_SHARE		= 39;///敌方联盟在本战区内放置集结点
 	/** 增加post时要变更这个值 */
-	public final static int	MSG_TYPE_MAX_VALUE				= MSG_TYPE_GW_SYS_NEW_SHARE;
+	public final static int	MSG_TYPE_MAX_VALUE				= MSG_TYPE_ENEMY_PUTDOWN_POINT_SHARE;
 
 	public final static int	MSG_TYPE_CHATROOM_TIP			= 100;
-	public final static int	MSG_TYPE_LIVEROOM_SYS			= 120;
 	public final static int	MSG_TYPE_USER_AD_TIP			= 150;
 	public final static int	MSG_TYPE_AREA_MSG_TIP			= 180;
 	public final static int	MSG_TYPE_MOD					= 200;
@@ -127,11 +129,10 @@ public final class MsgItem
 	 * 对于自己发的消息,发送状态，0正在发送，1发送失败，2发送成功 红包消息时，表示红包的领取状态,1未领取，0领取过,2被抢光了,3到期了
 	 * */
 	public int				sendState						= -1;
-
+	public int				readStateBefore					= -1;
 	/** 战报UID，侦察战报UID,装备ID等 */
 	public String			attachmentId					= "";
 
-	//多媒体格式 = {stickers:"stickersSetId|documentId","audio":"","photo":""}
 	public String			media							= "";
 
 	public String           roomId                          = "";
@@ -144,33 +145,12 @@ public final class MsgItem
 	public String			currentText						= "";
 	/** 是否被翻译过 */
 	public boolean			hasTranslated;
-
+	public boolean			isSendDataShowed				= false;
 	public int				lastUpdateTime					= 0;
 	/** 本地发送时间戳 */
 	public int				sendLocalTime					= 0;
-
-
-
-	//*推断未使用的变量-----------------------------------------------------star*//
-
-	public int				readStateBefore					= -1;
-	public boolean			isSendDataShowed				= false;
-
 	public boolean			isTranslateByGoogle				= false;
 	public boolean			isFirstNewMsg					= false;
-
-	public boolean			isAudioDownloading				= false;
-	public int				gmod;
-	/** 自定义头像 */
-	public int				headPicVer;
-
-	/** vip信息 */
-	public String			vip;
-
-	//*推断未使用的变量--------------------------------------------------------end *//
-
-
-
 	/**
 	 * 0:不是第一条 1:第一条且新消息数小于等于200条 2:第一条且新消息数超过200条
 	 * */
@@ -183,6 +163,7 @@ public final class MsgItem
 	public boolean			hasTranslatedByForce			= false;
 	//是否被强制显示原文
 	public boolean			isOriginalLangByForce			= false;
+	public boolean			isAudioDownloading				= false;
 
 	public boolean			isMsgBadReplace					= false;
 	public boolean			isTransMsgBadReplace					= false;
@@ -192,12 +173,13 @@ public final class MsgItem
 	public String			name;
 	/** 联盟简称 */
 	public String			asn;
-
+	/** vip信息 */
+	public String			vip;
 	/** 系统头像 */
 	public String			headPic;
-
-
-	public UserInfo msgUser = null;
+	public int				gmod;
+	/** 自定义头像 */
+	public int				headPicVer;
 
 	//'@'相关
 	public boolean mentioned = false;
@@ -221,13 +203,9 @@ public final class MsgItem
 	public UserInfo getUser()
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_MSG, "uid",uid, "name", name);
-		if (msgUser==null)
-		{
-			UserManager.checkUser(uid, name, 0);
-			msgUser = UserManager.getInstance().getUser(uid);
-		}
-
-		return msgUser;
+		UserManager.checkUser(uid, name, 0);
+		UserInfo user = UserManager.getInstance().getUser(uid);
+		return user;
 	}
 
 	public int getMonthCard()
@@ -243,7 +221,7 @@ public final class MsgItem
 	public String getLang()
 	{
 		String lang = originalLang;
-		if(StringUtils.isEmpty(lang) && isNotEmpty(getUser().lang))
+		if(StringUtils.isEmpty(lang) && StringUtils.isNotEmpty(getUser().lang))
 			lang = getUser().lang;
 		return lang;
 	}
@@ -276,6 +254,11 @@ public final class MsgItem
 		return getUser().getSVipLevel();
 	}
 
+    public int getVipframe()
+    {
+        return getUser().getVipframe();
+    }
+    
 	public String getHeadPic()
 	{
 		return getUser().headPic;
@@ -298,7 +281,7 @@ public final class MsgItem
 			LogUtil.printVariables(Log.WARN, LogUtil.TAG_MSG, "invalid lastUpdateTime msg:\n" + LogUtil.typeToString(this));
 		}
 		String fromUid = ChannelManager.getInstance().getModChannelFromUid(mailOpponentUid);
-		if (channelType == DBDefinition.CHANNEL_TYPE_USER && isNotEmpty(fromUid) && !fromUid.equals(uid) && !isSelfMsg())
+		if (channelType == DBDefinition.CHANNEL_TYPE_USER && StringUtils.isNotEmpty(fromUid) && !fromUid.equals(uid) && !isSelfMsg())
 		{
 			LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_MSG, "fromUid",fromUid, "mailOpponentName", mailOpponentName,"lastUpdateTime",lastUpdateTime);
 			UserManager.checkUser(fromUid, mailOpponentName, lastUpdateTime);
@@ -332,7 +315,6 @@ public final class MsgItem
 			post = c.getInt(c.getColumnIndex(DBDefinition.CHAT_COLUMN_TYPE));
 			channelType = c.getInt(c.getColumnIndex(DBDefinition.CHAT_COLUMN_CHANNEL_TYPE));
 			msg = c.getString(c.getColumnIndex(DBDefinition.CHAT_COLUMN_MSG));
-			shareComment = c.getString(c.getColumnIndex(DBDefinition.CHAT_COLUMN_SHARECOMMENT));
 			translateMsg = c.getString(c.getColumnIndex(DBDefinition.CHAT_COLUMN_TRANSLATION));
 			originalLang = c.getString(c.getColumnIndex(DBDefinition.CHAT_COLUMN_ORIGINAL_LANGUAGE));
 			translatedLang = c.getString(c.getColumnIndex(DBDefinition.CHAT_COLUMN_TRANSLATED_LANGUAGE));
@@ -379,7 +361,6 @@ public final class MsgItem
 		cv.put(DBDefinition.CHAT_COLUMN_TYPE, post);
 		cv.put(DBDefinition.CHAT_COLUMN_CHANNEL_TYPE, channelType);
 		cv.put(DBDefinition.CHAT_COLUMN_MSG, msg);
-		cv.put(DBDefinition.CHAT_COLUMN_SHARECOMMENT, shareComment);
 		cv.put(DBDefinition.CHAT_COLUMN_TRANSLATION, translateMsg);
 		cv.put(DBDefinition.CHAT_COLUMN_ORIGINAL_LANGUAGE, originalLang);
 		cv.put(DBDefinition.CHAT_COLUMN_TRANSLATED_LANGUAGE, translatedLang);
@@ -463,7 +444,7 @@ public final class MsgItem
 			}
 		}
 
-		isSelfMsg = isNotEmpty(uid) && isNotEmpty(UserManager.getInstance().getCurrentUserId())
+		isSelfMsg = StringUtils.isNotEmpty(uid) && StringUtils.isNotEmpty(UserManager.getInstance().getCurrentUserId())
 				&& uid.equals(UserManager.getInstance().getCurrentUserId()) && post != MSG_TYPE_CHATROOM_TIP && post != MSG_TYPE_USER_AD_TIP;
 		return isSelfMsg;
 	}
@@ -480,7 +461,7 @@ public final class MsgItem
 
 	public boolean isTranlateDisable()
 	{
-		if (isNotEmpty(originalLang) && isNotEmpty(TranslateManager.getInstance().disableLang))
+		if (StringUtils.isNotEmpty(originalLang) && StringUtils.isNotEmpty(TranslateManager.getInstance().disableLang))
 		{
 			boolean isContainsOriginLang = false;
 			if (originalLang.contains(","))
@@ -509,7 +490,7 @@ public final class MsgItem
 	private boolean isContainsLang(String disableLang, String lang)
 	{
 		boolean ret = false;
-		if (isNotEmpty(disableLang) && isNotEmpty(originalLang))
+		if (StringUtils.isNotEmpty(disableLang) && StringUtils.isNotEmpty(originalLang))
 		{
 			if (disableLang.contains(lang))
 				ret = true;
@@ -589,14 +570,17 @@ public final class MsgItem
 		UserInfo currInfo = UserManager.getInstance().getCurrentUser();
 		boolean isEqualServer = false;
 		if (channelType == DBDefinition.CHANNEL_TYPE_COUNTRY){
-			isEqualServer = getSrcServerId() > 0 && currInfo != null && currInfo.chatShowServerId > 0 && currInfo.crossFightSrcServerId != getSrcServerId();
+			isEqualServer = getSrcServerId() > 0 && currInfo != null && currInfo.serverId > 0 && currInfo.crossFightSrcServerId != getSrcServerId();
 		}
 		else if (isLanguageChatRoomMsg()){
 			isEqualServer = currInfo != null && currInfo.crossFightSrcServerId != getSrcServerId();
+		}else if(channelType == DBDefinition.CHANNEL_TYPE_CHATROOM ){
+			isEqualServer = getSrcServerId() > 0 ;
 		}
 
 		return isEqualServer;
 	}
+
 
 	/**
 	 * 是否是聊天室的提示消息,显示在中间
@@ -643,27 +627,49 @@ public final class MsgItem
 		return post == MSG_TYPE_ALLIANCE;
 	}
 
-	public boolean isAnnounceInvite(){
-		return post == MSG_TYPE_INVITE;
-	}
 	public boolean isBattleReport()
 	{
-		return post == MSG_TYPE_BATTLE_SHARE;
+		return post == 4;
 	}
 
 	public boolean isDetectReport()
 	{
-		return post == MSG_TYPE_INVESTIGATEREPORT;
+		return post == 5;
+	}
+
+	public boolean isFormationBattle(){
+		return post == MSG_TYPE_SHAMO_FORMATION_BATTLE_SHARE;
+	}
+
+	public boolean isFBScoutReport(){
+		return post == MSG_TYPE_FB_SCOUT_REPORT_SHARE;
+	}
+
+	public boolean isAllianceAttackMonsterShare()
+	{
+        return post == MSG_TYPE_ALLIANCE_ATTACT_SHARE;
+	}
+	public boolean isAllianceArmsRaceShare()
+	{
+        return post == MSG_TYPE_ALLIANCE_ARMS_RACE_SHARE;
+	}
+	public boolean isEnemyPutDownPointShare()
+	{
+		return post == MSG_TYPE_ENEMY_PUTDOWN_POINT_SHARE;
+	}
+	public boolean isAnnounceInvite()
+	{
+		return post == 3;
 	}
 
 	public boolean isHornMessage()
 	{
-		return post == MSG_TYPE_LOUDSPEAKER;
+		return post == 6;
 	}
 
 	public boolean isEquipMessage()
 	{
-		return post == MSG_TYPE_EQUIPSHARE;
+		return post == 7;
 	}
 
 	public boolean isAllianceJoinMessage()
@@ -718,26 +724,27 @@ public final class MsgItem
 		return post == MSG_TYPE_MEDAL_SHARE;
 	}
 
+	public boolean isAllianceCommonShare(){
+		return post == MSG_TYPE_ALLIANCE_COMMON_SHARE;
+	}
+
+	public boolean isActivityHeroShare()
+	{
+		return post == MSG_TYPE_FB_ACTIVITY_HERO_SHARE;
+	}
+
+	public boolean isFBFormationShare()
+	{
+		return post == MSG_TYPE_FB_FORMATION_SHARE;
+	}
+
 	public boolean isShamoInhesionShare()
 	{
 		return post == MSG_TYPE_SHAMO_INHESION_SHARE;
 	}
 
-	public boolean isViewQuestionActivity()
-	{
-		return post == MSG_TYPE_QUESTION_ACTIVITY;
-	}
-
-	public boolean isNewsCenterShare(){
-		return post == MSG_TYPE_NEWS_CENTER_SHARE;
-	}
-
 	public boolean isScienceMaxShare(){
 		return post == MSG_TYPE_SCIENCE_MAX__SHARE;
-	}
-
-	public boolean isAllianceCommonShare(){
-		return post == MSG_TYPE_ALLIANCE_COMMON_SHARE;
 	}
 
 	public boolean isSevenDayNewShare(){
@@ -768,11 +775,6 @@ public final class MsgItem
 
 	public boolean isAreaMsgTip(){return post == MSG_TYPE_AREA_MSG_TIP;}
 
-	public boolean isLiveRoomSys(){return post == MSG_TYPE_LIVEROOM_SYS;}
-
-	public boolean isGWSysTips(){return post == MSG_TYPE_GW_SYS;}
-    
-    public boolean isGwSysNewTips(){return post == MSG_TYPE_GW_SYS_NEW_SHARE;}
 	/**
 	 * 判断是否是系统消息
 	 */
@@ -796,11 +798,21 @@ public final class MsgItem
 		return post == MSG_TYPE_RED_PACKAGE;
 	}
 
+	//已领取
+	public boolean isReadRedPackageMessage()
+	{
+		if (StringUtils.isNotEmpty(attachmentId) && !isRedPackageFinish()) {
+			return false;
+		}
+
+		return true;
+	}
+
 	private Date getSendUtcDate()
 	{
 		int t = createTime > 0 ? createTime : sendLocalTime;
 		//只用于自由城建修改显示时间
-		if(false){
+		if(this.channelType == DBDefinition.CHANNEL_TYPE_USER){
 			t = t + 3600*2;
 		}
 		Date date = new Date((long) t * 1000);
@@ -831,17 +843,18 @@ public final class MsgItem
 //		{
 //			return getSendTimeHM();
 //		}
+
 		return getSendTimeYMD();
 	}
 
 	public boolean hasTranslation()
 	{
-		return isNotEmpty(translateMsg) && !translateMsg.startsWith("{\"code\":{");
+		return StringUtils.isNotEmpty(translateMsg) && !translateMsg.startsWith("{\"code\":{");
 	}
 
 	public boolean canShowTranslateMsg()
 	{
-		return isNotEmpty(msg) && !StringUtils.isNumeric(msg) && TranslateManager.getInstance().isTranslateMsgValid(this)
+		return StringUtils.isNotEmpty(msg) && !StringUtils.isNumeric(msg) && TranslateManager.getInstance().isTranslateMsgValid(this)
 				&& (!isTranlateDisable() || isTranslatedByForce) && !isOriginalSameAsTargetLang() && !isOriginalLangByForce;
 	}
 
@@ -858,7 +871,7 @@ public final class MsgItem
 
 	public boolean isVersionInvalid()
 	{
-		if (post > MSG_TYPE_MAX_VALUE && !isTipMsg() && !isUserADMsg() && !isModMsg() && !isAreaMsgTip() && !isLiveRoomSys() && !isGWSysTips() && !isGwSysNewTips() && post != MAIL_MOD_PERSON)
+		if (post > MSG_TYPE_MAX_VALUE && !isTipMsg() && !isUserADMsg() && !isModMsg() && !isAreaMsgTip() && post != MAIL_MOD_PERSON)
 			return true;
 		return false;
 	}
@@ -906,7 +919,7 @@ public final class MsgItem
 
 	public boolean isKingMsg()
 	{
-		if (isNotEmpty(uid) && isNotEmpty(ChatServiceController.kingUid)
+		if (StringUtils.isNotEmpty(uid) && StringUtils.isNotEmpty(ChatServiceController.kingUid)
 				&& ChatServiceController.kingUid.equals(uid))
 			return true;
 		return false;
@@ -952,14 +965,13 @@ public final class MsgItem
 
 	public int getPicType(Context context, String fileName)
 	{
-		if (fileName == null) {
+		if (fileName == null)
 			return -1;
-		}
 		int id = ResUtil.getId(context, "drawable", fileName);
-		if (id == 0) {
+		if (id == 0)
 			return -1;
-		}
-		if (context.getString(id).endsWith(".gif")) {
+		if (context.getString(id).endsWith(".gif"))
+		{
 			return MSGITEM_TYPE_GIF;
 		}
 		else
@@ -982,13 +994,13 @@ public final class MsgItem
 	}
 	public boolean isNotInRestrictList()
 	{
-		return (!isSystemMessage() && !(UserManager.getInstance().isInRestrictList(uid, UserManager.BAN_LIST) || UserManager.getInstance().isInRestrictList(uid, UserManager.BLOCK_LIST)))
+		return (!isSystemMessage() && !UserManager.getInstance().isInRestrictList(uid, UserManager.BAN_LIST))
 				|| (isHornMessage() && !UserManager.getInstance().isInRestrictList(uid, UserManager.BAN_NOTICE_LIST));
 	}
 
 	public boolean isInRestrictList()
 	{
-		return (!isSystemMessage() && (UserManager.getInstance().isInRestrictList(uid, UserManager.BAN_LIST) || UserManager.getInstance().isInRestrictList(uid, UserManager.BLOCK_LIST)))
+		return (!isSystemMessage() && UserManager.getInstance().isInRestrictList(uid, UserManager.BAN_LIST))
 				|| (isHornMessage() && UserManager.getInstance().isInRestrictList(uid, UserManager.BAN_NOTICE_LIST));
 	}
 	
@@ -996,7 +1008,7 @@ public final class MsgItem
 	{
 		if(isAllianceTreasureMessage())
 		{
-			if(isNotEmpty(attachmentId))
+			if(StringUtils.isNotEmpty(attachmentId))
 			{
 				String[] arr = attachmentId.split("\\|");
 				if(arr.length == 3 && index<3 && index>=0)
@@ -1019,17 +1031,14 @@ public final class MsgItem
 	}
 
 	public boolean isNeedParseAttachmentId(){
-		return  ((isAllianceGroupBuyMessage()||isAllianceJoinMessage() || isWoundedShare() || isBattleReport()
-				||isDetectReport() || isShamoInhesionShare() || isMissleReport() ||isAllianceMonthCardBoxMessage()
-				|| isGiftMailShare() || isLotteryMessage() || isSevenDayMessage() ||post == 1 || post == 2)
-				&&ChatServiceController.new_system_message) || isViewQuestionActivity();
+		return false;
 	}
 
 	public boolean isShareCommentMsg(){
-		if(ChatServiceController.share_optimization && isNotEmpty(shareComment)
-				&& isFavourPointShare()){
-			return true;
-		}
+		// if(ChatServiceController.share_optimization && isNotEmpty(shareComment)
+		// 		&& isFavourPointShare()){
+		// 	return true;
+		// }
 		return false;
 	}
 
@@ -1043,8 +1052,8 @@ public final class MsgItem
 			if (this.isAllianceCreate() || this.isAlllianceMessage() || this.isAnnounceInvite()
 					) {
 
-			} else if (this.isBattleReport() || this.isDetectReport()) {
-				if (isNotEmpty(attachmentIdStr)) {
+			} else if (this.isBattleReport() || this.isDetectReport() || this.isFBScoutReport()) {
+				if (StringUtils.isNotEmpty(attachmentIdStr)) {
 					String[] attachmentIds = attachmentIdStr.split("__");
 					String reportUid = attachmentIds[0];
 					if (attachmentIds.length > 1) {
@@ -1052,7 +1061,7 @@ public final class MsgItem
 						String[] dialogArray = attachmentIds[1].split("\\|");
 						if (dialogArray.length > 0) {
 							String dialogKey = dialogArray[0];
-							if (isNotEmpty(dialogKey)) {
+							if (StringUtils.isNotEmpty(dialogKey)) {
 								str = LanguageManager.getLangByKey(dialogKey);
 							} else {
 								str = LanguageManager.getLangByKey("111660");
@@ -1060,11 +1069,20 @@ public final class MsgItem
 
 							if (dialogArray.length == 2) {
 								String name1 = dialogArray[1];
+								if(name1.equals("200637") || name1.equals("200639") || name1.equals("200640")){
+									name1 = LanguageManager.getLangByKey(name1);
+								}
 								str = LanguageManager.getLangByKey(dialogKey, name1);
 							} else if (dialogArray.length == 3) {
 								String name1 = dialogArray[1];
 								String name2 = dialogArray[2];
-								str = LanguageManager.getLangByKey(dialogKey, name1, name2);
+								if(name2.equals("200637")){
+									name1 = "(" + name1 + ")";
+									name2 = LanguageManager.getLangByKey(name2);
+									str = LanguageManager.getLangByKey(dialogKey, name1.concat(name2));
+								}else{
+									str = LanguageManager.getLangByKey(dialogKey, name1, name2);
+								}
 							}
 						}
 					}
@@ -1076,17 +1094,7 @@ public final class MsgItem
 			} else if (this.isAllianceTaskMessage() || this.isAllianceTreasureMessage()) {
 
 			} else if (this.isAllianceMonthCardBoxMessage()) {
-				if(StringUtils.isNotEmpty(attachmentIdStr)) {
-					String[] attachmentIds = attachmentIdStr.split("\\|");
-					if(attachmentIds.length == 2){
-						String dialogKey = attachmentIds[0];
-						str = LanguageManager.getLangByKey(dialogKey, attachmentIds[1]);
-					}else{
-						str = this.msg;
-					}
-				}else{
-					str = this.msg;
-				}
+
 			} else if (this.isSevenDayMessage()) {
 				if(StringUtils.isNotEmpty(attachmentIdStr)) {
 					String[] attachmentIds = attachmentIdStr.split("\\|");
@@ -1144,156 +1152,86 @@ public final class MsgItem
 						} else if (taskInfo[0].equals("81000324") || taskInfo[0].equals("81000325")) {
 							String msgStr = LanguageManager.getLangByKey(taskInfo[5]);
 							str = LanguageManager.getLangByKey(taskInfo[0], taskInfo[4], msgStr, nomalStr);
-                        }
-						else if (taskInfo[0].equals("99010063")) {
-							str = LanguageManager.getLangByKey(taskInfo[0], taskInfo[4], taskInfo[5], taskInfo[2],taskInfo[3]);
-						}
-						else if (taskInfo[0].equals("99010079")) {
-							str = LanguageManager.getLangByKey(taskInfo[0],taskInfo[2],taskInfo[3]);
-						}
-						else {
+                        } else {
                             str = nomalStr;
                         }
 					}
 				}
 				if (isForNewChat)
 				{
-					return str;
+
 				}
-				else if (this.isShareCommentMsg() && ((textView != null && textView.getId() == R.id.commentText) || textView == null)) {
+				else if (this.isShareCommentMsg()) {
 					str = commentStr;
 				}
 
 			} else if (this.isWoundedShare()) {
 
 			} else if (this.isEquipmentMedalShare()) {
-				String msgStr = this.msg;
-				String equipName = "";
-				if (isNotEmpty(msgStr)) {
-					String[] equipInfo = msgStr.split("\\;");
-					if (equipInfo.length > 1) {
-						equipName = LanguageManager.getLangByKey(equipInfo[0]);
-						str = "[" + equipName + "]";
-
-						if (equipInfo.length == 3 && StringUtils.isNumeric(equipInfo[2]) && Integer.parseInt(equipInfo[2]) == 1) {
-							str = LanguageManager.getLangByKey(LanguageKeys.TIP_EQUIP_SHARE, equipName);
-						}
-					}
-				}
+                String[] attachmentIds = attachmentIdStr.split("\\|");
+                if (attachmentIds.length > 1 && StringUtils.isNotEmpty(attachmentIds[1])) {
+                    str = LanguageManager.getLangByKey(attachmentIds[0],attachmentIds[1]);
+                }else{
+                    str = this.msg;
+                }
 			} else if (this.isShamoInhesionShare()) {
 
-			} else if (this.isGWSysTips() || this.isGwSysNewTips()) {
-				String[] attachments = attachmentIdStr.split("__");
-				String[] attachmentIds = attachments[1].split("\\|");
-				if (attachmentIds.length == 0)
+			}
+//			else if (this.isGWSysTips()) {
+//				String[] attachments = attachmentIdStr.split("__");
+//				String[] attachmentIds = attachments[1].split("\\|");
+//				if (attachmentIds.length == 0)
+//					str = this.msg;
+//				String dialogKey = attachmentIds[0];
+//				String pngName = "";
+//				int cityOrFlagId = 0;
+//				if (attachmentIds.length == 3) {
+//					str = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], pngName);
+//				} else if (attachmentIds.length == 4) {
+//					if (NumberUtils.isNumber(attachmentIds[2])) {
+//						cityOrFlagId = Integer.parseInt(attachmentIds[2]);
+//					}
+//					if (cityOrFlagId > 1000) {
+//						String cityName = LanguageManager.getLangByKey("82000992", String.valueOf(cityOrFlagId - 1000));
+//						str = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], cityName, attachmentIds[3]);
+//					} else {
+//						str = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], pngName, attachmentIds[3]);
+//					}
+//				}
+//			}
+//			else if (this.isViewQuestionActivity()) {
+//				str = LanguageManager.getLangByKey(attachmentIdStr);
+//			} else if (this.isNewsCenterShare()) {
+//				String newsIdStr = "";
+//				String titleParams = "";
+//				String[] attachmentIDArray = attachmentIdStr.split("_", 3); //只分割两次,防止将名字分割了
+//				if (attachmentIDArray.length == 3) {
+//					newsIdStr = attachmentIDArray[1];
+//					titleParams = attachmentIDArray[2];
+//				}
+//				str = JniController.getInstance().excuteJNIMethod("getNewsCenterShowMsg", new Object[]{newsIdStr, titleParams});
+//			}
+			else if(isFormationBattle()){
+				String []attachmentIds = attachmentIdStr.split("_",2);
+				if(attachmentIds.length == 2){
+					String []dialogs = attachmentIds[1].split("\\|");
+					if(dialogs.length == 2) {
+						str = LanguageManager.getLangByKey(dialogs[0], dialogs[1]);
+					}else{
+						str = this.msg;
+					}
+				}
+			}
+			else if (isFBFormationShare())
+			{
+				String[] attachmentIds = attachmentIdStr.split("\\|");
+				if (attachmentIds.length > 1 && StringUtils.isNotEmpty(attachmentIds[1])) {
+					str = LanguageManager.getLangByKey(attachmentIds[0],attachmentIds[1]);
+				}else{
 					str = this.msg;
-				String dialogKey = attachmentIds[0];
-				String pngName = "";
-				int cityOrFlagId = 0;
-				if (attachmentIds.length == 3) {
-					str = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], pngName);
-				} else if (attachmentIds.length == 4) {
-					if (NumberUtils.isNumber(attachmentIds[2])) {
-						cityOrFlagId = Integer.parseInt(attachmentIds[2]);
-					}
-					if (cityOrFlagId > 1000) {
-						String cityName = LanguageManager.getLangByKey("82000992", String.valueOf(cityOrFlagId - 1000));
-						str = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], cityName, attachmentIds[3]);
-					} else {
-						str = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], pngName, attachmentIds[3]);
-					}
-				}else if(attachmentIds.length == 9){
-					String  place1 = attachmentIds[2]+":";
-					String place = place1+attachmentIds[3];
-
-					String function1 = attachmentIds[7];
-                    String[] function1_1 = function1.split(";");
-                    String function2 = attachmentIds[8];
-                    String[] function2_1 = function2.split(";");
-                
-                    String function1_2 = LanguageManager.getLangByKey(function1_1[0]);
-                    function1_2 = function1_2 +"+";
-                    // int buff1 = Integer.parseInt(function1_1[1]);
-                    // function1_1[1]=String.valueOf(buff1);
-                    function1_2 = function1_2 +function1_1[1];
-                    if(function1_1[2].equals("2"))
-					{
-                        function1_2 = function1_2 +"%";
-                    }
-                    
-                    String function2_2 = LanguageManager.getLangByKey(function2_1[0]);
-                    function2_2 = function2_2 +"+";
-                    // int buff2=Integer.parseInt(function2_1[1]);
-                    // function2_1[1] = String.valueOf(buff2);
-                    function2_2 = function2_2 +function2_1[1];
-                    if(function2_1[2].equals("2")){
-                        function2_2 = function2_2 +"%";
-                    }
-                      
-                    String buff=function1_2+"\n"+function2_2;
-
-					cityOrFlagId = Integer.parseInt(attachmentIds[5]);
-					String cityName = "";
-					if (cityOrFlagId > 1000) {
-						cityName = LanguageManager.getLangByKey("82000992", String.valueOf(cityOrFlagId - 1000));
-					} else {
-						cityName = "u_gwIslands_Camp"+(String.valueOf(cityOrFlagId));
-					}
-					if(dialogKey.equals("99014001")){
-						str = LanguageManager.getLangByKey(dialogKey,cityName,attachmentIds[6],place,attachmentIds[4],buff);
-                    }else{
-                        str = LanguageManager.getLangByKey(dialogKey,attachmentIds[4],cityName,attachmentIds[6],place,buff);
-                    }
-
-
-
 				}
-			} else if (this.isViewQuestionActivity()) {
-				str = LanguageManager.getLangByKey(attachmentIdStr);
-			} else if (this.isNewsCenterShare()) {
-				String newsIdStr = "";
-				String titleParams = "";
-				String[] attachmentIDArray = attachmentIdStr.split("_", 3); //只分割两次,防止将名字分割了
-				if (attachmentIDArray.length == 3) {
-					newsIdStr = attachmentIDArray[1];
-					titleParams = attachmentIDArray[2];
-				}
-				String []titleParamsArr =titleParams.split("\\|\\|");
-				String typeName = JniController.getInstance().excuteJNIMethod("getPropByIdType",new Object[]{newsIdStr,"name","newscontent",ConfigManager.LocalController.NewsCenterXml});
-				typeName = LanguageManager.getLangByKey(typeName).concat("\n");
-				String dialogKey = JniController.getInstance().excuteJNIMethod("getPropByIdType",new Object[]{newsIdStr,"title","newscontent",ConfigManager.LocalController.NewsCenterXml});
-				String title1s = JniController.getInstance().excuteJNIMethod("getPropByIdType",new Object[]{newsIdStr,"title1","newscontent",ConfigManager.LocalController.NewsCenterXml});
-				String []title1Arr = title1s.split("\\|");
-
-				ArrayList<String> paramsArr = new ArrayList<>();
-				int i = 0;
-				for (String params : titleParamsArr){
-					String type = title1Arr[i];
-					String outMsg = "";
-					if (type.equals("1")){//名称，直接使用后台
-						outMsg = params;
-					} else if (type.equals("2")){//官职名称(官职id)
-						outMsg = JniController.getInstance().excuteJNIMethod("getPropByIdGroup",new Object[]{params,"name","office"});
-					}else if (type.equals("6")){//大帝官职(官职id)
-						outMsg = JniController.getInstance().excuteJNIMethod("getPropByIdGroup",new Object[]{params,"name","great_office"});
-					} else if (type.equals("9")){//段位(段位id)
-						outMsg = JniController.getInstance().excuteJNIMethod("getPropByIdType",new Object[]{newsIdStr,"name","newscontent", ConfigManager.LocalController.ArenaRankXml});
-					}
-					paramsArr.add(outMsg);
-				}
-				if (titleParamsArr.length == 0) {
-					str = LanguageManager.getLangByKey(dialogKey);
-				} else if (titleParamsArr.length == 1) {
-					str = LanguageManager.getLangByKey(dialogKey,paramsArr.get(0));
-				} else if (titleParamsArr.length == 2) {
-					str = LanguageManager.getLangByKey(dialogKey,paramsArr.get(0),paramsArr.get(1));
-				} else if (titleParamsArr.length == 3) {
-					str = LanguageManager.getLangByKey(dialogKey,paramsArr.get(0),paramsArr.get(1),paramsArr.get(2));
-				} else if (titleParamsArr.length == 4) {
-					str = LanguageManager.getLangByKey(dialogKey,paramsArr.get(0),paramsArr.get(1),paramsArr.get(2),paramsArr.get(3));
-				}
-				str = typeName.concat(str);
-			} else if(this.isScienceMaxShare()){
+			}
+			else if(this.isScienceMaxShare()){
 				String dialogKey = "";
 				String scienceType = "";
 				String titleParams = "";
@@ -1305,7 +1243,7 @@ public final class MsgItem
 				String nameStr = JniController.getInstance().excuteJNIMethod("getNameById",new Object[]{scienceType});
 				String msg = JniController.getInstance().excuteJNIMethod("getScienceSharedMsg", new Object[]{scienceType});
 				str = LanguageManager.getLangByKey(dialogKey,nameStr,msg);
-			} else if(this.isAllianceCommonShare() || this.isSevenDayNewShare()){
+			} else if(this.isAllianceCommonShare() || this.isSevenDayNewShare() || this.isAllianceAttackMonsterShare()){
 				if(StringUtils.isNotEmpty(attachmentIdStr)) {
 					String[] attachmentIds = attachmentIdStr.split("\\|");
 					String dialogKey = attachmentIds[0];
@@ -1317,11 +1255,37 @@ public final class MsgItem
 						str = this.msg;
 					}
 				}
-			} else if (this.isVersionInvalid()) {
+			} else if(this.isAllianceArmsRaceShare()){
+				if(StringUtils.isNotEmpty(attachmentIdStr)) {
+					String[] attachmentIds = attachmentIdStr.split("\\|");
+					String dialogKey = attachmentIds[0];
+					if(attachmentIds.length == 2) {
+						str = LanguageManager.getLangByKey(dialogKey, attachmentIds[1]);
+					}else{
+						str = this.msg;
+					}
+				}
+			}
+			else if(this.isEnemyPutDownPointShare()){
+				if(StringUtils.isNotEmpty(attachmentIdStr)) {
+					String[] attachmentIds = attachmentIdStr.split("\\|");
+					String dialogKey = attachmentIds[0];
+					if(attachmentIds.length >= 3)
+					{
+						str = LanguageManager.getLangByKey(dialogKey, attachmentIds[2]);
+					}else{
+						str = this.msg;
+					}
+				}
+			}
+
+
+			else if (this.isVersionInvalid())
+			{
 				str = LanguageManager.getLangByKey(LanguageKeys.MSG_VERSION_NO_SUPPORT);
 			}
 			if ((StringUtils.isEmpty(str) && ChatServiceController.getCurrentChannelType() < DBDefinition.CHANNEL_TYPE_USER && this.isSystemMessage()
-					&& !this.isHornMessage()) || this.isLiveRoomSys()) {
+					&& !this.isHornMessage())) {
 				if (StringUtils.isEmpty(attachmentIdStr)) {
 					str = this.msg;
 				}
@@ -1336,9 +1300,9 @@ public final class MsgItem
 						msg = LanguageManager.getLangByKey(dialogKey);
 					} else if (attachmentIds.length == 2) {
 						msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1]);
-					} else if (attachmentIds.length == 3 && !this.isGWSysTips()) {
+					} else if (attachmentIds.length == 3 ) {
 						msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], attachmentIds[2]);
-					} else if (attachmentIds.length == 4 && !this.isGWSysTips()) {
+					} else if (attachmentIds.length == 4 ) {
 						msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], attachmentIds[2], attachmentIds[3]);
 					} else if (attachmentIds.length == 5) {
 						msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], attachmentIds[2], attachmentIds[3], attachmentIds[4]);
@@ -1359,9 +1323,9 @@ public final class MsgItem
 	}
 
 	public boolean isSystemMessageByKey(){
-		return (post >0 && post<=10 && ChatServiceController.new_system_message1)
-				|| (post >10 && post <= 20&& ChatServiceController.new_system_message2)
-				|| (post >20 && ChatServiceController.new_system_message3)
-				|| isScienceMaxShare() || isAllianceCommonShare() || isSevenDayNewShare();
+		return (post >0 && post<=10 && ChatServiceController.new_system_message)
+				|| (post >10 && post <= 20&& ChatServiceController.new_system_message)
+				|| (post >20 && ChatServiceController.new_system_message)
+				|| isScienceMaxShare() || isAllianceCommonShare() || isSevenDayNewShare() || isAllianceAttackMonsterShare() || isAllianceArmsRaceShare()|| isEnemyPutDownPointShare();
 	}
 }

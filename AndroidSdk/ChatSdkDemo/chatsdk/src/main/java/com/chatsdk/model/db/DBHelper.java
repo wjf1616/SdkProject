@@ -36,13 +36,12 @@ public class DBHelper extends SQLiteOpenHelper
 
 
 	private static final int	VERSION_UPDATE_CHANNEL_FIGHT_TO_BATTLEGAME				= 13;       //战争报告Channel中提出战争游戏相关的Channel 更新数据库channelId
+	private static final int	VERSION_UPDATE_USER_CAREERNAME				= 14;       //战争报告Channel中提出战争游戏相关的Channel 更新数据库channelId
+	private static final int	VERSION_UPDATE_MAIL_REPLYTEXT				= 15;       //
+	private static final int	VERSION_UPDATE_USER_VIPFRAME				= 16;       //
 
-	private static final int	VERSION_UPDATE_CHANNEL_EVENT			= 14; 	// 数据库更新 活动分类
-	private static final int	VERSION_UPDATE_CHANNEL_CHAT_RECREAT			= 15; 	// 数据库更新所有Chat表
-	private static final int	VERSION_UPDATE_CHANNEL_USER_LASTANIMATETIME			= 16; 	// 数据库更新 活动分类
 
-
-	public static final int		CURRENT_DATABASE_VERSION				= VERSION_UPDATE_CHANNEL_USER_LASTANIMATETIME;
+	public static final int		CURRENT_DATABASE_VERSION				= VERSION_UPDATE_USER_VIPFRAME;
 
 	public DBHelper(Context context)
 	{
@@ -281,37 +280,50 @@ public class DBHelper extends SQLiteOpenHelper
 					upgradeTableVersion(db, DBDefinition.TABEL_MAIL, VERSION_ADD_MAIL_FAILTIME);
 				case VERSION_UPDATE_USER_SVIP:
 					// 更新svip默认值
-					if (existsColumnInTable(db, DBDefinition.TABEL_USER, DBDefinition.USER_COLUMN_SVIP_LEVEL))
+					if (!existsColumnInTable(db, DBDefinition.TABEL_USER, DBDefinition.USER_COLUMN_SVIP_LEVEL))
 					{
 						db.execSQL("UPDATE " + DBDefinition.TABEL_USER + " SET " + DBDefinition.USER_COLUMN_SVIP_LEVEL + " = -1");
 						upgradeTableVersion(db, DBDefinition.TABEL_USER, VERSION_UPDATE_USER_SVIP);
 					}
+//				case VERSION_UPDATE_CHANNEL_FIGHT_TO_BATTLEGAME:
+//				{
+//					// 战争报告Channel中提出战争游戏相关的Channel 更新数据库channelId
+//					if (existsColumnInTable(db, DBDefinition.TABEL_MAIL, DBDefinition.MAIL_CHANNEL_ID))
+//					{
+//						db.execSQL("UPDATE " + DBDefinition.TABEL_MAIL + " SET " + DBDefinition.MAIL_CHANNEL_ID + " ='battle_game'"+" WHERE "+DBDefinition.MAIL_CHANNEL_ID+" = 'fight' AND"+DBDefinition.MAIL_CONTENTS + " LIKE '%\"battleMailType\":9%'");
+//
+//						upgradeTableVersion(db, DBDefinition.TABEL_MAIL, VERSION_UPDATE_CHANNEL_FIGHT_TO_BATTLEGAME);
+//					}
+//				}
 				case VERSION_UPDATE_CHANNEL_FIGHT_TO_BATTLEGAME:
 				{
-					if (!existsColumnInTable(db, DBDefinition.TABEL_CHANNEL, DBDefinition.MAIL_CHANNEL_ID))
-
+					// 战争报告Channel中提出战争游戏相关的Channel 更新数据库channelId
+					if (!existsColumnInTable(db, DBDefinition.TABEL_USER, DBDefinition.USER_COLUMN_CAREER_NAME))
 					{
-						db.execSQL("UPDATE " + DBDefinition.TABEL_MAIL + " SET " + DBDefinition.MAIL_CHANNEL_ID + " ='event'"+" WHERE "+DBDefinition.MAIL_CHANNEL_ID+" = 'normal_event'");
+						db.execSQL("UPDATE " + DBDefinition.TABEL_USER + " SET " + DBDefinition.USER_COLUMN_CAREER_NAME + " = -1");
+						upgradeTableVersion(db, DBDefinition.TABEL_USER, VERSION_UPDATE_USER_CAREERNAME);
 					}
-					upgradeTableVersion(db, DBDefinition.TABEL_CHANNEL, VERSION_UPDATE_CHANNEL_EVENT);
 				}
-				case VERSION_UPDATE_CHANNEL_EVENT:
+				case VERSION_UPDATE_USER_CAREERNAME:
 				{
 
-					// 重建chat表
-					updateChatTable(db);			
-				}
-				case VERSION_UPDATE_CHANNEL_CHAT_RECREAT:
-				{
+					if (!existsColumnInTable(db, DBDefinition.TABEL_MAIL, DBDefinition.MAIL_REPLY_TEXT))
+					{
 
-					if (!existsColumnInTable(db, DBDefinition.TABEL_USER, DBDefinition.USER_COLUMN_LAST_ANIMATE_TIME)) {
-						db.execSQL("ALTER TABLE " + DBDefinition.TABEL_USER + " ADD " + DBDefinition.USER_COLUMN_LAST_ANIMATE_TIME + " INTEGER DEFAULT 0");
+						db.execSQL("ALTER TABLE " + DBDefinition.TABEL_MAIL + " ADD " + DBDefinition.MAIL_REPLY_TEXT
+								+ " TEXT");
+						upgradeTableVersion(db, DBDefinition.TABEL_MAIL, VERSION_UPDATE_MAIL_REPLYTEXT);
 					}
-					upgradeTableVersion(db, DBDefinition.TABEL_USER, VERSION_UPDATE_CHANNEL_USER_LASTANIMATETIME);
 				}
+				case VERSION_UPDATE_MAIL_REPLYTEXT:
+				{
+					if (!existsColumnInTable(db, DBDefinition.TABEL_USER, DBDefinition.USER_COLUMN_VIP_FRAME)) {
 
-
-
+						db.execSQL("ALTER TABLE " + DBDefinition.TABEL_USER + " ADD " + DBDefinition.USER_COLUMN_VIP_FRAME
+								+ " TEXT");
+						upgradeTableVersion(db, DBDefinition.TABEL_USER, VERSION_UPDATE_USER_VIPFRAME);
+					}
+				}
 
 			}
 			db.setTransactionSuccessful();
@@ -358,7 +370,6 @@ public class DBHelper extends SQLiteOpenHelper
 		String columns = DBDefinition.CHAT_COLUMN_SEQUENCE_ID + "," + DBDefinition.CHAT_COLUMN_USER_ID + ","
 				+ DBDefinition.CHAT_COLUMN_CHANNEL_TYPE + "," + DBDefinition.CHAT_COLUMN_CREATE_TIME + ","
 				+ DBDefinition.CHAT_COLUMN_LOCAL_SEND_TIME + "," + DBDefinition.CHAT_COLUMN_TYPE + "," + DBDefinition.CHAT_COLUMN_MSG + ","
-				+ DBDefinition.CHAT_COLUMN_SHARECOMMENT + ","
 				+ DBDefinition.CHAT_COLUMN_TRANSLATION + "," + DBDefinition.CHAT_COLUMN_ORIGINAL_LANGUAGE + ","
 				+ DBDefinition.CHAT_COLUMN_TRANSLATED_LANGUAGE + "," + DBDefinition.CHAT_COLUMN_STATUS + ","
 				+ DBDefinition.CHAT_COLUMN_ATTACHMENT_ID + "," + DBDefinition.CHAT_COLUMN_MEDIA;
@@ -367,28 +378,6 @@ public class DBHelper extends SQLiteOpenHelper
 		db.execSQL(DBDefinition.CREATE_TABLE_CHAT.replace(DBDefinition.CHAT_TABLE_NAME_PLACEHOLDER, tableName));
 		db.execSQL("INSERT INTO " + tableName + "(" + columns + ") SELECT " + columns + " FROM TempOldTable");
 		db.execSQL("DROP TABLE TempOldTable");
-	}
-
-	private void updateChatTable(SQLiteDatabase db)
-	{
-		String sql = String.format("SELECT * FROM %s WHERE type = '%s' AND name LIKE '%s%%'", DBDefinition.TABLE_SQLITE_MASTER, "table",
-				DBDefinition.TABEL_CHAT);
-		Cursor cursor = db.rawQuery(sql, null);
-		while (cursor != null && cursor.moveToNext())
-		{
-			String tableName = cursor.getString(cursor.getColumnIndex("name"));
-			if (!existsColumnInTable(db, tableName, DBDefinition.CHAT_COLUMN_SHARECOMMENT))
-			{
-				db.execSQL("ALTER TABLE " + tableName + " ADD " + DBDefinition.CHAT_COLUMN_SHARECOMMENT
-						+ " TEXT");
-			}
-			upgradeTableVersion(db, tableName, VERSION_UPDATE_CHANNEL_CHAT_RECREAT);
-		}
-
-		if (cursor != null)
-		{
-			cursor.close();
-		}
 	}
 
 	public boolean isTableExists(SQLiteDatabase db, String tableName)
@@ -459,8 +448,6 @@ public class DBHelper extends SQLiteOpenHelper
 	}
 
 	public static boolean isExternalStoragePermissionsAvaiable(Context context) {
-		if(context == null)
-			return false;
 		if ((android.os.Build.VERSION.SDK_INT >= 23)) {
 			int permission = ActivityCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 			return permission == PackageManager.PERMISSION_GRANTED;

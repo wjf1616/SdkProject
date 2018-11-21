@@ -6,8 +6,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import android.content.Context;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -28,12 +26,6 @@ public class ActionBarFragment extends Fragment
 
 	public void onViewCreated(View view, Bundle savedInstanceState)
 	{
-		//处理系统字体缩放导致布局错乱情况，这里设置缩放比例始终保持为1
-		Resources resource = getResources();
-		Configuration configuration =resource.getConfiguration();
-		configuration.fontScale = 1.0f;//设置字体的缩放比例
-		resource.updateConfiguration(configuration , resource.getDisplayMetrics());
-
 		super.onViewCreated(view, savedInstanceState);
 
 		fragmentLayout = ((RelativeLayout) view.findViewById(ResUtil.getId(this.activity, "id", "fragmentLayout")));
@@ -162,7 +154,10 @@ public class ActionBarFragment extends Fragment
 		Rect r = new Rect();
 		// In effect, this tells you the available area where content can be
 		// placed and remain visible to users.
-		fragmentLayout.getWindowVisibleDisplayFrame(r);
+        if (fragmentLayout != null) {
+            fragmentLayout.getWindowVisibleDisplayFrame(r);
+        }
+        
 		return (r.bottom - r.top);
 	}
 
@@ -278,15 +273,5 @@ public class ActionBarFragment extends Fragment
 		activity = null;
 		fragmentLayout = null;
 		super.onDestroy();
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-		//处理系统字体缩放导致布局错乱情况，这里设置缩放比例始终保持为1
-		Resources resource = getResources();
-		Configuration configuration =resource.getConfiguration();
-		configuration.fontScale = 1.0f;//设置字体的缩放比例
-		resource.updateConfiguration(configuration , resource.getDisplayMetrics());
 	}
 }

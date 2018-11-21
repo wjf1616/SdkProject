@@ -10,6 +10,7 @@ import java.util.Locale;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.chatsdk.util.ImageUtil;
 import com.chatsdk.util.LogUtil;
 
 import android.graphics.Bitmap;
@@ -50,7 +51,7 @@ public class ImageStoreCache extends MemoryCache<String, Bitmap>
 		Bitmap ret = null;
 		try
 		{
-			ret = BitmapFactory.decodeByteArray(value, 0, value.length);
+			ret = ImageUtil.decodeImg(value);
 		}
 		catch (Exception e)
 		{

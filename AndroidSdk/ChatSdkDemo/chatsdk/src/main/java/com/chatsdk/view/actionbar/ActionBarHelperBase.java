@@ -370,15 +370,14 @@ public class ActionBarHelperBase extends ActionBarHelper
 			final SimpleMenuItemCompat.QueryTextActions queryTextActions = (SimpleMenuItemCompat.QueryTextActions) this.queryTextActionsMap
 					.get(Integer.valueOf(menuItemId));
 			SimpleSearchView simpleSearchView = (SimpleSearchView) getActionBarCompat().findViewById(searchId);
-			simpleSearchView.setQueryTextListener(new SearchView.OnQueryTextListener()
-			{
-				public boolean onQueryTextSubmit(String query)
-				{
+			simpleSearchView.setQueryTextListener(new SearchView.OnQueryTextListener() {
+				@Override
+				public boolean onQueryTextSubmit(String query) {
 					return queryTextActions.queryTextSubmitted(query);
 				}
 
-				public boolean onQueryTextChange(String newText)
-				{
+				@Override
+				public boolean onQueryTextChange(String newText) {
 					return queryTextActions.queryTextChanged(newText);
 				}
 			});

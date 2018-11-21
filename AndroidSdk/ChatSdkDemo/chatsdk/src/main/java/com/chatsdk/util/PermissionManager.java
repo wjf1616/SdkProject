@@ -19,7 +19,6 @@ public class PermissionManager
 	private static final int	MY_PERMISSIONS_REQUEST_XM_RECORD		= 2;
 	private static final int	MY_PERMISSIONS_REQUEST_XM_VIDEO			= 3;
 	private static final int	MY_PERMISSIONS_REQUEST_ALLIANCE_SHARE	= 4;
-	private static final int 	MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE_FOR_ACCOUNT = 6;
 
 	private static String[]		PERMISSIONS_STORAGE						= { Manifest.permission.WRITE_EXTERNAL_STORAGE };
 	private static String[]		PERMISSIONS_XM_RECORD					= {
@@ -59,31 +58,6 @@ public class PermissionManager
 	{
 		ActivityCompat.requestPermissions(ChatServiceController.hostActivity, PERMISSIONS_STORAGE, MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE);
 	}
-
-	public static void checkExternalStoragePermissionForAccount()
-	{
-		if (ActivityCompat.checkSelfPermission(ChatServiceController.hostActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-		{
-			return;
-		}
-		if (ActivityCompat.shouldShowRequestPermissionRationale(ChatServiceController.hostActivity,
-				Manifest.permission.WRITE_EXTERNAL_STORAGE))
-		{
-			String notify = LanguageManager.getLangByKey(LanguageKeys.PERMISSION_REQUEST_WRITE_SD_CARD_ACCOUNT);
-			MenuController.showAllowPermissionConfirm(ChatServiceController.hostActivity, notify,
-					LanguageKeys.PERMISSION_REQUEST_WRITE_SD_CARD_ACCOUNT);
-		}
-		else
-		{
-			actualGetAccountStoragePermissions();
-		}
-	}
-
-	private static void actualGetAccountStoragePermissions()
-	{
-		ActivityCompat.requestPermissions(ChatServiceController.hostActivity, PERMISSIONS_STORAGE, MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE_FOR_ACCOUNT);
-	}
-
 
 	public static boolean checkXMRecordPermission()
 	{
@@ -159,10 +133,6 @@ public class PermissionManager
 			{
 				return;
 			}
-			case MY_PERMISSIONS_REQUEST_EXTERNAL_STORAGE_FOR_ACCOUNT:
-			{
-				return;
-			}
 		}
 	}
 
@@ -182,10 +152,6 @@ public class PermissionManager
 //			{
 //				actualGetXMVideoPermissions(XiaoMiToolManager.getInstance().getCurrentRecordActivity());
 //			}
-		}
-		else if (permissionKey.equals(LanguageKeys.PERMISSION_REQUEST_WRITE_SD_CARD_ACCOUNT))
-		{
-			actualGetAccountStoragePermissions();
 		}
 	}
 

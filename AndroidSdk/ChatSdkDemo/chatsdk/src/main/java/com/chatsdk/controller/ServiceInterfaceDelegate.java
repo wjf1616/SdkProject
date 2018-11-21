@@ -24,4 +24,5 @@ public interface ServiceInterfaceDelegate {
     public void notifyLeaveChatRoom(String language);
     public void loadChatRoomMembers();
     public void pushChatRoomMembers(JSONArray array);
+
 }

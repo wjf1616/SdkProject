@@ -68,11 +68,6 @@ public class GameHost implements IHost
 	 */
 	public native void postCurChannel(int channel);
 
-	/**
-	 * 通知cocos2d-x已经关闭邮件展示界面（x号关闭）
-	 */
-	public native void closeMailPopUpViewByX();
-
 	public native void onBackPressed();
 
 	public native void onTextChanged(String msg);
@@ -149,11 +144,9 @@ public class GameHost implements IHost
 	/**
 	 * 将mail数据传递给C++端
 	 */
-	public native void transportMailInfo(long mailInfo, boolean isShowDetectMail,boolean isForViewChange);
+	public native void transportMailInfo(long mailInfo, boolean isShowDetectMail);
 
 	public native void deleteSingleMail(int tabType, int type, String mailUid, String fromUid);
-
-	public native void deleteMailsByTypes(String types);
 
 	public native void deleteMutiMail(String mailUids, String types);
 
@@ -163,16 +156,13 @@ public class GameHost implements IHost
 
 	public native void testMailCommand();
 
-	public native void deleteAllPersonMail();
-
-
 	public native void getUpdateMail(String time);
 
 	public native void readMail(String mailUid, int type);
 
 	public native void readMutiMail(String mailUids);
 
-	public native void postUnreadMailNum(int unReadCount,int unSysReadCount,int allSysCount);
+	public native void postUnreadMailNum(int unReadCount,int unSysReadCount,int allSysCount,int fightNum);
 
 	public native void getNewMailFromServer(String latestMailUid,String createTime,int count);
 
@@ -182,14 +172,15 @@ public class GameHost implements IHost
 
 	public native String getNameById(String xmlId);
 
-	public native String getNPCNameById(String npcId);
-
-	public native String getAllianceBossName(String npcId);
-
 	public native String getPropById(String xmlId, String proName);
 
 	public native String getPropByIdGroup(String xmlId, String proName,String groupId);
+
+	public native String getPropByNoGroup(String xmlId, String proName,int type);
+
 	public native String getPropByIdType(String xmlId, String proName,String groutId,int type);
+
+	public native int getConfigData(String param);
 
 	public native int getMailOrderById(String xmlId);
 
@@ -231,8 +222,6 @@ public class GameHost implements IHost
 
 	public native void reportCustomHeadImg(String uid);
 
-	public native void banPlayerPic(String uid);
-
 	public native void reportPlayerChatContent(String uid, String msg);
 
 	public native void translateOptimize(String method, String originalLang, String userLang, String msg, String translationMsg);
@@ -264,7 +253,7 @@ public class GameHost implements IHost
 	public native boolean getNativeGetIsShowStatusBar();
 	
 	public native void getLatestChatMessage();
-	public native void showGoBackGameDialog();
+
 	public native int getCanCreateChatRoomNum();
 
 	public native boolean isChatLimmit(int type,int gapTime);
@@ -277,31 +266,24 @@ public class GameHost implements IHost
 
 	public native void updateArenaChatRoomAni(boolean isShow);
 
+	public native void updateBattleBallsState(boolean isShow ,int num);
+
 	@Override
 	public native boolean getIsInTempAlliance();
 
 	public native void nativeFbEventDone(String event, String data);
 	public native void postToCppSwithOn(boolean isAnchorHost, boolean status);
 	public native void postToCppBCState(boolean isAnchorHost, int status);
-	public native void postToCppRefreshRoomNumber(String roomId, int roomNumber);
-	public native void postToCppRefreshLiveRoomInfo();
 
 	public native int getServerPingValue(String server, String port, String protocol);
 	public native void queryServerPing();
-
+	
 	public native void sendServerStatus(String server, String port, String protocol, int status);
-
-	public native void recordChat();
-
 	public native boolean isChina();
-
-	public native void updatePopLayout(float rate);
-
-	public native String getFlag();
-
-	public native String getNewsCenterShowMsg(String newsId, String titleParams);
-
-	public native String getScienceSharedMsg(String scienceType);
-
+	public native boolean isActivityOpen(int post);
+	public native String getNPCNameById(String npcId);
+	public native boolean isNeedAddWarZone();
+	public native String getWarZoneFilterStr();
 	public native String getLanguageChatRoom();
+	public native String getFlag();
 }

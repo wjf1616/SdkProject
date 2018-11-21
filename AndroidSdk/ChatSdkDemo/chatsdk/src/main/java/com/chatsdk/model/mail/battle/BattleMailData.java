@@ -1,7 +1,9 @@
 package com.chatsdk.model.mail.battle;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.commons.lang.StringUtils;
 import com.alibaba.fastjson.JSON;
-import com.chatsdk.controller.JniController;
 import com.chatsdk.model.LanguageKeys;
 import com.chatsdk.model.LanguageManager;
 import com.chatsdk.model.MailIconName;
@@ -10,12 +12,6 @@ import com.chatsdk.model.UserManager;
 import com.chatsdk.model.mail.MailData;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.MathUtil;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class BattleMailData extends MailData
 {
@@ -93,7 +89,6 @@ public class BattleMailData extends MailData
 				if (detail == null)
 					return;
 				this.isFreeAll = detail.getIsFreeAll();
-				this.issamplereport = detail.getIssamplereport();
 				this.catchLeader= detail.getHeroState();
 				this.captureHeroLevel= detail.getCaptureHeroLevel();
 				this.captureHeroId= detail.getCaptureHeroId();
@@ -166,7 +161,7 @@ public class BattleMailData extends MailData
 				String loss = "";
 
 				boolean isbigLoss = false;
-				if (detail.getBigLose()==true)
+				if (detail.getAtkGen() == null || detail.getAtkGen().size() <= 0)
 				{
 					isbigLoss = true;
 				}
@@ -237,22 +232,6 @@ public class BattleMailData extends MailData
 				if(battleMailType == 7)
 				{
 					defName = LanguageManager.getLangByKey(defName);
-				}
-				if (detail.getDefUser() != null && detail.getDefUser().getNpcId() != null && !detail.getDefUser().getNpcId().equals(""))
-				{
-					defName = JniController.getInstance().excuteJNIMethod("getNPCNameById", new Object[] { detail.getDefUser().getNpcId() });
-					if(defName==null||defName=="")
-					{
-						defName="";
-					}
-					else
-					{
-						addServerId=-1;
-					}
-					if(battleMailType == 13 && NumberUtils.isNumber(detail.getWorldFortressDefenceLoss()) && Integer.parseInt(detail.getWorldFortressDefenceLoss())>0)
-					{
-						defName = LanguageManager.getLangByKey("90100386");
-					}
 				}
 				if(UserManager.getInstance().getCurrentUser()!=null)
 					defName = UserManager.getInstance().getCurrentUser().getNameWithServerId(defAbbr,defName,addServerId);

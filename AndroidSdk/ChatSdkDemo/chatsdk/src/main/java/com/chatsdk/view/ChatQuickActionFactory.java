@@ -47,15 +47,19 @@ public class ChatQuickActionFactory
 	public static final int	ID_VIEW_WOUNDED_SHARE 		= 29; //联盟庇护所伤兵分享
 	public static final int	ID_VIEW_MEDAL_SHARE 		= 30; //联盟庇护所伤兵分享
 	public static final int	ID_VIEW_SHAMO_INHESIONs_SHARE = 31; //沙漠天赋分享
-	public static final int	ID_BAN_HEAD_IMG				 = 32; //GM封禁玩家头像
-	public static final int	ID_VIEW_QUESTION_ACTIVITY	= 33; //查看答题活动界面
-	public static final int	ID_VIEW_NWS_CENTER_SHARE	= 34; //查看要塞新闻中心
-	public static final int	ID_VIEW_SCIENCE_MAX_SHARE	= 35; //查看科技中心
+	public static final int	ID_VIEW_FORMATION_BATTLE_REPORT = 32; //沙漠天赋分享
 
+	public static final int	ID_VIEW_FB_SCOUT_REPORT = 33; //新侦查邮件分享
+
+	public static final int	ID_VIEW_FB_ACTIVITYHERO = 34; //查看自由城建积分兑换英雄活动
+
+	public static final int	ID_VIEW_FB_FORMATIONSHARE = 35; //查看自由城建编队分享
+
+	public static final int	ID_VIEW_FB_ALLIANCE_ATTACT = 37; //联盟集结boss
 	public static QuickAction createQuickAction(final Activity activity, MsgItem item)
 	{
 		boolean canCopy = (!item.isSystemMessage());
-		boolean canTranlate = (!item.isSystemMessage() || item.isHornMessage()|| item.isShareCommentMsg()) && !item.isSelfMsg();
+		boolean canTranlate = (!item.isSystemMessage() || item.isHornMessage()) && !item.isSelfMsg();
 		boolean canViewEquip = item.isEquipMessage();
 		boolean hasTranslated = item.canShowTranslateMsg() || (item.isTranslatedByForce && !item.isOriginalLangByForce);
 		boolean canJoinAlliance = item.isInAlliance() && !item.isSelfMsg() && !item.isTipMsg() &&!item.isUserADMsg()
@@ -67,13 +71,9 @@ public class ChatQuickActionFactory
 				&& UserManager.getInstance().isInRestrictList(item.uid, UserManager.BLOCK_LIST);
 		boolean canBan = item.isNotInRestrictList() && !item.isSelfMsg() && !item.isTipMsg() && !item.isUserADMsg()
 				&& (UserManager.getInstance().getCurrentUser().mGmod >= 1 && UserManager.getInstance().getCurrentUser().mGmod <= 9)
-				&& !ChatServiceController.isInMailDialog()
-				|| (!item.isSelfMsg() && ChatServiceController.isInLiveRoom() &&ChatServiceController.isAnchorHost && ChatServiceController.isInSelfLiveRoom()
-				&& UserManager.getInstance().isNotInLiveBanUser(item.uid));//是主播切在直播间才能禁言
+				&& !ChatServiceController.isInMailDialog();
 		boolean canUnBan = item.isInRestrictList() && !item.isSelfMsg() && !item.isTipMsg() && !item.isUserADMsg()
-				&& (UserManager.getInstance().getCurrentUser().mGmod >= 1 && UserManager.getInstance().getCurrentUser().mGmod <= 9) && !ChatServiceController.isInMailDialog()
-				|| (!item.isSelfMsg() && ChatServiceController.isInLiveRoom() &&ChatServiceController.isAnchorHost && ChatServiceController.isInSelfLiveRoom()
-				&& !UserManager.getInstance().isNotInLiveBanUser(item.uid));//是主播切在直播间才能禁言
+				&& (UserManager.getInstance().getCurrentUser().mGmod >= 1 && UserManager.getInstance().getCurrentUser().mGmod <= 9) && !ChatServiceController.isInMailDialog();
 		boolean canViewBattleReport = !item.isHornMessage()
 				&& item.isBattleReport() && !ChatServiceController.isInMailDialog();
 		boolean canViewDetectReport = !item.isHornMessage()
@@ -92,7 +92,7 @@ public class ChatQuickActionFactory
 		boolean canViewAllianceTreasure = item.isAllianceTreasureMessage() && !item.isSelfMsg();
 		// canTranlate && hasTranslated &&
 											// !item.isSystemMessage();
-		boolean canViewSevenDayShare = item.isSevenDayMessage() || item.isSevenDayNewShare();
+		boolean canViewSevenDayShare = item.isSevenDayMessage();
 		boolean canViewMissileReport = item.isMissleReport();
 		boolean canViewAllianceGroupBuyShare = !UserManager.getInstance().getCurrentUser().allianceId.equals("")&&item.isAllianceGroupBuyMessage();
 		boolean canVIewGiftMailShare = item.isGiftMailShare();
@@ -100,16 +100,20 @@ public class ChatQuickActionFactory
 		boolean canVIewWoundedShare = item.isWoundedShare();
 
 		boolean canVIewMedalShare = item.isEquipmentMedalShare();
+
+		boolean canVIewActivityHeroShare = item.isActivityHeroShare() && ChatServiceController.isActivityOpen(item);
+
+		boolean canViewFBFormationShare = item.isFBFormationShare();
+
 		boolean canViewShamoInhesion = item.isShamoInhesionShare();
-		boolean canViewQuestionActivity = item.isViewQuestionActivity();
-		boolean canViewNewsCneterShare = item.isNewsCenterShare();
-		boolean canViewScienceMaxShare = item.isScienceMaxShare();
-		boolean canBanPlayerPic = !item.isSelfMsg() && UserManager.getInstance().getCurrentUser().mGmod == 1 && ChatServiceController.gm_closed_avatar && item.getHeadPicVer() > 0;
+		boolean canViewformationBattleShare = item.isFormationBattle();
+		boolean canViewFBScoutReportShare = item.isFBScoutReport();
+		boolean canViewAlliceAttactBoss = item.isAllianceAttackMonsterShare();
 		boolean canSendMail = false;
 		QuickAction quickAction = ChatQuickActionFactory.getQuickAction(activity, QuickAction.HORIZONTAL, canCopy,canJoinAlliance, canSendMail,
 				canViewBattleReport, canViewDetectReport, canTranlate, hasTranslated, canBlock, canUnBlock, canBan, canUnBan, canInvite,
 				canReportHeadImg, canViewEquip, canReportContent, canSayHello, canViewRallyInfo, canViewLotteryShare,canVIewGiftMailShare,canLogicFavourPointShare,canVIewWoundedShare,canVIewMedalShare,
-				canViewAllianceTaskShare, canViewAllianceTreasure, canViewSevenDayShare, canViewMissileReport,canViewAllianceGroupBuyShare,canViewShamoInhesion,canViewQuestionActivity,canViewNewsCneterShare,canViewScienceMaxShare,canBanPlayerPic);
+				canViewAllianceTaskShare, canViewAllianceTreasure, canViewSevenDayShare, canViewMissileReport,canViewAllianceGroupBuyShare,canViewShamoInhesion,canViewformationBattleShare,canViewFBScoutReportShare,canVIewActivityHeroShare,canViewFBFormationShare,canViewAlliceAttactBoss);
 
 		return quickAction;
 	}
@@ -120,19 +124,19 @@ public class ChatQuickActionFactory
 			boolean canUnBlock, boolean canBan, boolean canUnBan, boolean canInvite, boolean canReportHeadImg, boolean canViewEquip,
 			boolean canReportContent, boolean canSayHello, boolean canViewRallyInfo, boolean canViewLotteryShare,boolean canVIewGiftMailShare,boolean canLogicFavourPointShare,boolean canVIewWoundedShare,boolean canVIewMedalShare,
 			boolean canViewAllianceTaskShare, boolean canViewAllianceTreasure, boolean canViewSevenDayShare, boolean canViewMissileReport,
-											  boolean canViewAllianceGroupBuyShare,boolean canViewShamoInhesion,boolean canViewQuestionActivity, boolean canViewNewsCneterShare, boolean canViewScienceMaxShare, boolean canBanPlayerPic)
+											  boolean canViewAllianceGroupBuyShare,boolean canViewShamoInhesion,boolean canViewformationBattleShare,boolean canViewFBScoutReportShare,boolean canVIewActivityHeroShare,boolean canViewFBFormationShare,boolean canViewAlliceAttactBoss)
 	{
 		QuickAction quickAction = actuallyCreateQuickAction(activity, orientation, canCopy, canJoinAlliance, canSendMail, canViewBattleReport,
 				canViewDetectReport, canTranlate, hasTranslated, canBlock, canUnBlock, canBan, canUnBan, canInvite, canReportHeadImg,
 				canViewEquip, canReportContent, canSayHello, canViewRallyInfo, canViewLotteryShare,canVIewGiftMailShare,canLogicFavourPointShare,canVIewWoundedShare,canVIewMedalShare,canViewAllianceTaskShare,
-				canViewAllianceTreasure, canViewSevenDayShare, canViewMissileReport, canViewAllianceGroupBuyShare,canViewShamoInhesion,canViewQuestionActivity,canViewNewsCneterShare, canViewScienceMaxShare, canBanPlayerPic,0);
+				canViewAllianceTreasure, canViewSevenDayShare, canViewMissileReport, canViewAllianceGroupBuyShare,canViewShamoInhesion,canViewformationBattleShare,canViewFBScoutReportShare,canVIewActivityHeroShare,canViewFBFormationShare,canViewAlliceAttactBoss,0);
 
 		if (orientation == QuickAction.HORIZONTAL && quickAction.isWiderThanScreen())
 		{
 			quickAction = ChatQuickActionFactory.actuallyCreateQuickAction(activity, QuickAction.VERTICAL, canCopy,canJoinAlliance, canSendMail,
 					canViewBattleReport, canViewDetectReport, canTranlate, hasTranslated, canBlock, canUnBlock, canBan, canUnBan,
 					canInvite, canReportHeadImg, canViewEquip, canReportContent, canSayHello, canViewRallyInfo, canViewLotteryShare,canVIewGiftMailShare,canLogicFavourPointShare,canVIewWoundedShare,canVIewMedalShare,
-					canViewAllianceTaskShare, canViewAllianceTreasure, canViewSevenDayShare, canViewMissileReport,canViewAllianceGroupBuyShare,canViewShamoInhesion,canViewQuestionActivity,canViewNewsCneterShare,canViewScienceMaxShare,canBanPlayerPic, quickAction.getMaxItemWidth());
+					canViewAllianceTaskShare, canViewAllianceTreasure, canViewSevenDayShare, canViewMissileReport,canViewAllianceGroupBuyShare,canViewShamoInhesion,canViewformationBattleShare,canViewFBScoutReportShare,canVIewActivityHeroShare,canViewFBFormationShare,canViewAlliceAttactBoss, quickAction.getMaxItemWidth());
 		}
 
 		return quickAction;
@@ -143,7 +147,7 @@ public class ChatQuickActionFactory
 			boolean canBlock, boolean canUnBlock, boolean canBan, boolean canUnBan, boolean canInvite, boolean canReportHeadImg,
 			boolean canViewEquip, boolean canReportContent, boolean canSayHello, boolean canViewRallyInfo, boolean canViewLotteryShare,boolean canVIewGiftMailShare,boolean canLogicFavourPointShare,boolean canVIewWoundedShare,boolean canVIewMedalShare,
 			boolean canViewAllianceTaskShare, boolean canViewAllianceTreasure, boolean canViewSevenDayShare, boolean canViewMissileReport,
-														 boolean canViewAllianceGroupBuyShare,boolean canViewShamoInhesionShare,boolean canViewQuestionActivity, boolean canViewNewsCneterShare, boolean canViewScienceMaxShare, boolean canBanPlayerPic, int maxItemWidth)
+														 boolean canViewAllianceGroupBuyShare,boolean canViewShamoInhesionShare,boolean canViewformationBattleShare,boolean canViewFBScoutReportShare,boolean canVIewActivityHeroShare,boolean canViewFBFormationShare,boolean canViewAlliceAttactBoss, int maxItemWidth)
 	{
 		// create QuickAction. Use QuickAction.VERTICAL or
 		// QuickAction.HORIZONTAL param to define layout orientation
@@ -177,6 +181,12 @@ public class ChatQuickActionFactory
 			quickAction.addActionItem(detectMsgItem);
 		}
 
+		if (canViewFBScoutReportShare)
+		{
+			ActionItem scoutMsgItem = new ActionItem(ID_VIEW_FB_SCOUT_REPORT, LanguageManager.getLangByKey(LanguageKeys.MENU_DETECTREPORT));
+			quickAction.addActionItem(scoutMsgItem);
+		}
+
 		if (canViewMissileReport)
 		{
 			ActionItem missileMsgItem = new ActionItem(ID_VIEW_MISSILE_REPORT, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
@@ -185,7 +195,7 @@ public class ChatQuickActionFactory
 
 		if (canViewRallyInfo)
 		{
-			ActionItem rallyMsgItem = new ActionItem(ID_VIEW_RALLY_INFO, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW_RALLY_INFO));
+			ActionItem rallyMsgItem = new ActionItem(ID_VIEW_RALLY_INFO, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
 			quickAction.addActionItem(rallyMsgItem);
 		}
 
@@ -212,13 +222,19 @@ public class ChatQuickActionFactory
 			quickAction.addActionItem(medalShareMsgItem);
 		}
 
-		if(canViewShamoInhesionShare){
-			ActionItem shamoInhesionShareMsgItem = new ActionItem(ID_VIEW_SHAMO_INHESIONs_SHARE, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
-			quickAction.addActionItem(shamoInhesionShareMsgItem);
+		if(canVIewActivityHeroShare) {
+			ActionItem heroActivityShareMsgItem = new ActionItem(ID_VIEW_FB_ACTIVITYHERO, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
+			quickAction.addActionItem(heroActivityShareMsgItem);
 		}
 
-		if(canViewQuestionActivity){
-			ActionItem shamoInhesionShareMsgItem = new ActionItem(ID_VIEW_QUESTION_ACTIVITY, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
+		if(canViewFBFormationShare) {
+			ActionItem heroActivityShareMsgItem = new ActionItem(ID_VIEW_FB_FORMATIONSHARE, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
+			quickAction.addActionItem(heroActivityShareMsgItem);
+		}
+
+
+		if(canViewShamoInhesionShare){
+			ActionItem shamoInhesionShareMsgItem = new ActionItem(ID_VIEW_SHAMO_INHESIONs_SHARE, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
 			quickAction.addActionItem(shamoInhesionShareMsgItem);
 		}
 
@@ -241,6 +257,11 @@ public class ChatQuickActionFactory
 			quickAction.addActionItem(allianceGroupBuyMsgItem);
 		}
 
+		if (canViewAlliceAttactBoss) {
+			ActionItem allianceAttactMsgItem = new ActionItem(ID_VIEW_FB_ALLIANCE_ATTACT,
+					LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
+			quickAction.addActionItem(allianceAttactMsgItem);
+		}
 		if (canTranlate)
 		{
 			if (hasTranslated)
@@ -325,21 +346,11 @@ public class ChatQuickActionFactory
 			ActionItem nextItem = new ActionItem(ID_REPORT_PLAYER_CHAT, LanguageManager.getLangByKey(LanguageKeys.MENU_REPORT_PLAYER_CHAT));
 			quickAction.addActionItem(nextItem);
 		}
-		if(canBanPlayerPic){
-			ActionItem nextItem = new ActionItem(ID_BAN_HEAD_IMG, LanguageManager.getLangByKey(LanguageKeys.MENU_BAN_PLAYER_PIC));
-			quickAction.addActionItem(nextItem);
-		}
 
-		if(canViewNewsCneterShare){
-			ActionItem nextItem = new ActionItem(ID_VIEW_NWS_CENTER_SHARE, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
-			quickAction.addActionItem(nextItem);
+		if(canViewformationBattleShare){
+			ActionItem formationBattleShareMsgItem = new ActionItem(ID_VIEW_FORMATION_BATTLE_REPORT, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
+			quickAction.addActionItem(formationBattleShareMsgItem);
 		}
-
-		if(canViewScienceMaxShare){
-			ActionItem nextItem = new ActionItem(ID_VIEW_SCIENCE_MAX_SHARE, LanguageManager.getLangByKey(LanguageKeys.MENU_VIEW));
-			quickAction.addActionItem(nextItem);
-		}
-
 		return quickAction;
 	}
 

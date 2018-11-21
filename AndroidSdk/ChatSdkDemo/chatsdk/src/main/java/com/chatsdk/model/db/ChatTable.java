@@ -30,10 +30,8 @@ public class ChatTable
 	public boolean isChannelType()
 	{
 		if (StringUtils.isNotEmpty(channelID)
-				&& (channelID.equals(MailManager.CHANNELID_RESOURCE) || channelID.equals(MailManager.CHANNELID_MONSTER)
-				|| channelID.equals(MailManager.CHANNELID_GIFT)|| channelID.equals(MailManager.CHANNELID_RESOURCE_HELP)
-				||channelID.equals(MailManager.CHANNELID_MISSILE) || channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER)
-				|| channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE)))
+				&& (channelID.equals(MailManager.CHANNELID_RESOURCE) || channelID.equals(MailManager.CHANNELID_GIFT)|| channelID
+						.equals(MailManager.CHANNELID_RESOURCE_HELP) ||channelID.equals(MailManager.CHANNELID_MISSILE)))
 		{
 			return true;
 		}
@@ -53,10 +51,6 @@ public class ChatTable
 			{
 				type = MailManager.MAIL_RESOURCE_HELP;
 			}
-			if (channelID.equals(MailManager.CHANNELID_MONSTER))
-			{
-				type = MailManager.MAIL_ATTACKMONSTER;
-			}
 			if (channelID.equals(MailManager.CHANNELID_GIFT))
 			{
 				type = MailManager.MAIL_GIFT_BUY_EXCHANGE;
@@ -64,14 +58,6 @@ public class ChatTable
 			if (channelID.equals(MailManager.CHANNELID_MISSILE))
 			{
 				type = MailManager.MAIL_MISSILE;
-			}
-			if (channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER))
-			{
-				type = MailManager.MAIL_MOBILIZATION_CENTER;
-			}
-			if (channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE))
-			{
-				type = MailManager.MAIL_COMBOTFACTORY_FIRE;
 			}
 		}
 		return type;

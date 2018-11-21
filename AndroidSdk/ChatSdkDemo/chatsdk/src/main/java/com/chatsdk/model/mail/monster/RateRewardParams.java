@@ -2,15 +2,16 @@ package com.chatsdk.model.mail.monster;
 
 public class RateRewardParams
 {
-	private RateRewardValueParams	value;
+	private Object	value;
 	private int						type;
+	private int						total;
 
-	public RateRewardValueParams getValue()
+	public Object getValue()
 	{
 		return value;
 	}
 
-	public void setValue(RateRewardValueParams value)
+	public void setValue(Object value)
 	{
 		this.value = value;
 	}
@@ -25,4 +26,13 @@ public class RateRewardParams
 		this.type = type;
 	}
 
+	public int getTotal()
+	{
+		return total;
+	}
+
+	public void setTotal(int total)
+	{
+		this.total = total;
+	}
 }

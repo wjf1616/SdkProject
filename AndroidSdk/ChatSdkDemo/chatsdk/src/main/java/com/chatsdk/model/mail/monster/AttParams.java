@@ -12,15 +12,6 @@ public class AttParams
 
 	private long desertExp;
 
-	private String		allKill;
-
-	public String getAllKill() {
-		return allKill;
-	}
-
-	public void setAllKill(String allKill) {
-		this.allKill = allKill;
-	}
 
 	public long getDesertExp()
 	{

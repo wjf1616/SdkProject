@@ -1,8 +1,11 @@
 package com.chatsdk.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.ref.SoftReference;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -575,4 +578,36 @@ public class ImageUtil
 		}
 		return outputFile;
 	}
+    
+    /**
+     * 正确获取图片BitMap    //BitmapFactory.decodeByteArray（）  是个邪恶的方法  ， 在android 上 很容易 OOM。
+     * @param value
+     * @return
+     */
+    public static Bitmap decodeImg(byte[] value){
+        Bitmap ret = null;
+        
+        InputStream input = null;
+        try{
+            BitmapFactory.Options options=new BitmapFactory.Options();
+//            options.inSampleSize = 8;
+            input = new ByteArrayInputStream(value);
+            SoftReference softRef = new SoftReference(BitmapFactory.decodeStream(input, null, options));
+            ret = (Bitmap)softRef.get();
+        }catch(Exception e){
+            LogUtil.printException(e);
+        }finally {
+            if (value != null) {
+                value = null;
+            }
+        }
+        if(input!=null){
+            try {
+                input.close();
+            } catch (IOException e) {
+                LogUtil.printException(e);
+            }
+        }
+        return ret;
+    }
 }

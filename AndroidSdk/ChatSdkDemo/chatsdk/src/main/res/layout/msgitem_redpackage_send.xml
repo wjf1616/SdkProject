@@ -80,8 +80,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:autoLink="none"
-                        android:layout_marginLeft="2dp"
                         android:text="@string/cs__chat_alliance_sample"
+                        android:layout_marginLeft="3dp"
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:textColor="#d5dca8"
                         android:textSize="@dimen/cs__textSizeName" />
@@ -94,6 +94,18 @@
                         android:text="@string/cs__chat_name_sample"
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:textColor="#d5dca8"
+                        android:textSize="@dimen/cs__textSizeName" />
+
+                    <TextView
+                        android:id="@+id/careerLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:autoLink="none"
+                        android:layout_marginLeft="8dp"
+                        android:maxLines="1"
+                        android:text="@string/cs__chat_name_sample"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:textColor="#8099ba"
                         android:textSize="@dimen/cs__textSizeName" />
                 </LinearLayout>
 

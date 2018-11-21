@@ -165,6 +165,9 @@ public class TimeManager
 		int timedt = 0;
 		if (dt >= 24 * 3600 * 2)
 		{
+			if(true) {
+				time += 3600 * 2;
+			}
 			if (isLastYear(time))
 				timeText = getTimeYMDHM(time);
 			else
@@ -260,9 +263,7 @@ public class TimeManager
 			{
 				timeText = "1" + LanguageManager.getLangByKey(LanguageKeys.TIME_MIN);
 			}
-			if(ChatServiceController.isInLiveRoom())
-				return timeText;
-			timeText = timeText + " ";
+			timeText = timeText + " " + LanguageManager.getLangByKey(LanguageKeys.TIME_BEFORE);
 		}
 		return timeText;
 	}

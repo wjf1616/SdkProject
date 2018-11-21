@@ -281,7 +281,7 @@ public class FilterWordsManager {
      * @date 2014��4��20�� ����4:28:30
      * @param txt  ����
      * @param matchType  ƥ�����&nbsp;1����Сƥ�����2�����ƥ�����
-     * @return ����������true�����򷵻�false
+     * @return ����������true�������false
      * @version 1.0
      */
     public boolean isContaintSensitiveWord(String txt,int matchType){
@@ -362,7 +362,7 @@ public class FilterWordsManager {
      * @param txt
      * @param beginIndex
      * @param matchType
-     * @return��������ڣ��򷵻����д��ַ��ĳ��ȣ������ڷ���0
+     * @return��������ڣ�������д��ַ��ĳ��ȣ������ڷ���0
      * @version 1.0
      */
     @SuppressWarnings({ "rawtypes"})

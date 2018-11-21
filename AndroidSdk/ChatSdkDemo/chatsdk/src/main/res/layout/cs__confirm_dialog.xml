@@ -62,7 +62,6 @@
             android:layout_marginTop="30dp" >
 
             <View
-                android:id="@+id/addView0"
                 android:layout_width="0dp"
                 android:layout_height="30dp"
                 android:layout_weight="1" />
@@ -82,7 +81,6 @@
                 android:textSize="@dimen/cs__textSizeMedium" />
 
             <View
-                android:id="@+id/addView1"
                 android:layout_width="0dp"
                 android:layout_height="30dp"
                 android:layout_weight="0.6" />
@@ -102,7 +100,6 @@
                 android:textSize="@dimen/cs__textSizeMedium" />
 
             <View
-                android:id="@+id/addView2"
                 android:layout_width="0dp"
                 android:layout_height="30dp"
                 android:layout_weight="1" />

@@ -11,6 +11,7 @@ import com.chatsdk.model.ChannelListItem;
 import com.chatsdk.model.ChannelManager;
 import com.chatsdk.model.ChatChannel;
 import com.chatsdk.model.MailManager;
+import com.chatsdk.model.db.DBDefinition;
 import com.chatsdk.model.mail.MailData;
 
 public class SortUtil

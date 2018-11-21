@@ -1,5 +1,8 @@
 package com.chatsdk.view.adapter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,9 +16,6 @@ import com.chatsdk.model.db.DBDefinition;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.view.ChannelListActivity;
 import com.chatsdk.view.ChannelListFragment;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MsgChannelAdapter extends ChannelAdapter
 {
@@ -83,7 +83,7 @@ public class MsgChannelAdapter extends ChannelAdapter
 		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "allMsgChannels.size()", allMsgChannels.size(), "moreCount",
 				moreCount, "actualCount", actualCount, "subMsgChannels.size()", subMsgChannels.size(), "addCnt", addCnt);
 
-		List<ChatChannel> LoadedMessageChannels = this.getLoadedMsgChannels();
+		List<ChatChannel> LoadedMessageChannels = ChannelManager.getInstance().getLoadedMessageChannel();
 		for (int i = 0; i < tempList.size(); i++)
 		{
 			ChatChannel chatChannel = tempList.get(i);
@@ -123,8 +123,7 @@ public class MsgChannelAdapter extends ChannelAdapter
 
 	public void reloadData()
 	{
-		List<ChatChannel> loadedMsgChannels = this.getLoadedMsgChannels();
-
+		List<ChatChannel> loadedMsgChannels = ChannelManager.getInstance().getLoadedMsgChannel();
 		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "loadedMsgChannels.size()", loadedMsgChannels.size());
 
 		list.clear();
@@ -138,13 +137,7 @@ public class MsgChannelAdapter extends ChannelAdapter
 		else
 		{
 			LogUtil.printVariables(Log.VERBOSE, LogUtil.TAG_VIEW, "    重新加载");
-			int count = loadedMsgChannels.size();
-			for (int i = 0;i < count;i++){
-				ChatChannel chatChannel = loadedMsgChannels.get(i);
-				if(!chatChannel.channelID.contains("custom_")){
-					list.add(chatChannel);
-				}
-			}
+			list.addAll(loadedMsgChannels);
 		}
 
 		refreshOrder();
@@ -155,17 +148,8 @@ public class MsgChannelAdapter extends ChannelAdapter
 	public void refreshAdapterList()
 	{
 		list.clear();
-		List<ChatChannel> loadedMsgChannels = this.getLoadedMsgChannels();
-		for (int i = 0; i < loadedMsgChannels.size(); i++)
-		{
-			ChatChannel chatChannel = loadedMsgChannels.get(i);
-			if (chatChannel != null
-					&& !ChannelManager.isChannelInList(chatChannel, list)
-					&& chatChannel.channelType == DBDefinition.CHANNEL_TYPE_USER)
-			{
-				list.add(chatChannel);
-			}
-		}
+		List<ChatChannel> loadedMsgChannels = ChannelManager.getInstance().getLoadedMsgChannel();
+		list.addAll(loadedMsgChannels);
 		refreshOrder();
 		fragment.setNoMailTipVisible(list.size() <= 0);
 	}
@@ -191,7 +175,7 @@ public class MsgChannelAdapter extends ChannelAdapter
 		}
 		else if (mChannelId.equals(MailManager.CHANNELID_MESSAGE))
 		{
-			return ChannelManager.getInstance().getLoadedMessageChannel();
+			return ChannelManager.getInstance().getLoadedMsgChannel();
 		}
 		return new ArrayList<ChatChannel>();
 	}

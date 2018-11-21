@@ -254,11 +254,11 @@ public class TranslateUtil
 			//String translateLang = "[\"" + key + "\"]";
 			String translateLang =  key;
  			BasicNameValuePair tf = new BasicNameValuePair("tf", translateLang);
-			BasicNameValuePair ch = new BasicNameValuePair("ch", "warz");
+			BasicNameValuePair ch = new BasicNameValuePair("ch", "lastshelter");
  			String currentTime = Long.toString(System.currentTimeMillis());
  			BasicNameValuePair t = new BasicNameValuePair("t", currentTime);
-			//String md5 = MD5.getMD5Str(srcMsg + originalLangStr + translateLang + "warz" + currentTime + "4cP_sdf3se&gcxN-NDb5__Y$%d3fz_-ZF3");
-			String md5 = MD5.getMD5Str(originalLangStr + translateLang + "warz" + currentTime + "4cP_sdf3se&gcxN-NDb5__Y$%d3fz_-ZF3");
+			//String md5 = MD5.getMD5Str(srcMsg + originalLangStr + translateLang + "warz" + currentTime + "4cP_eWNdWgcxN-NDb5__Y-rTz_gK-ZF3");
+			String md5 = MD5.getMD5Str(originalLangStr + translateLang + "lastshelter" + currentTime + "Dsd3fg-efr6gm,vgsdfike45");
 			BasicNameValuePair sig = new BasicNameValuePair("sig", md5);
 
 			UserInfo userInfo = UserManager.getInstance().getUser(UserManager.getInstance().getCurrentUserId());

@@ -13,7 +13,6 @@ import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.SortUtil;
 import com.chatsdk.view.ChannelListActivity;
 import com.chatsdk.view.ChannelListFragment;
-import com.chatsdk.view.EventMainListFragment;
 import com.chatsdk.view.MainListFragment;
 import com.chatsdk.view.MsgMailListFragment;
 
@@ -100,7 +99,7 @@ public class AbstractMailListAdapter extends BaseAdapter
 	{
 		if (convertView == null)
 		{
-            if ((fragment instanceof MainListFragment ||fragment instanceof EventMainListFragment)&& !(fragment instanceof MsgMailListFragment))
+            if (fragment instanceof MainListFragment && !(fragment instanceof MsgMailListFragment))
             {
 				if(ChatServiceController.getInstance().isArOrPrGameLang()){
 					convertView = View.inflate(context, R.layout.ar__channel_list_item_category, null);
@@ -148,7 +147,6 @@ public class AbstractMailListAdapter extends BaseAdapter
 				try
 				{
 					notifyDataSetChanged();
-					fragment.showEditButton(!fragment.isInEditMode());//add for update bottom UI
 				}
 				catch (Exception e)
 				{

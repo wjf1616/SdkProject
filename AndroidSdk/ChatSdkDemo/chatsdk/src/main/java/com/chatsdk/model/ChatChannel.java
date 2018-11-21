@@ -1,12 +1,20 @@
 package com.chatsdk.model;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.graphics.Point;
 import android.util.Log;
 
 import com.chatsdk.controller.ChatServiceController;
-import com.chatsdk.controller.ServiceInterface;
 import com.chatsdk.model.db.ChatTable;
 import com.chatsdk.model.db.DBDefinition;
 import com.chatsdk.model.db.DBHelper;
@@ -18,8 +26,6 @@ import com.chatsdk.model.mail.gift.GiftMailContents;
 import com.chatsdk.model.mail.gift.GiftMailData;
 import com.chatsdk.model.mail.missile.MissileMailContents;
 import com.chatsdk.model.mail.missile.MissileMailData;
-import com.chatsdk.model.mail.mobilization.MobilizationMailContents;
-import com.chatsdk.model.mail.mobilization.MobilizationMailData;
 import com.chatsdk.model.mail.monster.MonsterMailContents;
 import com.chatsdk.model.mail.monster.MonsterMailData;
 import com.chatsdk.model.mail.resouce.ResourceMailContents;
@@ -32,13 +38,6 @@ import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.SortUtil;
 import com.chatsdk.view.ChannelListFragment;
 import com.chatsdk.view.ChatFragment;
-
-import org.apache.commons.lang.StringUtils;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 public class ChatChannel extends ChannelListItem implements Serializable
 {
@@ -121,115 +120,8 @@ public class ChatChannel extends ChannelListItem implements Serializable
 	private boolean 			calculateSysMailCountInDB = false;
 	private boolean 			calculateUnreadSysMailCountInDB = false;
 
-	//最新一条msg
-	public MsgItem top_message;
-	public boolean kicked; 	// 已经离开频道标记
-
 	public ChatChannel()
 	{
-
-	}
-
-	public void SetChatChannel(ChatChannel e)
-	{
-		this.channelType = e.channelType;
-		this.channelID = e.channelID;
-
-		this.dbMinSeqId = e.dbMinSeqId;
-		this.dbMaxSeqId	= e.dbMaxSeqId;
-
-		for (int i = 0; i < e.memberUidArray.size(); i++)
-		{
-			String temp = e.memberUidArray.get(i);
-			this.memberUidArray.add(temp);
-		}
-
-		this.roomOwner = e.roomOwner;
-		this.isMember = e.isMember;
-		this.customName	= e.customName;
-		this.latestTime	= e.latestTime;
-
-		this.latestModifyTime = e.latestModifyTime;
-		this.latestId = e.latestId;
-		this.settings = e.settings;
-
-		for (int i = 0; i < e.msgList.size(); i++)
-		{
-			MsgItem temp = e.msgList.get(i);
-			this.msgList.add(temp);
-		}
-
-		for (int i = 0; i < e.sendingMsgList.size(); i++)
-		{
-			MsgItem temp = e.sendingMsgList.get(i);
-			this.sendingMsgList.add(temp);
-		}
-
-		this.hasRequestDataBefore = e.hasRequestDataBefore;
-		this.noMoreDataFlag = e.noMoreDataFlag;
-		this.sysMailCountInDB = e.sysMailCountInDB;
-		this.sysUnreadMailCountInDB = e.sysUnreadMailCountInDB;
-		this.lastPosition = e.lastPosition;
-
-		this.serverMinSeqId = e.serverMinSeqId;
-		this.serverMaxSeqId = e.serverMaxSeqId;
-		this.serverMaxTime = e.serverMaxTime;
-		this.serverMinTime = e.serverMinTime;
-		this.wsNewMsgCount = e.wsNewMsgCount;
-		this.prevDBMaxSeqId = e.prevDBMaxSeqId;
-		this.isLoadingAllNew = e.isLoadingAllNew;
-		this.hasLoadingAllNew = e.hasLoadingAllNew;
-		this.firstNewMsgSeqId = e.firstNewMsgSeqId;
-		this.latestMailData = e.latestMailData;
-		this.isMemberUidChanged = e.isMemberUidChanged;
-		this.nameText = e.nameText;
-		this.contentText = e.contentText;
-		this.channelIcon = e.channelIcon;
-		this.channelShowUserInfo = e.channelShowUserInfo;
-		this.timeText = e.timeText;
-		this.usePersonalPic = e.usePersonalPic;
-		this.showItem = e.showItem;
-		this.channelView = e.channelView;
-
-		for (int i = 0; i < e.mailUidList.size(); i++)
-		{
-			String temp = e.mailUidList.get(i);
-			this.mailUidList.add(temp);
-		}
-
-		for (int i = 0; i < e.mailDataList.size(); i++)
-		{
-			MailData temp = e.mailDataList.get(i);
-			this.mailDataList.add(temp);
-		}
-
-		for (int i = 0; i < e.allmailDataList.size(); i++)
-		{
-			MailData temp = e.allmailDataList.get(i);
-			this.allmailDataList.add(temp);
-		}
-
-		this.latestLoadedMailCreateTime = e.latestLoadedMailCreateTime;
-
-		if (e.msgTimeIndexArray != null)
-		{
-			if (this.msgTimeIndexArray == null)
-			{
-				this.msgTimeIndexArray = new ArrayList<Integer>();
-			}
-			for (int i = 0; i < e.msgTimeIndexArray.size(); i++)
-			{
-				Integer temp = e.msgTimeIndexArray.get(i);
-				this.msgTimeIndexArray.add(temp);
-			}
-		}
-
-
-		this.calculateSysMailCountInDB = e.calculateSysMailCountInDB;
-		this.calculateUnreadSysMailCountInDB = e.calculateUnreadSysMailCountInDB;
-		
-		this.top_message = e.top_message;
-		this.kicked = e.kicked;
 	}
 
 	public String getSetting(){
@@ -470,7 +362,7 @@ public class ChatChannel extends ChannelListItem implements Serializable
 			return false;
 		}
 		// 已经退出的聊天室
-		if (channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && !isMember)
+		if (channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && !channelID.contains("warzone_") && !isMember)
 		{
 			return false;
 		}
@@ -542,8 +434,7 @@ public class ChatChannel extends ChannelListItem implements Serializable
 	{
 		for (int i = 0; i < msgList.size(); i++)
 		{
-			if ((msgList.get(i).msg.equals(msg.msg) &&StringUtils.isEmpty(msg.attachmentId) || StringUtils.isNotEmpty(msg.attachmentId))
-					&& msgList.get(i).createTime == msg.createTime)
+			if (msgList.get(i).msg.equals(msg.msg) && msgList.get(i).createTime == msg.createTime)
 			{
 				return true;
 			}
@@ -624,9 +515,7 @@ public class ChatChannel extends ChannelListItem implements Serializable
 	 */
 	public void addDummyMsg(MsgItem msg)
 	{
-		if(!msgList.contains(msg)) {
-			msgList.add(msg);
-		}
+		msgList.add(msg);
 		initMsg(msg);
 	}
 
@@ -657,9 +546,7 @@ public class ChatChannel extends ChannelListItem implements Serializable
 			@Override
 			public void run() {
 				try {
-					if(!msgList.contains(msg)) {
-						msgList.set(posIndex, msg);
-					}
+					msgList.set(posIndex, msg);
 					if (ChatServiceController.getChatFragment() != null) {
 						ChatServiceController.getChatFragment().notifyDataSetChanged();
 						ChatServiceController.getChatFragment().notifyDataSetChanged(channelType, true);
@@ -682,16 +569,20 @@ public class ChatChannel extends ChannelListItem implements Serializable
 	private void addMsgAndSort(final MsgItem msg,final boolean isNewMsg)
 	{
 		int pos = 0;
-		for (int i = 0; i < msgList.size(); i++) {
+		for (int i = 0; i < msgList.size(); i++)
+		{
 			if (msg.createTime > msgList.get(i).createTime
 					|| (msg.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && msg.createTime == msgList.get(i).createTime && msg.sequenceId > msgList
-					.get(i).sequenceId)) {
+							.get(i).sequenceId))
+			{
 				pos = i + 1;
-			} else {
+			}
+			else
+			{
 				break;
 			}
 		}
-		final int posIndex = pos;
+        final int posIndex = pos;
 		if(ChatServiceController.isNeedReplaceBadWords()) {
 			if(StringUtils.isNotEmpty(msg.shareComment) && msg.isShareCommentMsg()){
 				msg.shareComment = FilterWordsManager.replaceSensitiveWord(msg.shareComment,1,"*");
@@ -713,20 +604,20 @@ public class ChatChannel extends ChannelListItem implements Serializable
 				try {
 
 					if (ChatServiceController.getChatFragment() != null) {
-						if (isNewMsg) {
+						if(isNewMsg) {
 							ChatServiceController.getChatFragment().notifyDataSetChanged();
 							ChatServiceController.getChatFragment().notifyDataSetChanged(channelType, true);
 							ChatServiceController.getChatFragment().updateListPositionForNewMsg(channelType, msg.isSelfMsg, msg.post);
-						} else {
+						}else{
 
 						}
 					}
-
 				} catch (Exception e) {
 					LogUtil.printException(e);
 				}
 			}
 		});
+
 	}
 
 	public void addNewMsg(MsgItem msg,boolean isNewMsg)
@@ -738,14 +629,14 @@ public class ChatChannel extends ChannelListItem implements Serializable
 			{
 				ChannelManager.getInstance().latestModChannelMsg = msg.msg;
 				ChatChannel modChannel = ChannelManager.getInstance().getModChannel();
-				if (modChannel != null&&unreadCount==1)
+				if (modChannel != null)
 					modChannel.unreadCount++;
 			}
 			else if (isMessageChannel())
 			{
 				ChannelManager.getInstance().latestMessageChannelMsg = msg.msg;
 				ChatChannel messageChannel = ChannelManager.getInstance().getMessageChannel();
-				if (messageChannel != null&&unreadCount==1)
+				if (messageChannel != null)
 					messageChannel.unreadCount++;
 			}
 		}
@@ -1257,57 +1148,6 @@ public class ChatChannel extends ChannelListItem implements Serializable
 		return null;
 	}
 
-	public MailData getMobilizationMailData(){
-		if (StringUtils.isNotEmpty(channelID) && channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER) && mailDataList != null
-				&& mailDataList.size() > 0)
-		{
-			MailData mail = mailDataList.get(0);
-			if (mail == null)
-				return null;
-
-			int unreadCount = 0;
-			boolean isLock = false;
-			List<MobilizationMailContents> mobilizationsArray = new ArrayList<MobilizationMailContents>();
-			for (int i = 0; i < mailDataList.size(); i++)
-			{
-				MailData mailData = mailDataList.get(i);
-				if (mailData == null)
-					continue;
-
-				if (!isLock && mailData.isLock())
-					isLock = true;
-
-				if (!mailData.hasMailOpend)
-				{
-					mailData.setNeedParseByForce(true);
-					mailData = MailManager.getInstance().parseMailDataContent(mailData);
-				}
-				if (mailData instanceof MobilizationMailData)
-				{
-					MobilizationMailData mobilizationMail = (MobilizationMailData) mailData;
-					if (mobilizationMail.isUnread())
-						unreadCount++;
-
-					if (mobilizationMail.getMobilizations() == null || mobilizationMail.getMobilizations().size() <= 0)
-						continue;
-					MobilizationMailContents mobilizations = mobilizationMail.getMobilizations().get(0);
-					if (mobilizations != null && !mobilizationsArray.contains(mobilizations))
-						mobilizationsArray.add(mobilizations);
-				}
-			}
-
-			MobilizationMailData newMail = new MobilizationMailData();
-			newMail.setMailData(mail);
-			newMail.setSave(isLock ? 1 : 0);
-			newMail.setTotalNum(DBManager.getInstance().getSysMailCountByTypeInDB(mail.getChannelId()));
-			newMail.setUnread(unreadCount);
-			newMail.setMobilizations(mobilizationsArray);
-			newMail.setContents("");
-			newMail.setDetail(null);
-			return newMail;
-		}
-		return null;
-	}
 	public MailData getResourceHelpMailData()
 	{
 		if (StringUtils.isNotEmpty(channelID) && channelID.equals(MailManager.CHANNELID_RESOURCE_HELP) && mailDataList != null
@@ -1374,10 +1214,9 @@ public class ChatChannel extends ChannelListItem implements Serializable
 	{
 		return channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE;
 	}
-
 	public boolean isChatRoomChannel()
 	{
-		return channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && !channelID.contains("live_");
+		return channelType == DBDefinition.CHANNEL_TYPE_CHATROOM;
 	}
 
 	public boolean isModChannel()
@@ -1386,17 +1225,11 @@ public class ChatChannel extends ChannelListItem implements Serializable
 				&& !channelID.equals(MailManager.CHANNELID_MOD);
 	}
 
-	public boolean isEventChannel()
-	{
-		return channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL && channelID.endsWith(DBDefinition.CHANNEL_ID_POSTFIX_EVENT)
-				&& !channelID.equals(MailManager.CHANNELID_EVENT);
-	}
-
 	public boolean isMessageChannel()
 	{
 		return (channelType == DBDefinition.CHANNEL_TYPE_USER && !channelID.endsWith(DBDefinition.CHANNEL_ID_POSTFIX_MOD)
 				&& !channelID.equals(MailManager.CHANNELID_MOD) && !channelID.equals(MailManager.CHANNELID_MESSAGE))
-				|| (channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && !channelID.contains("live_"));
+				|| channelType == DBDefinition.CHANNEL_TYPE_CHATROOM;
 	}
 
 	public boolean isUserMailChannel()
@@ -1430,8 +1263,8 @@ public class ChatChannel extends ChannelListItem implements Serializable
 
 	public boolean hasNoItemInChannel()
 	{
-		if (((channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL && !channelID.equals(MailManager.CHANNELID_MONSTER)&& !channelID.equals(MailManager.CHANNELID_GIFT)
-						&& !channelID.equals(MailManager.CHANNELID_RESOURCE) && !channelID.equals(MailManager.CHANNELID_KNIGHT) && !channelID.equals(MailManager.CHANNELID_BORDERFIGHT)&& !channelID.equals(MailManager.CHANNELID_MISSILE)&& !channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER)&& !channelID.equals(MailManager.CHANNELID_BATTLEGAME)&& !channelID.equals(MailManager.CHANNELID_SHAMOGAME)&& !channelID.equals(MailManager.CHANNELID_ARENAGAME)&& !channelID.equals(MailManager.CHANNELID_SHAMOEXPLORE)&& !channelID.equals(MailManager.CHANNELID_SHAMOGOLDDIGGER) && !channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE)))
+		if (((channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL && !channelID.equals(MailManager.CHANNELID_GIFT)
+						&& !channelID.equals(MailManager.CHANNELID_RESOURCE) && !channelID.equals(MailManager.CHANNELID_KNIGHT)&& !channelID.equals(MailManager.CHANNELID_MANORFIGHT) && !channelID.equals(MailManager.CHANNELID_BORDERFIGHT)&& !channelID.equals(MailManager.CHANNELID_MISSILE)&& !channelID.equals(MailManager.CHANNELID_BATTLEGAME)&& !channelID.equals(MailManager.CHANNELID_SHAMOGAME)&& !channelID.equals(MailManager.CHANNELID_ARENAGAME)&& !channelID.equals(MailManager.CHANNELID_SHAMOEXPLORE)))
 				|| (channelType == DBDefinition.CHANNEL_TYPE_USER && (channelID.equals(MailManager.CHANNELID_MOD) || channelID
 						.equals(MailManager.CHANNELID_MESSAGE))))
 			return false;
@@ -1462,7 +1295,7 @@ public class ChatChannel extends ChannelListItem implements Serializable
 				if (mail != null && StringUtils.isNotEmpty(mail.getUid()))
 				{
 					DBManager.getInstance().deleteSysMail(this, mail.getUid());
-					if (!hasDetectMail && (mail.getType() == MailManager.MAIL_DETECT_REPORT||mail.getType() == MailManager.Mail_DETECT_REPORT_ARENA))
+					if (!hasDetectMail && (mail.getType() == MailManager.MAIL_DETECT_REPORT||mail.getType() == MailManager.Mail_NEW_SCOUT_REPORT_FB))
 						hasDetectMail = true;
 				}
 			}
@@ -1684,9 +1517,8 @@ public class ChatChannel extends ChannelListItem implements Serializable
 						.equals(MailManager.CHANNELID_MONSTER)|| channelID.equals(MailManager.CHANNELID_GIFT) || channelID
 				.equals(MailManager.CHANNELID_MISSILE)|| channelID
 				.equals(MailManager.CHANNELID_BATTLEGAME)|| channelID
-				.equals(MailManager.CHANNELID_ARENAGAME)|| channelID.equals(MailManager.CHANNELID_SHAMOGAME)|| channelID.equals(MailManager.CHANNELID_SHAMOEXPLORE)|| channelID.equals(MailManager.CHANNELID_BORDERFIGHT)|| channelID.equals(MailManager.CHANNELID_SHAMOGOLDDIGGER)
-				||channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER)
-				||channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE)
+				.equals(MailManager.CHANNELID_ARENAGAME)|| channelID.equals(MailManager.CHANNELID_SHAMOGAME)|| channelID.equals(MailManager.CHANNELID_SHAMOEXPLORE)
+				|| channelID.equals(MailManager.CHANNELID_BORDERFIGHT)|| channelID.equals(MailManager.CHANNELID_MANORFIGHT)
 		);
 	}
 	//=====================    华丽的分割线   读取数据库   =======================//
@@ -1954,6 +1786,9 @@ public class ChatChannel extends ChannelListItem implements Serializable
 
 			nameText = StringUtils.isNotEmpty(customName) ? customName : channelID;
 
+			if( channelID.contains("warzone_")){
+				nameText = LanguageManager.getLangByKey(LanguageKeys.BTN_WARZONE_NAME);
+			}
 			MsgItem mail = null;
 			if (msgList.size() > 0)
 			{
@@ -2011,17 +1846,8 @@ public class ChatChannel extends ChannelListItem implements Serializable
 			else if (channelID.equals(MailManager.CHANNELID_EVENT))
 				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_EVENT);
 
-			else if (channelID.equals(MailManager.CHANNELID_EVENT_PERSONALARM))
-				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_EVENT_P);
-			else if (channelID.equals(MailManager.CHANNELID_EVENT_ALLIANCERAM))
-				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_EVENT_A);
-			else if (channelID.equals(MailManager.CHANNELID_EVENT_GREATKING))
-				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_EVENT_G);
-			else if (channelID.equals(MailManager.CHANNELID_EVENT_DESERT))
-				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_EVENT_D);
-			else if (channelID.equals(MailManager.CHANNELID_EVENT_NORMAL))
-				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_EVENT_N);
-			else if (channelID.equals(MailManager.CHANNELID_STUDIO))
+
+			if (channelID.equals(MailManager.CHANNELID_STUDIO))
 				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_STUDIO);
 			else if (channelID.equals(MailManager.CHANNELID_SYSTEM))
 				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_SYSTEM);
@@ -2047,11 +1873,7 @@ public class ChatChannel extends ChannelListItem implements Serializable
 				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_RESOURCE);
 			else if (channelID.equals(MailManager.CHANNELID_BORDERFIGHT))
 				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_SHAMOGAME);
-			else if (channelID.equals(MailManager.CHANNELID_SHAMOGOLDDIGGER))
-				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_SHAMOGAME);
-			else if (channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER))
-				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_MOBILIZATION);
-			else if (channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE))
+			else if (channelID.equals(MailManager.CHANNELID_MANORFIGHT))
 				channelIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_SHAMOGAME);
 
 			nameText = getSystemChannelName();
@@ -2063,8 +1885,7 @@ public class ChatChannel extends ChannelListItem implements Serializable
 					|| channelID.equals(MailManager.CHANNELID_MISSILE)|| channelID.equals(MailManager.CHANNELID_GIFT)
 					|| channelID.equals(MailManager.CHANNELID_BATTLEGAME)|| channelID.equals(MailManager.CHANNELID_ARENAGAME)
 					|| channelID.equals(MailManager.CHANNELID_SHAMOGAME)|| channelID.equals(MailManager.CHANNELID_SHAMOEXPLORE)
-					|| channelID.equals(MailManager.CHANNELID_BORDERFIGHT)|| channelID.equals(MailManager.CHANNELID_SHAMOGOLDDIGGER)
-					|| channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER) || channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE)
+					|| channelID.equals(MailManager.CHANNELID_BORDERFIGHT)|| channelID.equals(MailManager.CHANNELID_MANORFIGHT)
 					)
 
 				return;
@@ -2087,10 +1908,8 @@ public class ChatChannel extends ChannelListItem implements Serializable
 					}
 					if (StringUtils.isEmpty(nameText))
 						nameText = mail.nameText;
-					if (StringUtils.isEmpty(channelIcon))
-						channelIcon = mail.mailIcon;
-					if (StringUtils.isEmpty(contentText))
-						contentText = mail.contentText;
+					contentText = mail.contentText;
+					channelIcon = mail.mailIcon;
 				}
 			}
 		}
@@ -2199,22 +2018,8 @@ public class ChatChannel extends ChannelListItem implements Serializable
 			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_SHAMOEXPLORE);
 		else if (channelID.equals(MailManager.CHANNELID_BORDERFIGHT))
 			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_BORDERFIGHT);
-		else if (channelID.equals(MailManager.CHANNELID_SHAMOGOLDDIGGER))
-			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_GOLDDIGGER);
-		else if (channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER))
-			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_MOBILIZATION);
-		else if (channelID.equals(MailManager.CHANNELID_EVENT_PERSONALARM))
-			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_EVENT_P);
-		else if (channelID.equals(MailManager.CHANNELID_EVENT_ALLIANCERAM))
-			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_EVENT_A);
-		else if (channelID.equals(MailManager.CHANNELID_EVENT_GREATKING))
-			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_EVENT_G);
-		else if (channelID.equals(MailManager.CHANNELID_EVENT_DESERT))
-			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_EVENT_D);
-		else if (channelID.equals(MailManager.CHANNELID_EVENT_NORMAL))
-			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_EVENT_N);
-		else if (channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE))
-			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_COMBATFACTORY);
+		else if (channelID.equals(MailManager.CHANNELID_MANORFIGHT))
+			name = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_MANORFIGHT);
 		return name;
 	}
 }

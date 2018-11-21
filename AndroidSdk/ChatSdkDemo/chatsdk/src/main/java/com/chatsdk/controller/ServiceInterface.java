@@ -2,12 +2,9 @@ package com.chatsdk.controller;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Looper;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -16,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,11 +53,11 @@ import com.chatsdk.util.FilterWordsManager;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.PermissionManager;
 import com.chatsdk.util.TranslatedByLuaResult;
+import com.chatsdk.util.toast.ToastCompat;
 import com.chatsdk.view.ChannelListActivity;
 import com.chatsdk.view.ChannelListFragment;
 import com.chatsdk.view.ChatActivity;
 import com.chatsdk.view.ChatFragment;
-import com.chatsdk.view.ChatLiveSettingActivity;
 import com.chatsdk.view.ChatRoomNameModifyActivity;
 import com.chatsdk.view.ChatRoomSettingActivity;
 import com.chatsdk.view.ICocos2dxScreenLockListener;
@@ -72,13 +70,13 @@ import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static android.R.attr.data;
 import static com.alibaba.fastjson.JSON.toJSONString;
@@ -91,7 +89,6 @@ public class ServiceInterface
 {
 	public static String	allianceIdJoining;
 	private static boolean	oldHornMsgPushed	= false;
-
 	private static ServiceInterfaceDelegate delegate = null;
 
 	public static void setServiceDelegate(ServiceInterfaceDelegate del)
@@ -112,9 +109,9 @@ public class ServiceInterface
 			{
 				try
 				{
-					if (getChatFragment() != null)
+					if (ChatServiceController.getChatFragment() != null)
 					{
-						getChatFragment().onJoinAnnounceInvitationSuccess();
+						ChatServiceController.getChatFragment().onJoinAnnounceInvitationSuccess();
 					}
 				}
 				catch (Exception e)
@@ -171,9 +168,9 @@ public class ServiceInterface
 
 	public static void postNoMoreMessage(int channelType)
 	{
-		if (getChatFragment() != null)
+		if (ChatServiceController.getChatFragment() != null)
 		{
-			getChatFragment().resetMoreDataStart(channelType);
+			ChatServiceController.getChatFragment().resetMoreDataStart(channelType);
 		}
 	}
 
@@ -194,8 +191,7 @@ public class ServiceInterface
 		else if (channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL)
 		{
 			if (type == MailManager.MAIL_RESOURCE || type == MailManager.MAIL_RESOURCE_HELP
-					|| type == MailManager.MAIL_ATTACKMONSTER || type == MailManager.MAIL_MISSILE || type == MailManager.MAIL_GIFT_BUY_EXCHANGE
-					|| type == MailManager.MAIL_MOBILIZATION_CENTER|| id.equals("knight") )
+					|| type == MailManager.MAIL_ATTACKMONSTER || type == MailManager.MAIL_MISSILE || type == MailManager.MAIL_GIFT_BUY_EXCHANGE|| id.equals("knight") )
 			{
 				String channelId = "";
 				if (type == MailManager.MAIL_RESOURCE)
@@ -208,10 +204,6 @@ public class ServiceInterface
 					channelId = MailManager.CHANNELID_MISSILE;
 				else if (type == MailManager.MAIL_GIFT_BUY_EXCHANGE)
 					channelId = MailManager.CHANNELID_GIFT;
-				else if (type == MailManager.MAIL_MOBILIZATION_CENTER)
-					channelId = MailManager.CHANNELID_MOBILIZATION_CENTER;
-				else if (type == MailManager.MAIL_COMBOTFACTORY_FIRE)
-					channelId = MailManager.CHANNELID_COMBOTFACTORY_FIRE;
 				else if (id.equals("knight"))
 					channelId = MailManager.CHANNELID_KNIGHT;
 				ChatChannel channel = ChannelManager.getInstance().getChannel(channelType, channelId);
@@ -273,12 +265,12 @@ public class ServiceInterface
 			{
 				try
 				{
-					if (getChatFragment() != null)
+					if (ChatServiceController.getChatFragment() != null)
 					{
-						if (!getChatFragment().isSelectMemberBtnEnable())
+						if (!ChatServiceController.getChatFragment().isSelectMemberBtnEnable())
 						{
-							getChatFragment().refreshMemberSelectBtn();
-							getChatFragment().setSelectMemberBtnState();
+							ChatServiceController.getChatFragment().refreshMemberSelectBtn();
+							ChatServiceController.getChatFragment().setSelectMemberBtnState();
 						}
 					}
 				}
@@ -302,14 +294,14 @@ public class ServiceInterface
 		}
 
 		ChannelManager.getInstance().updateChannelMemberArray(fromUid, uidStr, op);
+
 		if (ChatServiceController.getChatRoomSettingActivity() != null) {
 			ChatServiceController.getChatRoomSettingActivity().refreshData();
 			ChatServiceController.getChatRoomSettingActivity().refreshTitle();
 		}
 
-		if (ChatServiceController.hostActivity == null) {
+		if (ChatServiceController.hostActivity == null)
 			return;
-		}
 
 		final String roomid = fromUid;
 		final boolean delChannel = isRemove;
@@ -317,6 +309,7 @@ public class ServiceInterface
 			@Override
 			public void run() {
 				try {
+
 					ChatChannel channel = ChannelManager.getInstance().getChannel(ChatTable.createChatTable(DBDefinition.CHANNEL_TYPE_CHATROOM, roomid));
 					if (channel == null) {
 						return;
@@ -326,7 +319,6 @@ public class ServiceInterface
 					if(ChatServiceController.chat_v2_on) {
 						if (delChannel) {
 							ChannelManager.getInstance().deleteChannel(channel);
-
 							if (ServiceInterface.getServiceDelegate() != null) {
 								ServiceInterface.getServiceDelegate().updateDialogs();
 							}
@@ -356,8 +348,6 @@ public class ServiceInterface
 							}
 						}
 					}
-
-
 
 				} catch (Exception e) {
 					LogUtil.printException(e);
@@ -616,7 +606,8 @@ public class ServiceInterface
 			}
 		};
 
-		UserManager.getInstance().runOnExecutorService(run);
+		Thread thread = new Thread(run);
+		thread.start();
 	}
 	
 	private static synchronized void handleMailDataIndexForGetNew(final int mailDataIndex, final int isFlag)
@@ -636,15 +627,11 @@ public class ServiceInterface
 			MailData mailData = (MailData) mailDataArr[i];
 			if (mailData == null)
 				continue;
-			if (!hasDetectMail && (mailData.getType() == MailManager.MAIL_DETECT_REPORT||mailData.getType() == MailManager.Mail_DETECT_REPORT_ARENA))
+			if (!hasDetectMail && (mailData.getType() == MailManager.MAIL_DETECT_REPORT||mailData.getType() == MailManager.Mail_NEW_SCOUT_REPORT_FB))
 				hasDetectMail = true;
 			mailData.parseMailTypeTab();
 			mailData.setNeedParseByForce(true);
 			mailData = MailManager.getInstance().parseMailDataContent(mailData);
-			if (mailData.getType() == MAIL_SYSTEM && mailData.getTitle().equals("90200039") && !MailManager.getInstance().isInTransportedMailList(mailData.getUid())) {
-				String jsonStr = JSON.toJSONString(mailData);
-				MailManager.getInstance().transportMailInfo(jsonStr, false, false);
-			}
 			ChatChannel channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, mailData.getChannelId());
 			if (channel != null)
 			{
@@ -714,20 +701,6 @@ public class ServiceInterface
 		else
 		{
 			ChannelManager.getInstance().prepareSystemMailChannel();
-			if(!ChatServiceController.isInitTipMail) {
-				ArrayList<MailData> tempArray = DBManager.getInstance().getSysMailFromDB(MailManager.CHANNELID_SYSTEM, DBManager.CONFIG_TYPE_REWARD);
-//			(MailManager.CHANNELID_SYSTEM,MAIL_SYSTEM ,"90200032");
-				if (tempArray != null && tempArray.size() > 0) {
-					for (MailData mailModel : tempArray) {
-						if (mailModel.getType() == MAIL_SYSTEM && mailModel.getTitle().equals("90200039")) {
-							String jsonStr = JSON.toJSONString(mailModel);
-							MailManager.getInstance().transportMailInfo(jsonStr, false, false);
-						}
-					}
-				}
-				ChatServiceController.isInitTipMail = false;
-			}
-//			CCSafeNotificationCenter::sharedNotificationCenter()->postNotification("updateTipMailInfo", NULL);
 			ChatServiceController.hostActivity.runOnUiThread(new Runnable()
 			{
 				@Override
@@ -776,7 +749,7 @@ public class ServiceInterface
 			MailData mailData = (MailData)mailDataArr[i];
 			if (mailData == null)
 				continue;
-			if (!hasDetectMail && (mailData.getType() == MailManager.MAIL_DETECT_REPORT||mailData.getType() == MailManager.Mail_DETECT_REPORT_ARENA))
+			if (!hasDetectMail && (mailData.getType() == MailManager.MAIL_DETECT_REPORT||mailData.getType() == MailManager.Mail_NEW_SCOUT_REPORT_FB))
 				hasDetectMail = true;
 //			LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_MSG, "mailData.contentText", mailData);
 			if (!isGetNew)
@@ -881,63 +854,21 @@ public class ServiceInterface
 		return mailData;
 	}
 
-	public static void updateMsg(MsgItem item){
-		if ((ChatServiceController.getCurrentChannelType() < DBDefinition.CHANNEL_TYPE_USER && item.isSystemMessage()
-				&& !item.isHornMessage()) || item.isLiveRoomSys()) {
-			String attachmentId = item.attachmentId;
-			String[] attachments = attachmentId.split("__");
-			if (attachments.length == 0 || StringUtils.isEmpty(attachmentId))
-				return;
-			String[] attachmentIds = attachments[attachments.length -1].split("\\|");
-			if(attachmentIds.length== 0)
-				return;
-			String dialogKey = attachmentIds[0];
-			String msg = "";
-			if (attachmentIds.length == 1) {
-				msg = LanguageManager.getLangByKey(dialogKey);
-			} else if (attachmentIds.length == 2) {
-				msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1]);
-			} else if (attachmentIds.length == 3 && !item.isGWSysTips()) {
-				msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], attachmentIds[2]);
-			} else if (attachmentIds.length == 4 && !item.isGWSysTips()) {
-				msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], attachmentIds[2], attachmentIds[3]);
-			} else if (attachmentIds.length == 5) {
-				msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], attachmentIds[2], attachmentIds[3], attachmentIds[4]);
-			}
-			item.msg = msg;
-			item.translatedLang = ConfigManager.getInstance().gameLang;
-			LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_CORE, "msg_dialog", msg);
-		}
-	}
-
-	/**
-	 *
-	 * @param chatInfoArr
-	 * @param channelId
-	 * @param customName
-	 * @param calulateUnread
-	 * @param isFromServer
-	 * @param channelType 用于新聊天 判断是否刷新dialogs
-	 */
 	public static void handleMessage(final MsgItem[] chatInfoArr, final String channelId, final String customName,
-			final boolean calulateUnread, final boolean isFromServer) {
-		boolean isUpdatemsg = false;
-		for (int i = 0; i < chatInfoArr.length; i++) {
-			if (isFromServer && chatInfoArr[i].hasTranslation()) {
+			final boolean calulateUnread, final boolean isFromServer)
+	{
+		for (int i = 0; i < chatInfoArr.length; i++)
+		{
+			if (isFromServer && chatInfoArr[i].hasTranslation())
 				chatInfoArr[i].translatedLang = ConfigManager.getInstance().gameLang;
-			}
-			if (!chatInfoArr[i].isRedPackageMessage()) {
+			if (!chatInfoArr[i].isRedPackageMessage())
 				chatInfoArr[i].sendState = MsgItem.SEND_SUCCESS;
-			}
-
 			// 存储用户信息
 			chatInfoArr[i].initUserForReceivedMsg(channelId, customName);
-			if (TranslateManager.getInstance().hasTranslated(chatInfoArr[i])) {
+			if (TranslateManager.getInstance().hasTranslated(chatInfoArr[i]))
 				chatInfoArr[i].hasTranslated = true;
-			}
-			else {
+			else
 				chatInfoArr[i].hasTranslated = false;
-			}
 		}
 
 		final int channelType = chatInfoArr[0].channelType;
@@ -945,53 +876,53 @@ public class ServiceInterface
 
 		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_MSG, "channelType", channelType, "channelId", channelId,
 				"calulateUnread", calulateUnread, "isFromServer", isFromServer);
-		if (isFromServer) {
+		if (isFromServer)
+		{
 			save2DB(chatInfoArr, channelType, channelId, customName);
-		}else{
-			if((channelType == DBDefinition.CHANNEL_TYPE_COUNTRY || channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE) && isUpdatemsg) {
-				ChatChannel channel = ChannelManager.getInstance().getChannel(channelType);
-				DBManager.getInstance().updateDBMsgs(chatInfoArr, channel.getChatTable());
-			}
 		}
 
-		if (getChatFragment() != null && isNewMessage) {
-			getChatFragment().refreshIsInLastScreen(channelType);
+		if (ChatServiceController.getChatFragment() != null && isNewMessage)
+		{
+			ChatServiceController.getChatFragment().refreshIsInLastScreen(channelType);
 		}
 
 		try
 		{
-			handleMessage2(channelType, isNewMessage, chatInfoArr, channelId, customName, isFromServer);
+			// TODO 如果消息属于当前的聊天窗口，则无需刷新unread
 			if (calulateUnread && (channelType == DBDefinition.CHANNEL_TYPE_USER || channelType == DBDefinition.CHANNEL_TYPE_OFFICIAL)) {
 				ChannelManager.getInstance().calulateAllChannelUnreadNum();
 			}
 
+			handleMessage2(channelType, isNewMessage, chatInfoArr, channelId, customName, isFromServer);
 			if(channelType == DBDefinition.CHANNEL_TYPE_CHATROOM){
-				final Activity currentActivity;
-				if(ChatServiceController.chat_v2_on) {
-					//聊天v2
-					currentActivity = ChatServiceController.getCurrentV2Activity();
-				}
-				else
-				{
-					currentActivity = ChatServiceController.getCurrentActivity();
-				}
+				if(channelType == DBDefinition.CHANNEL_TYPE_CHATROOM){
+					final Activity currentActivity;
+					if(ChatServiceController.chat_v2_on) {
+						//聊天v2
+						currentActivity = ChatServiceController.getCurrentV2Activity();
+					}
+					else
+					{
+						currentActivity = ChatServiceController.getCurrentActivity();
+					}
 
-				if (currentActivity != null) {
-					currentActivity.runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							//新聊天需要,添加同步未读聊天
-							if(ChatServiceController.chat_v2_on) {
-								LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_MSG, "new chat v2 need add....");
-							}
-							else {
-								if (getChatFragment() != null) {
-									getChatFragment().refreshUnreadCount();
+					if (currentActivity != null) {
+						currentActivity.runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								//新聊天需要,添加同步未读聊天
+								if(ChatServiceController.chat_v2_on) {
+									LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_MSG, "new chat v2 need add....");
 								}
-							}
+								else {
+									if (ChatServiceController.getChatFragment() != null) {
+										ChatServiceController.getChatFragment().refreshUnreadCount();
+									}
+								}
 
-						}
-					});
+							}
+						});
+					}
 				}
 			}
 		}
@@ -1000,12 +931,13 @@ public class ServiceInterface
 			LogUtil.printException(e);
 		}
 
-		if (ConfigManager.autoTranlateMode > 0) {
-			for (int i = 0; i < chatInfoArr.length; i++) {
+		if (ConfigManager.autoTranlateMode > 0)
+		{
+			for (int i = 0; i < chatInfoArr.length; i++)
+			{
 				TranslateManager.getInstance().loadTranslation(chatInfoArr[i], null);
 			}
 		}
-
 	}
 
 	private static void handleMessage2(final int channelType, final boolean isNewMessage, final MsgItem[] chatInfoArr,
@@ -1059,26 +991,35 @@ public class ServiceInterface
 					sendingMsg.sendState = MsgItem.SEND_SUCCESS;
 					sendingMsgList.remove(sendingMsg);
 					channel.replaceDummyMsg(recievedMsg, msgList.indexOf(sendingMsg));
-					ChatServiceController.getInstance().postLatestChatMessage(recievedMsg);
 				}
 				else
 				{
 					channel.addNewMsg(recievedMsg,true);
 				}
 
-				if (getChatFragment() != null)
+				if (ChatServiceController.getChatFragment() != null)
 				{
-					if(ChatServiceController.chat_effect_switch) {
-						UserInfo user = UserManager.getInstance().getUser(chatInfoArr[0].uid);
-						int currentTime = TimeManager.getInstance().getCurrentTime();
-						if (isFromServer && ChatServiceController.isContainFestivalWords(chatInfoArr[0].msg) && chatInfoArr[0].sequenceId > channel.dbMinSeqId && (currentTime - chatInfoArr[0].createTime < 10)
-								&& (currentTime - user.lastAnimateTime > ChatServiceController.intervalTime) && ChatServiceController.getCurrentChannelType()== channelType) {
-							UserManager.getInstance().addUerAnimateList(chatInfoArr[0].uid);
-							if(!ChatServiceController.isInLantern){
-								getChatFragment().beginAnimation();
-							}
-						}
-					}
+//					ChatServiceController.getChatFragment().notifyDataSetChanged();
+//					ChatServiceController.getChatFragment().notifyDataSetChanged(channelType, true);
+//					ChatServiceController.getChatFragment().updateListPositionForNewMsg(channelType, recievedMsg.isSelfMsg,recievedMsg.post);
+//
+//					final MsgItem msgItem = recievedMsg;
+//					ChatServiceController.hostActivity.runOnUiThread(new Runnable()
+//					{
+//						@Override
+//						public void run()
+//						{
+//							try
+//							{
+//								if (msgItem.isHornMessage() && ChatServiceController.getChatFragment() != null)
+//									ChatServiceController.getChatFragment().showHornScrollText(msgItem);
+//							}
+//							catch (Exception e)
+//							{
+//								LogUtil.printException(e);
+//							}
+//						}
+//					});
 
 				}
 				else
@@ -1124,12 +1065,12 @@ public class ServiceInterface
 				}
 			}
 
-			if (getChatFragment() != null)
+			if (ChatServiceController.getChatFragment() != null)
 			{
-				getChatFragment().notifyDataSetChanged(channelType, false);
-				getChatFragment().updateListPositionForOldMsg(channelType, loadCount,
+				ChatServiceController.getChatFragment().notifyDataSetChanged(channelType, false);
+				ChatServiceController.getChatFragment().updateListPositionForOldMsg(channelType, loadCount,
 						!ChatServiceController.getInstance().isDifferentDate(oldFirstItem, channel.msgList));
-				getChatFragment().resetMoreDataStart(channelType);
+				ChatServiceController.getChatFragment().resetMoreDataStart(channelType);
 			}
 		}
 
@@ -1151,7 +1092,7 @@ public class ServiceInterface
 			if(channel.channelType == DBDefinition.CHANNEL_TYPE_USER) {
 				ChannelListFragment.onMsgAdded(channel);
 			}
-			if(channel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM) {
+			if(channel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && channel.channelID.contains("custom")) {
 				ChatFragment.onMsgAdded(channel);
 			}
 		}
@@ -1177,9 +1118,9 @@ public class ServiceInterface
 			@Override
 			public void run() {
 				try {
-					if (getChatFragment() != null
+					if (ChatServiceController.getChatFragment() != null
 							&& ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_CHATROOM) {
-						getChatFragment().changeChatRoomName(modifyName);
+						ChatServiceController.getChatFragment().changeChatRoomName(modifyName);
 					}
 				} catch (Exception e) {
 					LogUtil.printException(e);
@@ -1204,23 +1145,6 @@ public class ServiceInterface
 		ChannelManager.getInstance().removeAllMailMsgByUid(fromUid);
 	}
 
-	//通知游戏Setting-内容 ("聊天设置|自动加入语言频道")=("0|1")
-	public static void notifySetting(String strSetting)
-	{
-		if (strSetting != null && !strSetting.isEmpty()) {
-			String[] infoArr = strSetting.split("\\|");
-			if (infoArr.length > 0) {
-				String temp = infoArr[0];
-				ChatServiceController.cahe_chat_settings = !(temp != null && temp.equals("1"));
-			}
-
-			if (infoArr.length > 1){
-				String temp = infoArr[1];
-				ChatServiceController.cahe_language_autojoin = temp != null && temp.equals("1");
-			}
-		}
-	}
-
 	public static void setCurrentUserId(String uidStr)
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_CORE, "uid", uidStr);
@@ -1236,8 +1160,8 @@ public class ServiceInterface
 	 * @param worldTime
 	 *            utc时间，单位为s
 	 */
-	public static void setPlayerInfo(int country, int worldTime, int gmod, int headPicVer, String name, String uidStr, String picStr,
-			int vipLevel, int svipLevel,int vipEndTime, int lastUpdateTime, int crossFightSrcServerId,int monthCard,int isShowServerId,int level,long gold)
+	public static void setPlayerInfo(int country, int worldTime, int gmod, int headPicVer, String name, String careerName, String uidStr, String picStr,
+			int vipLevel, int svipLevel,int vipEndTime, int lastUpdateTime, int crossFightSrcServerId,int monthCard,int isShowServerId,int level,long gold,int vipframe)
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_CORE, "uid", uidStr, "name", name, "country", country,
 				"crossFightSrcServerId", crossFightSrcServerId);
@@ -1252,9 +1176,11 @@ public class ServiceInterface
 			UserManager.getInstance().getCurrentUser().headPicVer = headPicVer;
 			UserManager.getInstance().getCurrentUser().mGmod = gmod;
 			UserManager.getInstance().getCurrentUser().userName = name;
+			UserManager.getInstance().getCurrentUser().careerName = careerName;
 			UserManager.getInstance().getCurrentUser().headPic = picStr;
 			UserManager.getInstance().getCurrentUser().vipLevel = vipLevel;
 			UserManager.getInstance().getCurrentUser().svipLevel = svipLevel;
+            UserManager.getInstance().getCurrentUser().vipframe = vipframe;
 			UserManager.getInstance().getCurrentUser().vipEndTime = vipEndTime;
 			UserManager.getInstance().getCurrentUser().lastUpdateTime = lastUpdateTime;
 			UserManager.getInstance().getCurrentUser().crossFightSrcServerId = crossFightSrcServerId;
@@ -1268,6 +1194,7 @@ public class ServiceInterface
 		ChatServiceController.crossFightSrcServerId = crossFightSrcServerId;
 		ChannelManager.getInstance().getCountryChannel();
 		MailManager.getInstance().clearData();
+
 		if (WebSocketManager.isWebSocketEnabled())
 		{
 			WebSocketManager.getInstance().setUserInfo();
@@ -1279,7 +1206,6 @@ public class ServiceInterface
 				ServiceInterface.getServiceDelegate().loadChatChannel();
 			}
 		}
-
 	}
 
 	public static void setPlayerAllianceJoinTime(int joinTime)
@@ -1290,19 +1216,11 @@ public class ServiceInterface
 		}
 	}
 
-	public static void closeMailPopUpViewByX()
-	{
-		if(ChatServiceController.isCurrentSecondList==true)
-		{
-			ChatServiceController.isCurrentSecondList = false;
-		}
-	}
-
 	/**
 	 * 初始登录时会调用 打开聊天时，会紧接着setPlayerInfo后面调
 	 * 重新登录、切服等时候，会调C++的parseData()刷新联盟信息，也调用此函数
 	 */
-	public static void setPlayerAllianceInfo(String asnStr, String allianceIdStr, int alliancerank, boolean isFirstJoinAlliance)
+	public static void setPlayerAllianceInfo(String asnStr, String allianceIdStr, int alliancerank, boolean isFirstJoinAlliance ,int createServer)
 	{
 		//LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_MSG, "allianceIdStr", allianceIdStr, "current allianceId", UserManager.getInstance().getCurrentUser().allianceId);
 
@@ -1319,9 +1237,9 @@ public class ServiceInterface
 					try
 					{
 						ChannelManager.getInstance().getAllianceChannel().resetMsgChannel();
-						if (getChatFragment() != null)
+						if (ChatServiceController.getChatFragment() != null)
 						{
-							getChatFragment().notifyDataSetChanged(DBDefinition.CHANNEL_TYPE_ALLIANCE, true);
+							ChatServiceController.getChatFragment().notifyDataSetChanged(DBDefinition.CHANNEL_TYPE_ALLIANCE, true);
 						}
 					}
 					catch (Exception e)
@@ -1354,6 +1272,7 @@ public class ServiceInterface
 			UserManager.getInstance().getCurrentUser().asn = asnStr;
 			UserManager.getInstance().getCurrentUser().allianceId = allianceIdStr;
 			UserManager.getInstance().getCurrentUser().allianceRank = alliancerank;
+			UserManager.getInstance().getCurrentUser().createServer = createServer;
 		}
 
 		ConfigManager.getInstance().isFirstJoinAlliance = isFirstJoinAlliance;
@@ -1378,11 +1297,10 @@ public class ServiceInterface
 		}
 		
 //        JniController.getInstance().excuteJNIVoidMethod("getLatestChatMessage", null);
-
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_WS_STATUS);
 		UserManager.getInstance().isInitUserInfo = true;
 	}
-
+	
 	public static void connect2WS()
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_WS_STATUS);
@@ -1435,9 +1353,9 @@ public class ServiceInterface
 						{
 							// 有时候会发生nullPointer异常
 							ChannelManager.getInstance().getAllianceChannel().msgList.clear();
-							if (getChatFragment() != null)
+							if (ChatServiceController.getChatFragment() != null)
 							{
-								getChatFragment().notifyDataSetChanged(DBDefinition.CHANNEL_TYPE_ALLIANCE, true);
+								ChatServiceController.getChatFragment().notifyDataSetChanged(DBDefinition.CHANNEL_TYPE_ALLIANCE, true);
 							}
 						}
 					}
@@ -1486,7 +1404,6 @@ public class ServiceInterface
 	public static void onLogOutCmd()
 	{
 		UserManager.getInstance().isInitUserInfo = false;
-		ChatServiceController.resetLiveInfo(); //退出登录时清除直播间信息
 		WebSocketManager.getInstance().clearSocket();
 	}
 
@@ -1569,7 +1486,6 @@ public class ServiceInterface
 		ChatServiceController.isHornItemUsed = isNoticeItemUsed;
 		ConfigManager.sendInterval = sendInterval * 1000;
 		ChatServiceController.isCreateChatRoom = false;
-		ChatServiceController.isFromBd = false;
 		if (ChatServiceController.hostActivity != null)
 		{
 			ChatServiceController.hostActivity.runOnUiThread(new Runnable()
@@ -1628,7 +1544,7 @@ public class ServiceInterface
 		}
 	}
 
-	public static void showChannelListFrom2dx(final boolean isGoBack)
+	public static void showChannelListFrom2dx(final boolean isGoBack,final int tabType)
 	{
 		if (ChatServiceController.hostActivity != null)
 		{
@@ -1638,7 +1554,11 @@ public class ServiceInterface
 				public void run()
 				{
 					try {
-						ChatServiceController.isFromBd = false;
+						if(tabType>=0){
+							ServiceInterface.showChannelListActivity(ChatServiceController.hostActivity, true,
+									DBDefinition.CHANNEL_TYPE_OFFICIAL, ChannelManager.getInstance().getChannelIdByTabType(tabType), isGoBack);
+							return;
+						}
 						if (ChatServiceController.canJumpToSecondaryList()) {
 							ServiceInterface.showChannelListActivity(ChatServiceController.hostActivity, ChatServiceController.rememberSecondChannelId,
 									DBDefinition.CHANNEL_TYPE_OFFICIAL, ChatServiceController.lastSecondChannelId, isGoBack);
@@ -1733,7 +1653,6 @@ public class ServiceInterface
 
 	/**
 	 * C++主动关闭原生，发生在网络断开连接时，或创建聊天室之后
-	 * needTipsDialog 是否回调，显示提示框
 	 */
 	public static void exitChatActivityFrom2dx(boolean needRemeberActivityStack, boolean needTipsDialog)
 	{
@@ -1809,7 +1728,7 @@ public class ServiceInterface
 			public void run() {
 				try {
 					if (activity != null && !activity.isFinishing()){
-						Toast toast = Toast.makeText(activity, contextText, duration);
+						Toast toast = ToastCompat.makeText(activity, contextText, duration);
 						toast.setGravity(Gravity.TOP, 0, 0);
 						toast.show();
 					}
@@ -1834,7 +1753,7 @@ public class ServiceInterface
 			public void run() {
 				try {
 					if (activity != null && !activity.isFinishing()){
-						Toast toast = Toast.makeText(activity, contextText, duration);
+						Toast toast = ToastCompat.makeText(activity, contextText, duration);
 						toast.setGravity(gravity, xOffset, yOffset);
 						toast.show();
 					}
@@ -1864,9 +1783,9 @@ public class ServiceInterface
 			@Override
 			public void run() {
 				try {
-					if ( currentActivity!= null && !currentActivity.isFinishing() && text != null) {
+					if ( currentActivity.getApplicationContext()!= null && text != null) {
 						//实例化一个Toast对象
-						Toast toast = Toast.makeText(currentActivity,text,duration);
+						Toast toast = ToastCompat.makeText(currentActivity.getApplicationContext(),text,duration);
 						toast.setGravity(Gravity.TOP, 0, 0);
 						if(text.contains(LanguageManager.getLangByKey("170250"))) {
 							LayoutInflater inflater = currentActivity.getLayoutInflater();
@@ -1888,7 +1807,9 @@ public class ServiceInterface
 							toast.setView(layout);
 						}
 
-						toast.show();
+						if (currentActivity != null && !currentActivity.isFinishing()) {
+							toast.show();
+						}
 					}
 				}
 				catch (Exception e)
@@ -1899,9 +1820,6 @@ public class ServiceInterface
 		});
 	}
 
-	public static void flyRewardNew(String rewardStr){
-		MenuController.showMailRewardInAndroid(rewardStr);
-	}
 	private static Timer	flyHintTimer;
 
 	public static void stopFlyHintTimer()
@@ -1949,13 +1867,10 @@ public class ServiceInterface
 								else
 									showText = text + "\n"
 											+ LanguageManager.getLangByKey(LanguageKeys.FLYHINT_DOWN_SECOND, String.valueOf(flyHintCount));
-							if (ChatServiceController.getCurrentActivity().getApplicationContext() != null)
-							{
-								MyActionBarActivity activity = ChatServiceController.getCurrentActivity();
-								if (activity != null) {
-									ServiceInterface.safeGravityMakeText(activity,showText,Toast.LENGTH_LONG,
-											Gravity.TOP, 0, activity.getToastPosY());
-								}
+
+							MyActionBarActivity activity = ChatServiceController.getCurrentActivity();
+							if (activity != null) {
+								safeGravityMakeText(activity,showText,Toast.LENGTH_LONG,Gravity.TOP, 0, activity.getToastPosY());
 							}
 						}
 						catch (Exception e)
@@ -2022,20 +1937,9 @@ public class ServiceInterface
 			LogUtil.printException(e);
 			return;
 		}
-
-		//处理系统字体缩放导致布局错乱情况，这里设置缩放比例始终保持为1
-		Resources resource = a.getResources();
-		Configuration configuration =resource.getConfiguration();
-		configuration.fontScale = 1.0f;//设置字体的缩放比例
-		resource.updateConfiguration(configuration , resource.getDisplayMetrics());
 	}
 
 	public static void showNewChatActivity(Activity a, int channelType, boolean rememberPosition) {
-		//聊天设置 - 开启时，不跳转到具体频道，停留在频道列表
-		if (ChatServiceController.chat_entry_settings && !ChatServiceController.cahe_chat_settings){
-			channelType = -1;
-		}
-
 		showNewActivity(a, "Chat", channelType, rememberPosition);
 	}
 
@@ -2054,7 +1958,6 @@ public class ServiceInterface
 		LogUtil.trackPageView("ShowMemberSelector");
 		showActivity(a, MemberSelectorActivity.class, true, false, null, requestResult, false);
 	}
-
 	public static void showChannelListActivity(Activity a, boolean isSecondLvList, int channelType, String channelId, boolean isGoBack)
 	{
 		Intent intent = new Intent(a, ChannelListActivity.class);
@@ -2103,15 +2006,6 @@ public class ServiceInterface
 		showActivity(a, WriteMailActivity.class, true, clearTop, intent, false, clearTop);
 	}
 
-	private static void showNewActivity(Activity hostActivity, String name, int channelType, boolean position) {
-		ChatServiceController.isNativeStarting = true;
-		ChatServiceController.isNativeShowing = true;
-		ChatServiceController.isReturningToGame = false;
-		ChannelListFragment.preventSecondChannelId = false;
-		delegate.showNewActivity(hostActivity, name, channelType, position);
-
-	}
-
 	private static void showActivity(Activity a, Class<?> cls, boolean newTask, boolean clearTop, Intent intent, boolean requestResult,
 			boolean popStackAnimation)
 	{
@@ -2158,6 +2052,17 @@ public class ServiceInterface
 		else
 		{
 			a.overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
+		}
+	}
+
+	private static void showNewActivity(Activity hostActivity, String name, int channelType, boolean position) {
+		ChatServiceController.isNativeStarting = true;
+		ChatServiceController.isNativeShowing = true;
+		ChatServiceController.isReturningToGame = false;
+		ChannelListFragment.preventSecondChannelId = false;
+
+		if (delegate != null) {
+			delegate.showNewActivity(hostActivity, name, channelType, position);
 		}
 	}
 
@@ -2214,10 +2119,10 @@ public class ServiceInterface
 			@Override
 			public void run() {
 				try {
-					if (getChatFragment() != null) {
-						if (getChatFragment().isSelectMemberBtnEnable()) {
-							getChatFragment().refreshMemberSelectBtn();
-							getChatFragment().setSelectMemberBtnState();
+					if (ChatServiceController.getChatFragment() != null) {
+						if (ChatServiceController.getChatFragment().isSelectMemberBtnEnable()) {
+							ChatServiceController.getChatFragment().refreshMemberSelectBtn();
+							ChatServiceController.getChatFragment().setSelectMemberBtnState();
 						}
 					}
 				} catch (Exception e) {
@@ -2226,14 +2131,14 @@ public class ServiceInterface
 			}
 		});
 	}
-
+	
 
 	public static void postChannelInfo(final String channelInfo)
 	{
 		ChannelManager.getInstance().isGetingNewMsg = false;
-
+		
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_CORE, "handleChannelInfo1", channelInfo);
-
+		
 		long startTime = System.currentTimeMillis();
 		ChannelManager.getInstance().handleChannelInfo(channelInfo);
 
@@ -2243,8 +2148,8 @@ public class ServiceInterface
 			@Override
 			public void run() {
 				try {
-					if (getChatFragment() != null) {
-						getChatFragment().refreshToolTip();
+					if (ChatServiceController.getChatFragment() != null) {
+						ChatServiceController.getChatFragment().refreshToolTip();
 					}
 				} catch (Exception e) {
 					LogUtil.printException(e);
@@ -2416,7 +2321,7 @@ public class ServiceInterface
 									mailData.setStatus(1);
 								}
 								mailData.setRewardStatus(1);
-							}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         							}
 							break;
 						}
 					}
@@ -2555,7 +2460,7 @@ public class ServiceInterface
 				MailData mail = DBManager.getInstance().getSysMailByID(mailUidArr[i]);
 				if (mail != null)
 				{
-
+					
 					mail.setNeedParseByForce(true);
 					MailData mailData = MailManager.getInstance().parseMailDataContent(mail);
 					LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_MSG, "knight mailData.channelId", mailData.channelId);
@@ -2582,10 +2487,10 @@ public class ServiceInterface
 						{
 							deleteMail("knight", DBDefinition.CHANNEL_TYPE_OFFICIAL, -1);
 						}
-
-
+						
+						
 					}
-
+						
 				}
 			}
 			for (int j = 0; j < channel.mailDataList.size(); j++)
@@ -2672,7 +2577,7 @@ public class ServiceInterface
 					else if (configType == DBManager.CONFIG_TYPE_DELETE)
 					{
 						ChannelManager.getInstance().deleteSysMailFromChannel(channel, mailUidArr[i], true);
-						if (!hasDetectMail && (mail.getType() == MailManager.MAIL_DETECT_REPORT||mail.getType() == MailManager.Mail_DETECT_REPORT_ARENA))
+						if (!hasDetectMail && (mail.getType() == MailManager.MAIL_DETECT_REPORT||mail.getType() == MailManager.Mail_NEW_SCOUT_REPORT_FB))
 							hasDetectMail = true;
 						continue;
 					}
@@ -2764,10 +2669,6 @@ public class ServiceInterface
 			channelId = MailManager.CHANNELID_MISSILE;
 		else if (type == MailManager.MAIL_GIFT_BUY_EXCHANGE)
 			channelId = MailManager.CHANNELID_GIFT;
-		else if (type == MailManager.MAIL_MOBILIZATION_CENTER)
-			channelId = MailManager.CHANNELID_MOBILIZATION_CENTER;
-		else if (type == MailManager.MAIL_COMBOTFACTORY_FIRE)
-			channelId = MailManager.CHANNELID_COMBOTFACTORY_FIRE;
 		else if (type == MsgItem.MAIL_MOD_PERSON)
 			channelId = MailManager.CHANNELID_MOD;
 		else if (type == 0 || type == 1 || type == MailManager.MAIL_Alliance_ALL)
@@ -2776,9 +2677,7 @@ public class ServiceInterface
 		if (StringUtils.isEmpty(channelId))
 			return;
 		if (channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId.equals(MailManager.CHANNELID_RESOURCE_HELP)
-				|| channelId.equals(MailManager.CHANNELID_MONSTER) ||channelId.equals(MailManager.CHANNELID_MISSILE)||channelId.equals(MailManager.CHANNELID_GIFT)
-				|| channelId.equals(MailManager.CHANNELID_MOBILIZATION_CENTER)
-				|| channelId.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE))
+				|| channelId.equals(MailManager.CHANNELID_MONSTER) ||channelId.equals(MailManager.CHANNELID_MISSILE)||channelId.equals(MailManager.CHANNELID_GIFT))
 		{
 			ChatChannel channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, channelId);
 			if (channel != null)
@@ -3037,11 +2936,6 @@ public class ServiceInterface
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_CORE,  "isArena", isArena);
 		ConfigManager.isEnterArena = isArena;
 	}
-	public static void setIsNeedReName(boolean isNeedReName)
-	{
-		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_CORE,  "isNeedReName", isNeedReName);
-		ChatServiceController.isNeedReName = isNeedReName;
-	}
 
 	public static void setIndependentLeague(boolean isIndependentLeague)
 	{
@@ -3084,9 +2978,9 @@ public class ServiceInterface
 				MailData mailData = MailManager.getInstance().parseMailDataContent(mail);
 				try
 				{
-					String jsonStr = toJSONString(mailData);
-					MailManager.getInstance().transportMailInfo(jsonStr, true,false);
-
+					String jsonStr = JSON.toJSONString(mailData);
+					MailManager.getInstance().transportMailInfo(jsonStr, true);
+					
 					//------------//
 					LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_MSG, "mailId", mailUid, "channelId", mail.getChannelId());
 					if (mail.isUnread())
@@ -3095,7 +2989,7 @@ public class ServiceInterface
 						JniController.getInstance().excuteJNIVoidMethod("readMail",
 								new Object[] { mailData.getUid(), Integer.valueOf(mailData.getType()) });
 						DBManager.getInstance().updateMail(mail);
-
+						
 						// 更新channel
 						ChatChannel channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, mail.getChannelId());
 						if (channel == null || channel.mailDataList == null)
@@ -3267,13 +3161,14 @@ public class ServiceInterface
 			return;
 		}
 
-		if (ChatServiceController.getChatActivity() == null) {
+		if (ChatServiceController.getChatActivity() == null)
 			return;
-		}
 
-		ChatServiceController.getCurrentActivity().runOnUiThread(new Runnable() {
+		ChatServiceController.getCurrentActivity().runOnUiThread(new Runnable()
+		{
 			@Override
-			public void run() {
+			public void run()
+			{
 				try
 				{
 					if(ConfigManager.isRedPackageShakeEnabled) {
@@ -3288,6 +3183,11 @@ public class ServiceInterface
 				}
 			}
 		});
+
+		// if (ChatServiceController.hostActivity == null ||
+		// !hasRedPackageChange)
+		// return;
+		// notifyDataSetChangedChatFragment();
 	}
 
 	public static void notifyDataSetChangedChatFragment()
@@ -3296,8 +3196,8 @@ public class ServiceInterface
 			@Override
 			public void run() {
 				try {
-					if (getChatFragment() != null) {
-						getChatFragment().notifyDataSetChanged(ChatServiceController.getCurrentChannelType(), false);
+					if (ChatServiceController.getChatFragment() != null) {
+						ChatServiceController.getChatFragment().notifyDataSetChanged(ChatServiceController.getCurrentChannelType(), false);
 					}
 				} catch (Exception e) {
 					LogUtil.printException(e);
@@ -3321,15 +3221,15 @@ public class ServiceInterface
 		}
 
 		MsgItem currentPopupItem = null;// ChatServiceController.getChatFragment().getCurrentRedPackageItem();
-		if (getChatFragment() != null)
+		if (ChatServiceController.getChatFragment() != null)
 		{
-			currentPopupItem = getChatFragment().getCurrentRedPackageItem();
+			currentPopupItem = ChatServiceController.getChatFragment().getCurrentRedPackageItem();
 		}
 
 		if (StringUtils.isEmpty(redPackageUid) || status <= 0)
 		{
-			if (getChatFragment() != null)
-				getChatFragment().hideRedPackageConfirm();
+			if (ChatServiceController.getChatFragment() != null)
+				ChatServiceController.getChatFragment().hideRedPackageConfirm();
 
 			if (currentPopupItem != null) {
 				String[] redPackageInfoArr = currentPopupItem.attachmentId.split("\\|");
@@ -3337,7 +3237,7 @@ public class ServiceInterface
 			}
 			return;
 		}
-		if (getChatFragment() != null)
+		if (ChatServiceController.getChatFragment() != null)
 		{
 			if (currentPopupItem != null)
 			{
@@ -3345,15 +3245,15 @@ public class ServiceInterface
 				if(status == MsgItem.NONE_MONEY && ChatServiceController.redPackgeMsgGotArray.contains(redPackageUid) ){//其他机器上抢过该红包
 					currentPopupItem.sendState = MsgItem.HANDLED;
 					status = MsgItem.HANDLED;
-					getChatFragment().hideRedPackageConfirm();
+					ChatServiceController.getChatFragment().hideRedPackageConfirm();
 					ChatServiceController.doHostAction("viewRedPackage", "", currentPopupItem.msg, redPackageInfoArr[0], true);
 				}else {
 					if (redPackageUid.equals(redPackageInfoArr[0]) && currentPopupItem.sendState == MsgItem.UNHANDLE
 							&& status != MsgItem.UNHANDLE) {
 						currentPopupItem.sendState = status;
-						getChatFragment().showRedPackageConfirm(currentPopupItem);
+						ChatServiceController.getChatFragment().showRedPackageConfirm(currentPopupItem);
 					} else {
-						getChatFragment().hideRedPackageConfirm();
+						ChatServiceController.getChatFragment().hideRedPackageConfirm();
 						ChatServiceController.doHostAction("pickRedPackage", "", currentPopupItem.msg, redPackageInfoArr[0], true);
 					}
 				}
@@ -3361,6 +3261,9 @@ public class ServiceInterface
 		}
 		boolean hasChange = handleRedPackageInfo(redPackageUid, status);
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "hasChange", hasChange);
+		// if (ChatServiceController.hostActivity == null || !hasChange)
+		// return;
+		// notifyDataSetChangedChatFragment();
 	}
 
 	public static void postRedPackageDuringTime(int time)
@@ -3402,7 +3305,7 @@ public class ServiceInterface
 
 		try
 		{
-			String friendMailJson = toJSONString(friendMailList);
+			String friendMailJson = JSON.toJSONString(friendMailList);
 			LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "friendMailJson", friendMailJson);
 			return friendMailJson;
 		}
@@ -3484,12 +3387,6 @@ public class ServiceInterface
 		ChatServiceController.banTime = banTime;
 	}
 
-	public static void postLiveBanTime(String banTime){
-		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "banTime", banTime);
-		if(StringUtils.isNotEmpty(banTime)){
-			ChatServiceController.liveBanTime = banTime;
-		}
-	}
 	public static void postShieldUids(String shieldUids)
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "shieldUids", shieldUids);
@@ -3503,12 +3400,6 @@ public class ServiceInterface
 		}
 	}
 
-	/**
-	 * 在初始化禁言列表之前重置数据
-	 */
-	public static void resetBanOrBlockData(){
-		UserManager.getInstance().resetBanOrBlock();
-	}
 	/**
 	 * 国家与联盟频道禁言与解除禁言
 	 * @author lzh
@@ -3553,58 +3444,22 @@ public class ServiceInterface
 		MailManager.getInstance().addMailInTransportedList(mailUid);
 	}
 
-
-	public static void addMailToTransportedList(String mailUid)
-	{
-		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "mailUid", mailUid);
-		if (StringUtils.isEmpty(mailUid))
-			return;
-		MailManager.getInstance().addMailInTransportedList(mailUid);
-	}
-
-	public static String getNeighborMail(String channelId,String mailUid, int type)
+	public static String getNeighborMail(String mailUid, int type)
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "mailUid", mailUid, "type", type);
-		if (StringUtils.isEmpty(channelId)||StringUtils.isEmpty(mailUid) || !(type == 1 || type == 2))
-		{
+		if (StringUtils.isEmpty(mailUid) || !(type == 1 || type == 2))
 			return "";
-		}
-		else
+		MailData mail = DBManager.getInstance().getSysMailByID(mailUid);
+		if (mail != null)
 		{
 			if (type == 1)
-				return MailManager.getInstance().transportNeiberMailData(channelId,mailUid, true, false);
+				return MailManager.getInstance().transportNeiberMailData(mail, true, false);
 			else if (type == 2)
-				return MailManager.getInstance().transportNeiberMailData(channelId,mailUid, false, true);
+				return MailManager.getInstance().transportNeiberMailData(mail, false, true);
 		}
-
 		return "";
 	}
 
-	public void updateMailContents(String mailUid,String contents){
-		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "mailUid", mailUid, "contents", contents);
-		if (StringUtils.isNotEmpty(mailUid)) {
-			MailData mail = DBManager.getInstance().getSysMailByID(mailUid);
-			if (mail != null) {
-				mail.setNeedParseByForce(true);
-				MailData mailData = MailManager.getInstance().parseMailDataContent(mail);
-				mailData.setContents(contents);
-				DBManager.getInstance().updateMail(mail);
-				// 更新channel
-				ChatChannel channel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, mail.getChannelId());
-				if (channel == null || channel.mailDataList == null)
-					return;
-				for (int i = 0; i < channel.mailDataList.size(); i++)
-				{
-					MailData mailData1 = channel.mailDataList.get(i);
-					if (mailData1 != null && mailUid.equals(mailData1.getUid()))
-					{
-						mailData1.setContents(contents);
-						break;
-					}
-				}
-			}
-		}
-	}
 	public static void postSwitch(String switchKey, String switchValue)
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "switchKey", switchKey, "switchValue", switchValue);
@@ -3643,56 +3498,38 @@ public class ServiceInterface
 			case "convenient_contact":
 				ChatServiceController.convenient_contact = switchValue;
 				break;
-			case "mail_button_hide"://一键已读开关
-				ChatServiceController.mail_button_hide = switchValue;
-				break;
 			case "mail_all_delete":
 				ChatServiceController.mail_all_delete = switchValue;
 				break;
 			case "chat_msg_independent":
 				ChatServiceController.chat_msg_independent = switchValue;
 				break;
-			case "gm_closed_avatar":
-				ChatServiceController.gm_closed_avatar = switchValue;   //GM封禁玩家头像开关
+			case "career_chat":
+				ChatServiceController.career_chat = switchValue;
+				break;
+			case "new_battlemail":
+				ChatServiceController.new_battlemail = switchValue;
+				break;
+			case "new_resourcebattlemail":
+				ChatServiceController.new_resourcebattlemail = switchValue;
+                break;
+			case "front_end_badwords":
+				ChatServiceController.front_end_badwords = switchValue;
+				break;
+			case "monster_mail":
+				ChatServiceController.monster_mail = switchValue;
+				break;
+			case "scoutmail":
+				ChatServiceController.scoutmail = switchValue;
+				break;
+			case "mass_boss":
+				ChatServiceController.mass_boss = switchValue;
 				break;
 			case "new_system_message":
 				ChatServiceController.new_system_message = switchValue;
 				break;
-			case "new_system_message1":
-				ChatServiceController.new_system_message1 = switchValue;
-				break;
-			case "new_system_message2":
-				ChatServiceController.new_system_message2 = switchValue;
-				break;
-			case "new_system_message3":
-				ChatServiceController.new_system_message3 = switchValue;
-				break;
-			case "deleteAllPersonCmd":
-				ChatServiceController.deleteAllPersonCmd = switchValue;
-				break;
-			case "deleteMailByType":
-				ChatServiceController.deleteMailByType = switchValue;
-				break;
-			case "deleteMailByAllSelect":
-				ChatServiceController.deleteMailByAllSelect = switchValue;
-				break;
-			case "share_optimization":
-				ChatServiceController.share_optimization = switchValue;
-				break;
-			case "chat_send_cn":
-				ChatServiceController.chat_send_cn = switchValue;
-				break;
-			case "chat_effect_switch":
-				ChatServiceController.chat_effect_switch = switchValue;
-				break;
-			case "front_end_badwords":
-				ChatServiceController.front_end_badwords = switchValue;
-				break;
-			case "korean_shielding":
-				ChatServiceController.korean_shielding = switchValue;
-				break;
-			case "special_symbol_check":
-				ChatServiceController.special_symbol_check = switchValue;
+			case "16_server_chatroomlock":
+				ChatServiceController.isWarZoneRoomEnable = switchValue;
 				break;
 			case "new_chat":	//新版聊天v2 开关
 				ChatServiceController.chat_v2_on = switchValue;
@@ -3709,35 +3546,27 @@ public class ServiceInterface
 			case "language_channel":	//语言聊天室 开关
 				ChatServiceController.chat_language_on = switchValue;
 				break;
+
 			case "new_personal_chat":	//新版个人聊天 开关
 				ChatServiceController.chat_v2_personal = switchValue;
 				break;
-			case "mail_seach_old_sql_close":	//邮件查询老SQ语句关闭 开关
-				ChatServiceController.mail_seach_old_sql_close = switchValue;
-				break;
+
 			case "mail_all_read":	//一键已读所有邮件(包含领取奖励) 开关
 				ChatServiceController.mail_all_read = switchValue;
 				break;
-			case "language_channel_emoticons": //语言频道表情开关
-				ChatServiceController.chat_language_emoticons = switchValue;
+
+			case "defence_select_switch":	//破城杀敌
+				ChatServiceController.defence_select_switch = switchValue;
 				break;
-			case "chat_entry_settings": //聊天设置 - 默认打开频道
-				ChatServiceController.chat_entry_settings = switchValue;
-				break;
-			case "language_channel_autojoin": //语言聊天 - 自动加入语言聊天状态
-				ChatServiceController.language_channel_autojoin = switchValue;
+
+			case "chat_tab":	//新版聊天切换标签页
+				ChatServiceController.chat_tab = switchValue;
 				break;
 
 		}
 
 	}
 
-	public static void postChatEffect(int time,String dialog,int animateTime)
-	{
-		ChatServiceController.intervalTime = time;
-		ChatServiceController.dialog = dialog;
-		ChatServiceController.animateTime = animateTime;
-	}
 	public static void postPlayerLevel(int playerLevel)
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "playerLevel", playerLevel);
@@ -3749,7 +3578,7 @@ public class ServiceInterface
 		//System.out.println("mergeConfig");
 		ConfigManager.getInstance().mergeRemoteDynamicImageMap();
 	}
-
+	
 	public static void initXiaoMiSDK(String appId, String appKey,String pid, String pkey,String guid, String b2token)
 	{
 		String temp = "appId="+appId+"appKey= "+appKey+"pid= "+pid+"pkey= "+pkey+"guid= "+guid+"b2token= "+b2token;
@@ -3757,13 +3586,13 @@ public class ServiceInterface
 		XiaoMiToolManager.initActivity(ChatServiceController.getInstance().hostActivity,appId,appKey,pid,pkey,guid,b2token);
 		Log.d("xiaomi", "xiaomi initXiaoMiSDK init end");
 	}
-
+	
 	public static void xiaomistartRecord()
 	{
 		Log.d("xiaomi", "xiaomi xiaomistartRecord");
 		XiaoMiToolManager.getInstance().startRecord();
 	}
-
+	
 	public static void onGetMultiUserInfoActualCalled()
 	{
 		UserManager.getInstance().onServerActualCalled();
@@ -3773,13 +3602,13 @@ public class ServiceInterface
 		Log.d("xiaomi", "xiaomi xiaomistopRecord");
 		XiaoMiToolManager.getInstance().stopRecord();
 	}
-
+	
 	public static void xiaomisendAudio()
 	{
 		Log.d("xiaomi", "xiaomi xiaomisendVideo");
 		XiaoMiToolManager.getInstance().sendAudio();
 	}
-
+	
 	public static void notifyWebSocketEventType(final int type)
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_DEBUG, "type", type);
@@ -3787,7 +3616,7 @@ public class ServiceInterface
 		{
 			ConfigManager.websocket_network_state = type;
 			if(ChatServiceController.getCurrentActivity()!=null && (
-					ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY
+					ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY 
 					|| ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_ALLIANCE))
 			{
 				ChatServiceController.getCurrentActivity().runOnUiThread(new Runnable()
@@ -3807,9 +3636,9 @@ public class ServiceInterface
 					}
 				});
 			}
-
+				
 		}
-
+		
 	}
 
 	public static void savePngToAlbum(final String filePath)
@@ -3949,17 +3778,17 @@ public class ServiceInterface
 	}
 
 	//加入直播聊天室
-	public static void joinLiveRoom(String roomId){
+	public static void joinLiveRoom(String roomId,String roomName){
 
 		WebSocketManager.getInstance().joinLiveRoom(roomId);
 //		WebSocketManager.getInstance().chatRoomChangeName(roomId,"nihao");
 	}
 
 	public static void showChatActivityFrom2dxForBC(int maxHornInputCount, final int chatType, int sendInterval, final boolean rememberPosition,
-													boolean enableCustomHeadImg, boolean isNoticeItemUsed, String params)
+											   boolean enableCustomHeadImg, boolean isNoticeItemUsed,String params)
 	{
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_VIEW, "chatType", chatType, "sendInterval", sendInterval,
-				"rememberPosition", rememberPosition, "enableCustomHeadImg", enableCustomHeadImg, "isNoticeItemUsed", isNoticeItemUsed,"params",params);
+				"rememberPosition", rememberPosition, "enableCustomHeadImg", enableCustomHeadImg, "isNoticeItemUsed", isNoticeItemUsed);
 		ConfigManager.maxHornInputLength = maxHornInputCount;
 		ConfigManager.enableCustomHeadImg = enableCustomHeadImg;
 		ChatServiceController.isHornItemUsed = isNoticeItemUsed;
@@ -3976,45 +3805,30 @@ public class ServiceInterface
 			roomId = obj.getString("chatRoomId");
 			ChatServiceController.liveTipContent = obj.getString("roomContent");
 			ChatServiceController.liveRoomName = obj.getString("roomName");
-			if(StringUtils.isNotEmpty(obj.getString("userName"))) {
-				ChatServiceController.liveUserName = obj.getString("userName");
-			}
-			if(StringUtils.isNotEmpty(obj.getString("roomNumber"))) {
-				ChatServiceController.listenRoomNumber = Integer.parseInt(obj.getString("roomNumber"));
-			}
-			if(obj.has("liveStatus") && ChatServiceController.isInSelfLiveRoom()){
-				ChatServiceController.isAnchorHost = true;
-			}
-
-			ChatServiceController.livePushStatus = obj.has("pushStatus") && obj.getString("pushStatus").equals("1") ? true:false;
-			ChatServiceController.livePullStatus = obj.has("pullStatus") && obj.getString("pullStatus").equals("1") ? true:false;
-			ChatServiceController.livePicVer = Integer.parseInt(obj.getString("livePicVer"));
-			ChatServiceController.canPull = obj.has("canPull") && obj.getString("canPull").equals("1") ? true:false;
+			ChatServiceController.livePushStatus = obj.getString("pushStatus").equals("1") ? true:false;
+			ChatServiceController.livePullStatus = obj.getString("pullStatus").equals("1") ? true:false;
 
 		}catch (Exception e){
 			LogUtil.printException(e);
 		}
-
-		if((!ChatServiceController.isAnchorHost && StringUtils.isNotEmpty(roomId) && !roomId.equals(ChatServiceController.curLiveRoomId ))){
+		if(!ChatServiceController.curLiveRoomId.equals(roomId) && roomId!=""){
 			//先离开上一个语音直播聊天室
-			if(StringUtils.isEmpty(ChatServiceController.curLiveRoomId)) {
-				ChatChannel channel = ChannelManager.getInstance().getChannel(ChatTable.createChatTable(DBDefinition.CHANNEL_TYPE_CHATROOM, roomId));
-				ChannelManager.getInstance().deleteChannel(channel);
+			ChatChannel channel = ChannelManager.getInstance().getChannel(ChatTable.createChatTable(DBDefinition.CHANNEL_TYPE_CHATROOM, UserManager.getInstance().getCurrentMail().opponentUid));
+			if (channel == null) {
+				return;
 			}
-			else{
-				ChatChannel channel = ChannelManager.getInstance().getChannel(ChatTable.createChatTable(DBDefinition.CHANNEL_TYPE_CHATROOM, ChatServiceController.curLiveRoomId));
-				ChannelManager.getInstance().deleteChannel(channel);
+
+			if(ChatServiceController.getInstance().standalone_chat_room && StringUtils.isNotEmpty(ChatServiceController.curLiveRoomId)
+					){
+				WebSocketManager.getInstance().chatRoomQuit(ChatServiceController.curLiveRoomId);
+			}else{
+				JniController.getInstance().excuteJNIVoidMethod("quitChatRoom",
+						new Object[] { ChatServiceController.curLiveRoomId });
 			}
-			ChatServiceController.curLiveRoomId = roomId;
-			WebSocketManager.getInstance().chatRoomInvite(roomId,UserManager.getInstance().getCurrentUserId());
-		}else{
-			ChatServiceController.curLiveRoomId = roomId;
-		}
 
-		if(ChatServiceController.isNeedJoinLive && !ChatServiceController.isInSelfLiveRoom()) {
-			WebSocketManager.getInstance().chatRoomInvite(ChatServiceController.curLiveRoomId, UserManager.getInstance().getCurrentUserId());
+			ChatServiceController.curLiveRoomId = roomId;
+			ServiceInterface.joinLiveRoom(ChatServiceController.curLiveRoomId,ChatServiceController.curLiveRoomId);
 		}
-
 		if (ChatServiceController.hostActivity != null)
 		{
 			ChatServiceController.hostActivity.runOnUiThread(new Runnable()
@@ -4051,76 +3865,18 @@ public class ServiceInterface
 		}
 	}
 
-	public static void showChatLiveSettingActivityFrom2dx(String params){
-		ChatServiceController.isInLiveRoom = false;
-//		String roomId = "";
-		try{
-			JSONObject obj = new JSONObject(params);
-			ChatServiceController.curLiveRoomId = obj.getString("chatRoomId");
-			ChatServiceController.liveUid = obj.getString("gameUid");
-			if(obj.has("liveStatus") && ChatServiceController.isInSelfLiveRoom()){
-				ChatServiceController.isAnchorHost = true;
-			}
-			ChatServiceController.canPull = obj.has("canPull") && obj.getString("canPull").equals("1") ? true:false;
-//			ChatServiceController.liveTipContent = obj.getString("roomContent");
-//			ChatServiceController.liveRoomName = obj.getString("roomName");
-//			if(StringUtils.isNotEmpty(obj.getString("userName")))
-//				ChatServiceController.liveUserName = obj.getString("userName");
-//			if(StringUtils.isNotEmpty(obj.getString("roomNumber")))
-//				ChatServiceController.listenRoomNumber = Integer.parseInt(obj.getString("roomNumber"));
-//			ChatServiceController.livePushStatus = obj.has("pushStatus") && obj.getString("pushStatus").equals("1") ? true:false;
-//			ChatServiceController.livePullStatus = obj.has("pullStatus") && obj.getString("pullStatus").equals("1") ? true:false;
-//			ChatServiceController.livePicVer = Integer.parseInt(obj.getString("livePicVer"));
-
-		}catch (Exception e){
-			LogUtil.printException(e);
-		}
-		if (ChatServiceController.hostActivity != null)
-		{
-			ChatServiceController.hostActivity.runOnUiThread(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					try
-					{
-						ServiceInterface.showActivity(ChatServiceController.hostActivity, ChatLiveSettingActivity.class, true, false, null, false, false);;
-					}
-					catch (Exception e)
-					{
-						LogUtil.printException(e);
-					}
-				}
-			});
-		}
-
-	}
 	public static void  refreshChatActivityInfoFrom2dxForBC(String params){
 		JSONObject obj = null;
 		try {
 			obj = new JSONObject(params);
-			if(StringUtils.isNotEmpty(obj.getString("gameUid"))) {
+			if(StringUtils.isNotEmpty(obj.getString("gameUid")))
 				ChatServiceController.liveUid = obj.getString("gameUid");
-			}
-			if(StringUtils.isNotEmpty(obj.getString("roomContent"))) {
+			if(StringUtils.isNotEmpty(obj.getString("roomContent")))
 				ChatServiceController.liveTipContent = obj.getString("roomContent");
-			}
-			if(StringUtils.isNotEmpty(obj.getString("roomName"))) {
+			if(StringUtils.isNotEmpty(obj.getString("roomName")))
 				ChatServiceController.liveRoomName = obj.getString("roomName");
-			}
-			if(StringUtils.isNotEmpty(obj.getString("userName"))) {
-				ChatServiceController.liveUserName = obj.getString("userName");
-			}
-			if(StringUtils.isNotEmpty(obj.getString("roomNumber"))) {
-				ChatServiceController.listenRoomNumber = Integer.parseInt(obj.getString("roomNumber"));
-			}
-			if(obj.has("liveStatus") && ChatServiceController.isInSelfLiveRoom()){
-				ChatServiceController.isAnchorHost = true;
-			}
-			ChatServiceController.livePushStatus = obj.has("pushStatus") && obj.getString("pushStatus").equals("1") ? true:false;
-			ChatServiceController.livePullStatus = obj.has("pullStatus") && obj.getString("pullStatus").equals("1") ? true:false;
-			ChatServiceController.livePicVer = Integer.parseInt(obj.getString("livePicVer"));
-			ChatServiceController.canPull = obj.has("canPull") && obj.getString("canPull").equals("1") ? true:false;
+			ChatServiceController.livePushStatus = obj.getString("pushStatus").equals("1") ? true:false;
+			ChatServiceController.livePullStatus = obj.getString("pullStatus").equals("1") ? true:false;
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -4128,12 +3884,79 @@ public class ServiceInterface
 			ChatServiceController.getCurrentActivity().runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					if(getChatFragment() instanceof ChatFragment)
-					getChatFragment().refreshLiveView();
+					if(ChatServiceController.getChatFragment() instanceof ChatFragment)
+					ChatServiceController.getChatFragment().refreshLiveView();
 				}
 			});
 
 		}
+	}
+
+	public static String getUserPicUrl(String uid){
+		UserManager.checkUser(uid, "", 0);
+		UserInfo userInfo = UserManager.getInstance().getUser(uid);
+		if(userInfo != null && userInfo.isCustomHeadImage()){
+			return userInfo.getCustomHeadPicUrl();
+		}
+		return "";
+	}
+
+	public static String getUserPropertyByKey(String uid,String key){
+		UserManager.checkUser(uid, "", 0);
+		UserInfo userInfo = UserManager.getInstance().getUser(uid);
+		String result = "";
+		if(userInfo != null){
+			switch (key){
+				case "userName":
+					result = userInfo.userName;
+					break;
+				case "careerName":
+					result = userInfo.careerName;
+					break;
+				case "allianceId":
+					result = userInfo.allianceId;
+					break;
+				case "asn":
+					result = userInfo.asn;
+					break;
+				case "allianceRank":
+					result = String.valueOf(userInfo.allianceRank);
+					break;
+				case "headPic":
+					result = userInfo.headPic;
+					break;
+				case "headPicVer":
+					result = String.valueOf(userInfo.headPicVer);
+					break;
+				case "mGmod":
+					result = String.valueOf(userInfo.mGmod);
+					break;
+				case "vipLevel":
+					result = String.valueOf(userInfo.vipLevel);
+					break;
+				case "svipLevel":
+					result = String.valueOf(userInfo.svipLevel);
+					break;
+                case "vipframe":
+                    result = String.valueOf(userInfo.vipframe);
+                    break;
+				case "lang":
+					result = userInfo.lang;
+					break;
+				default:
+					break;
+			}
+		}
+		if(result != null){
+			return result;
+		}
+		return "";
+	}
+
+
+	public static void setWarZoneRoomKey(String roomKey){
+		ChatServiceController.m_roomGroupKey = roomKey;
+
 	}
 
 	/**
@@ -4149,63 +3972,22 @@ public class ServiceInterface
 		}
 	}
 
-	public static void sendMessage(int type,String msg){
-		// 极少情况会出现 chatActivity == null 或 chatActivity.chatFragment == null
-		if (type < 0)
-			return;
-		ChatBanInfo banInfo = UserManager.getInstance().isHaveUidBan(1);
-		if (banInfo != null) {
-
-			// 发送按钮点击后关闭软键盘
-			String tipStr = "";
-			if (banInfo.banTime == -1) {
-				tipStr = LanguageManager.getLangByKey("171307");
-			} else {
-				tipStr = LanguageManager.getLangByKey("105201", "", TimeManager.getInstance().getTimeFormatWithRemainTime((int) banInfo.banTime));
-			}
-			ServiceInterface.flyHint("", "", tipStr, 3, 0, false);
-			return;
+	public static String getContactUids(boolean isPresident){
+		if(!isPresident){
+			return "";
 		}
-
-
-		ChatChannel channel = ChannelManager.getInstance().getChannel(type);
-		if (channel == null)
-		{
-			LogUtil.trackMessage("sendMsg() channel is null: currentChatType=" + ChatServiceController.getCurrentChannelType()
-					+ " fromUid=" + UserManager.getInstance().getCurrentMail().opponentUid);
-			return;
+		ConcurrentHashMap<String, ChatChannel> map = ChannelManager.getInstance().getChannelMapAll();
+		StringBuilder uids = new StringBuilder();
+		for (Map.Entry<String, ChatChannel> entry : map.entrySet()) {
+			ChatChannel value = entry.getValue();
+				if (value != null && value.channelType == DBDefinition.CHANNEL_TYPE_USER && !value.channelID.equals(UserManager.getInstance().getCurrentUserId())) {
+					uids = uids.append(value.channelID);
+					uids = uids.append("_");
+				}
 		}
-
-		int sendLocalTime = TimeManager.getInstance().getCurrentTime();
-		int gapTime = getChatSendGapTime(channel,sendLocalTime);
-		boolean isChatLimmit = JniController.getInstance().excuteJNIMethod("isChatLimmit", new Object[]{type,gapTime}); //从C++获得是否聊天限制
-		if(isChatLimmit){
-			String tipStr = LanguageManager.getLangByKey("170759");  //170759 = 您的聊天速度过快，请稍后再试
-			ServiceInterface.flyHint("", "", tipStr, 2, 0, false);
-			return;
+		if(uids.length()-1 > 0) {
+			uids = uids.deleteCharAt(uids.length() - 1);
 		}
-		int post = MsgItem.MSGITEM_TYPE_MESSAGE;
-
-		// 创建消息对象，加入正在发送列表
-		MsgItem msgItem = new MsgItem(UserManager.getInstance().getCurrentUser().uid, true, true, type, post,msg,
-				sendLocalTime);
-		msgItem.sendState = MsgItem.SENDING;
-		msgItem.createTime = sendLocalTime;
-		msgItem.initUserForSendedMsg();
-		// 此时插入的数据只包括uid、msg、sendLocalTime、sendState、post、channelType
-		channel.sendingMsgList.add(msgItem);
-		if (channel.msgList != null && channel.msgList.size() > 0 && type != DBDefinition.CHANNEL_TYPE_USER)
-		{
-			MsgItem lastItem = channel.msgList.get(channel.msgList.size() - 1);
-			if (lastItem != null)
-				msgItem.sequenceId = lastItem.sequenceId + 1;
-		}
-		// 此时插入的数据只包括uid、msg、sendLocalTime、sendState、post、channelType
-		channel.sendingMsgList.add(msgItem);
-		channel.addDummyMsg(msgItem);
-		channel.getTimeNeedShowMsgIndex();
-		ChatServiceController.sendMsgInCpp(channel, msg, false, false, sendLocalTime,
-		post, "");
+		return uids.toString();
 	}
-
 }

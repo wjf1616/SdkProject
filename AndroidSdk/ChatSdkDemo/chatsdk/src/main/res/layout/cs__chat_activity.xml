@@ -22,7 +22,7 @@
 
             <Button
                 android:id="@+id/cs__actionbar_backButton"
-                android:layout_width="@dimen/cs__actionBarHeight"
+                android:layout_width="@dimen/cs__mailButtonBarMaxWidth"
                 android:layout_height="@dimen/cs__actionBarHeight"
                 android:background="@drawable/but_back" />
 
@@ -89,7 +89,7 @@
                 android:layout_centerVertical="true"
                 android:minHeight="0dp"
                 android:minWidth="0dp"
-                android:background="@drawable/mail_actionbar_returngameui"/>
+                android:background="@drawable/btn_close"/>
 
 
             <Button
@@ -194,7 +194,7 @@
             android:id="@+id/fontImg_fragment_layout"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
-       </RelativeLayout>
+        </RelativeLayout>
     </RelativeLayout>
 
     <FrameLayout
@@ -279,7 +279,7 @@
                     android:layout_weight="0.65"
                     android:background="@drawable/red_package_bg"
                     android:clickable="true"
-                    android:orientation="vertical" 
+                    android:orientation="vertical"
                     android:gravity="center_horizontal">
 
                     <LinearLayout
@@ -289,7 +289,7 @@
                         android:orientation="vertical"
                         android:gravity="center_horizontal" >
 
-                        <View 
+                        <View
                             android:layout_width="fill_parent"
                             android:layout_height="0dp"
                             android:layout_weight="0.3"/>
@@ -336,7 +336,7 @@
                             android:layout_width="fill_parent"
                             android:layout_height="0dp"
                             android:layout_weight="0.1"
-                            android:orientation="horizontal" 
+                            android:orientation="horizontal"
                             android:layout_gravity="center_horizontal">
 
                             <View
@@ -411,14 +411,14 @@
                                 android:orientation="vertical"
                                 android:visibility="gone" >
 
-                                    <ImageView
-                                        android:paddingTop="24dp"
-                                        android:id="@+id/red_package_open_btn"
-                                        android:layout_width="100dp"
-                                        android:layout_height="match_parent"
-                                        android:layout_gravity="center"
-                                        android:scaleType="fitCenter"
-                                        android:src="@drawable/red_package_pick_btn" />
+                                <ImageView
+                                    android:paddingTop="24dp"
+                                    android:id="@+id/red_package_open_btn"
+                                    android:layout_width="100dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center"
+                                    android:scaleType="fitCenter"
+                                    android:src="@drawable/red_package_pick_btn" />
                             </LinearLayout>
                         </LinearLayout>
 

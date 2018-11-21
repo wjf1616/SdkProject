@@ -37,6 +37,57 @@ public class UserParams
 	private String  defHeroLevel;
 	private String  serverId;
 	private String  crossFightSrcServerId;
+	private String  srcServerId;
+
+
+	private String  allianceId;
+	private String  alAbbr;
+	private String  alName;
+	private String  alIcon;
+
+	public String getAlIcon() {
+		return alIcon;
+	}
+
+	public void setAlIcon(String alIcon) {
+		this.alIcon = alIcon;
+	}
+
+	public String getCrossFightSrcServerId() {
+		return crossFightSrcServerId;
+	}
+
+	public String getSrcServerId() {
+		return srcServerId;
+	}
+
+	public void setSrcServerId(String srcServerId) {
+		this.srcServerId = srcServerId;
+	}
+
+	public String getAllianceId() {
+		return allianceId;
+	}
+
+	public void setAllianceId(String allianceId) {
+		this.allianceId = allianceId;
+	}
+
+	public String getAlAbbr() {
+		return alAbbr;
+	}
+
+	public void setAlAbbr(String alAbbr) {
+		this.alAbbr = alAbbr;
+	}
+
+	public String getAlName() {
+		return alName;
+	}
+
+	public void setAlName(String alName) {
+		this.alName = alName;
+	}
 
 	public String getNpcId()
 	{

@@ -1,16 +1,11 @@
 package com.chatsdk.controller.inputfield;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
-import android.graphics.Rect;
-import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.view.ViewTreeObserver;
 
 import com.chatsdk.controller.ChatServiceController;
-import com.chatsdk.controller.JniController;
 import com.chatsdk.model.ConfigManager;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.view.inputfield.ChatInputView;
@@ -152,63 +147,6 @@ public class InputViewServiceInterface {
 					} catch (Exception e) {
 						// reportException(Main.getInstance(), e);
 					}
-				}
-			});
-		}
-	}
-
-	private static boolean isVisiableForLast = false;
-	private static ViewTreeObserver.OnGlobalLayoutListener m_onGlobalLayoutListener= new ViewTreeObserver.OnGlobalLayoutListener() {
-		@Override
-		public void onGlobalLayout() {
-			Rect rect = new Rect();
-			View decorView = ChatServiceController.hostActivity.getWindow().getDecorView();
-			decorView.getWindowVisibleDisplayFrame(rect);
-			//计算出可见屏幕的高度
-			int displayHight = rect.bottom - rect.top;
-			//获得屏幕整体的高度
-			int height = decorView.getHeight();
-			//获得键盘高度
-			boolean virtualIsHide = JniController.getInstance().excuteJNIMethod("getNativeGetIsShowStatusBar",new Object[]{});
-
-			int virtualheight = height - ChatServiceController.hostActivity.getWindowManager().getDefaultDisplay().getHeight();
-			int keyboardHeight = 0;
-			if(virtualIsHide){
-				keyboardHeight = height-displayHight;
-			}else{
-				keyboardHeight = height-displayHight - virtualheight;
-			}
-			float rate = Math.abs((float) keyboardHeight / height);
-			boolean visible =rate > 0.2;
-			if(visible != isVisiableForLast){
-				JniController.getInstance().excuteJNIVoidMethod("updatePopLayout", new Object[]{rate});
-			}
-			isVisiableForLast = visible;
-		}
-	};
-
-	public static void addInputListener(){
-		if (ChatServiceController.hostActivity != null) {
-			ChatServiceController.hostActivity.runOnUiThread(new Runnable() {
-				public void run() {
-					try {
-						View decorView = ChatServiceController.hostActivity.getWindow().getDecorView();
-						decorView.getViewTreeObserver().addOnGlobalLayoutListener(m_onGlobalLayoutListener);
-					} catch (Exception e) {
-						// reportException(Main.getInstance(), e);
-					}
-				}
-			});
-		}
-	}
-
-	public static void removeInputListener(){
-		if (ChatServiceController.hostActivity != null) {
-			ChatServiceController.hostActivity.runOnUiThread(new Runnable() {
-				@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-				public void run() {
-					final View decorView = ChatServiceController.hostActivity.getWindow().getDecorView();
-					decorView.getViewTreeObserver().removeOnGlobalLayoutListener(m_onGlobalLayoutListener);
 				}
 			});
 		}

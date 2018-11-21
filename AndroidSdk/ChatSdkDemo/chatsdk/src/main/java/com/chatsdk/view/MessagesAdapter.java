@@ -69,15 +69,11 @@ import com.chatsdk.util.gif.GifMovieView;
 import com.quickaction3d.QuickAction;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import static com.chatsdk.util.FilterWordsManager.replaceSensitiveWord;
 
 public final class MessagesAdapter extends BaseAdapter
 {
@@ -97,9 +93,7 @@ public final class MessagesAdapter extends BaseAdapter
 	private static final int	ITEM_REDPACKAGE_RECEIVE	= 7;
 	private static final int	ITEM_CHATROOM_TIP		= 8;
 	private static final int	ITEM_NEWMESSAGE_TIP		= 9;
-	private static final int	ITEM_MSG_COMMENT_SEND		= 10;
-	private static final int	ITEM_MSG_COMMENT_RECEIVE	= 11;
-	private static final int	ITEM_TYPE_TOTAL_COUNT	= 12;
+	private static final int	ITEM_TYPE_TOTAL_COUNT	= 10;
 
 	public MessagesAdapter(Fragment f, int textViewResourceId, ArrayList<MsgItem> objects)
 	{
@@ -160,14 +154,7 @@ public final class MessagesAdapter extends BaseAdapter
 					if (!item.canShowTranslateMsg() || StringUtils.isEmpty(translateMsg) || translateMsg.startsWith("{\"code\":{"))
 						return;
 					item.isOriginalLangByForce = false;
-					String toAll = LanguageManager.getLangByKey(LanguageKeys.TIP_TO_ALL);
-					if(item.msg.contains(toAll)){
-						final String resultStr = toAll.concat(translateMsg);
-						item.translateMsg = resultStr;
-						setTextOnUIThread(textView, resultStr, item);
-					}else {
-						setTextOnUIThread(textView, translateMsg, item);
-					}
+					setTextOnUIThread(textView, translateMsg, item);
 				}
 			});
 		}
@@ -223,10 +210,6 @@ public final class MessagesAdapter extends BaseAdapter
 				if (type == MsgItem.MSGITEM_TYPE_MESSAGE)
 				{
 					return isSelfMsg ? ITEM_MESSAGE_SEND : ITEM_MESSAGE_RECEIVE;
-				}
-				else if (type == MsgItem.MSGITEM_TYPE_MESSAGE_COMMENT)
-				{
-					return isSelfMsg ? ITEM_MSG_COMMENT_SEND : ITEM_MSG_COMMENT_RECEIVE;
 				}
 				else if (type == MsgItem.MSGITEM_TYPE_GIF)
 				{
@@ -319,16 +302,10 @@ public final class MessagesAdapter extends BaseAdapter
 				int sdk = android.os.Build.VERSION.SDK_INT;
 				setHeadImageBackground(convertView, item, sdk);
 
-				if (type == MsgItem.MSGITEM_TYPE_MESSAGE || type == MsgItem.MSGITEM_TYPE_MESSAGE_COMMENT)
+				if (type == MsgItem.MSGITEM_TYPE_MESSAGE)
 				{
 					setMessageTextBackground(convertView, item, sdk);
 					setMessageData(convertView, item);
-
-					if(item.isShareCommentMsg()){
-						TextView messageText = (TextView) convertView.findViewById(R.id.messageText);
-						setText(messageText, item.msg, item, false);
-					}
-
 				}
 				else if (type == MsgItem.MSGITEM_TYPE_REDPACKAGE)
 				{
@@ -381,12 +358,13 @@ public final class MessagesAdapter extends BaseAdapter
 						}
 					}
 
-					if (item.sendState == MsgItem.HANDLED) {
+					if (item.sendState == MsgItem.HANDLED){
 						if (ChatServiceController.isNeedReplaceBadWords()) {
 							item.msg = FilterWordsManager.replaceSensitiveWord(item.msg, 1, "*");
 						}
 						ChatServiceController.doHostAction("viewRedPackage", "", item.msg, redPackageInfoArr[0], true);
-					}else
+					}
+					else
 					{
 						if (ChatServiceController.getChatFragment() != null)
 							ChatServiceController.getChatFragment().showRedPackageConfirm(item);
@@ -404,18 +382,13 @@ public final class MessagesAdapter extends BaseAdapter
 					if(quickAction.getMaxItemWidth() == 0)
 						return;
 					quickAction.setOnActionItemClickListener(actionClickListener);
+
 					quickAction.currentTextView = (TextView) view;
 					boolean isFous = false;
 					if(ChatServiceController.getInstance().host.getNativeGetIsShowStatusBar()) {
 						isFous = true;
 					}
-					View showView;
-					if(item.isShareCommentMsg()) {
-						showView = (LinearLayout)view.getParent();
-					}else{
-						showView = (TextView) view;
-					}
-					quickAction.show(showView,isFous);
+					quickAction.show(view,isFous);
 				}
 			}
 		};
@@ -438,14 +411,6 @@ public final class MessagesAdapter extends BaseAdapter
 				messageText.setTag(holder);
 				messageText.setOnClickListener(onClickListener);
 			}
-			if(item.isShareCommentMsg()) {
-				TextView commentText = ViewHolderHelper.get(convertView, R.id.commentText);
-				if (commentText != null) {
-					commentText.setTag(holder);
-					commentText.setOnClickListener(onClickListener);
-				}
-			}
-
 		}
 	}
 
@@ -548,9 +513,6 @@ public final class MessagesAdapter extends BaseAdapter
 		if (messageText != null)
 			ScaleUtil.adjustTextSize(messageText, ConfigManager.scaleRatio);
 
-		TextView commentText = ViewHolderHelper.get(convertView, R.id.commentText);
-		if (commentText != null)
-			ScaleUtil.adjustTextSize(commentText, ConfigManager.scaleRatio);
 //		TextView vipLabel = ViewHolderHelper.get(convertView, R.id.vipLabel);
 //		if (vipLabel != null)
 //			ScaleUtil.adjustTextSize(vipLabel, ConfigManager.scaleRatio);
@@ -563,6 +525,12 @@ public final class MessagesAdapter extends BaseAdapter
 		if (nameLabel != null)
 			ScaleUtil.adjustTextSize(nameLabel, ConfigManager.scaleRatio);
 
+		if(ChatServiceController.career_chat) {
+			TextView careerLabel = ViewHolderHelper.get(convertView, R.id.careerLabel);
+			if (careerLabel != null) {
+				ScaleUtil.adjustTextSize(careerLabel, ConfigManager.scaleRatio);
+			}
+		}
 		TextView red_package_title = ViewHolderHelper.get(convertView, R.id.red_package_title);
 		
 		if (red_package_title != null)
@@ -656,12 +624,6 @@ public final class MessagesAdapter extends BaseAdapter
 							@Override
 							public void run()
 							{
-								if(item.sendState != MsgItem.SEND_SUCCESS){
-									JniController.getInstance().excuteJNIVoidMethod("recordChat",new Object[]{});
-									if(ChatServiceController.getChatFragment() != null){
-										ChatServiceController.getChatFragment().refreshNetState(ChatServiceController.getCurrentChannelType(),false);//显示WiFi图标
-									}
-								}
 								refreshSendState(convertView, item);
 								holder.removeSendTimer();
 							}
@@ -710,11 +672,7 @@ public final class MessagesAdapter extends BaseAdapter
 
 	private void setMessageData(final View convertView, final MsgItem item)
 	{
-		int id = R.id.messageText;
-		if(item.isShareCommentMsg()){
-			id = R.id.commentText;
-		}
-		final TextView messageText = ViewHolderHelper.get(convertView, id);
+		final TextView messageText = ViewHolderHelper.get(convertView, R.id.messageText);
 		if (messageText == null)
 			return;
 		if (item.isSelfMsg())
@@ -751,14 +709,7 @@ public final class MessagesAdapter extends BaseAdapter
 								if ((msgItem != null && !msgItem.equals(item)) || !item.canShowTranslateMsg()
 										|| StringUtils.isEmpty(translateMsg) || translateMsg.startsWith("{\"code\":{"))
 									return;
-								String toAll = LanguageManager.getLangByKey(LanguageKeys.TIP_TO_ALL);
-								if(item.msg.contains(toAll)){
-									final String resultStr = toAll.concat(translateMsg);
-									item.translateMsg = resultStr;
-									setTextOnUIThread(messageText, resultStr, item);
-								}else {
-									setTextOnUIThread(messageText, translateMsg, item);
-								}
+								setTextOnUIThread(messageText, translateMsg, item);
 							}
 						}
 					});
@@ -785,9 +736,10 @@ public final class MessagesAdapter extends BaseAdapter
 				title = item.msg;
 			}
 
-			if(ChatServiceController.isNeedReplaceBadWords()){
-				title = FilterWordsManager.replaceSensitiveWord(title,1,"*");
+			if (ChatServiceController.isNeedReplaceBadWords()) {
+				item.msg = FilterWordsManager.replaceSensitiveWord(item.msg, 1, "*");
 			}
+
 			// 大于10后尾省略号
 			if (title.length()>30) {
 				title = title.substring(0, 30) + "...";
@@ -847,9 +799,11 @@ public final class MessagesAdapter extends BaseAdapter
 				vip_image.setImageResource(R.drawable.svip_back);
 			}
 
+			int showlevel = JniController.getInstance().excuteJNIMethod("getConfigData", new Object[] { "vipchat" });
+
 			ImageView vip_value_image = ViewHolderHelper.get(convertView, R.id.vip_valueimage);
 			if(vip_value_image != null&&vipLayout != null){
-				if(item.getSVipLevel()>0){
+				if(item.getSVipLevel()>showlevel){
 					vip_value_image.setImageResource(imgId1[item.getSVipLevel()-1]);
 					vipLayout.setVisibility(View.VISIBLE);
 					vipLayout.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
@@ -878,10 +832,11 @@ public final class MessagesAdapter extends BaseAdapter
 			if(vip_image != null&&vipLayout != null){
 				vip_image.setImageResource(R.drawable.vip_back);
 			}
+			int showlevel = JniController.getInstance().excuteJNIMethod("getConfigData", new Object[] { "vipchat" });
 
 			if(vip_value_image != null&&vipLayout != null){
-				if(item.getVipLevel()>0){
-					vip_value_image.setImageResource(imgId[item.getVipLevel()-1]);
+				if(item.getSVipLevel()>showlevel){
+					vip_value_image.setImageResource(imgId[item.getSVipLevel()-1]);
 					vipLayout.setVisibility(View.VISIBLE);
 					vipLayout.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 
@@ -917,31 +872,40 @@ public final class MessagesAdapter extends BaseAdapter
 					name = LanguageManager.getLangByKey(LanguageKeys.TIP_FESTIVAl_PLAYER_NAME);
 				}
 			}
-			if(item.msg.equals(LanguageManager.getLangByKey("90100001"))){
-				headPic = "guide_player_icon";
-				name = LanguageManager.getLangByKey(LanguageKeys.TIP_SYSTEM_PLAYER_NAME);
-			}
-		}else if(item.post == MsgItem.MSG_TYPE_USE_ITEM_SHARE || item.post == MsgItem.MSG_TYPE_AREA_MSG_TIP || item.post == MsgItem.MSG_TYPE_LIVEROOM_SYS || item.post == MsgItem.MSG_TYPE_GW_SYS){
+		}else if(item.post == MsgItem.MSG_TYPE_USE_ITEM_SHARE || item.post == MsgItem.MSG_TYPE_AREA_MSG_TIP){
 			headPic = "guide_player_icon";
 			name = LanguageManager.getLangByKey(LanguageKeys.TIP_SYSTEM_PLAYER_NAME);
 		}
 
 
-	TextView nameLabel = ViewHolderHelper.get(convertView, R.id.nameLabel);
+		TextView nameLabel = ViewHolderHelper.get(convertView, R.id.nameLabel);
+		TextView careerLabel = ViewHolderHelper.get(convertView,R.id.careerLabel);
 		if (nameLabel != null)
 		{
 			if(UserManager.getInstance().getCurrentUser() != null){
-				nameLabel.setText(name + ((item.getSrcServerId() > 0 && UserManager.getInstance().getCurrentUser().chatShowServerId > 0 && item.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY ) ? "#" + item.getSrcServerId() : ""));
+				nameLabel.setText(name + ((item.getSrcServerId() > 0 && ((UserManager.getInstance().getCurrentUser().chatShowServerId > 0 && item.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY) || item.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM) ? "#" + item.getSrcServerId() : "")));
+
+			}
+			if(careerLabel != null && ChatServiceController.career_chat){
+				careerLabel.setVisibility(View.VISIBLE);
+
+				if(user != null && user.careerName.length() > 0) {
+					careerLabel.setText(user.careerName);
+				}else {
+					careerLabel.setVisibility(View.GONE);
+				}
+			}else{
+				careerLabel.setVisibility(View.GONE);
 			}
 		}
 
 		if( UserManager.getInstance().getCurrentUser() != null) {
-			if (UserManager.getInstance().getCurrentUser().chatShowServerId > 0) {
+			if (UserManager.getInstance().getCurrentUser().serverId > 0) {
 				if (UserManager.getInstance().getCurrentUser().crossFightSrcServerId == item.getSrcServerId()) {
 					nameLabel.setTextColor(Color.rgb(213, 220, 168));
 					allianceLabel.setTextColor(Color.rgb(213, 220, 168));
 				} else {
-					if (item.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY && item.getSrcServerId() > 0) {//国家频道来自不同服颜色区分对待
+					if ((item.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY || item.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM) && item.getSrcServerId() > 0) {//国家频道来自不同服颜色区分对待
 						nameLabel.setTextColor(Color.rgb(255, 0, 0));
 						allianceLabel.setTextColor(Color.rgb(255, 0, 0));
 					} else {
@@ -1025,7 +989,6 @@ public final class MessagesAdapter extends BaseAdapter
 				}
 				if (!item.isSystemHornMsg())
 				{
-					ChatServiceController.isFromLiveExist = true;
 					if (ChatServiceController.isContactMod)
 						ChatServiceController.doHostAction("showPlayerInfo@mod", item.uid, item.getName(), "", true);
 					else
@@ -1055,8 +1018,8 @@ public final class MessagesAdapter extends BaseAdapter
 				{
 					String[] redPackageInfoArr = item.attachmentId.split("\\|");
 					if (item.sendState == MsgItem.HANDLED || item.isSelfMsg()){
-						if(ChatServiceController.isNeedReplaceBadWords()){
-							item.msg = FilterWordsManager.replaceSensitiveWord(item.msg,1,"*");
+						if (ChatServiceController.isNeedReplaceBadWords()) {
+							item.msg = FilterWordsManager.replaceSensitiveWord(item.msg, 1, "*");
 						}
 						ChatServiceController.doHostAction("viewRedPackage", "", item.msg, redPackageInfoArr[0], true);
 					}
@@ -1098,13 +1061,6 @@ public final class MessagesAdapter extends BaseAdapter
 			if (messageText != null)
 			{
 				messageText.setOnClickListener(onClickListener);
-			}
-			if(item.isShareCommentMsg()){
-				TextView commentText = ViewHolderHelper.get(convertView, R.id.commentText);
-				if (commentText != null)
-				{
-					commentText.setOnClickListener(onClickListener);
-				}
 			}
 		}
 	}
@@ -1176,8 +1132,7 @@ public final class MessagesAdapter extends BaseAdapter
 	private void setMessageTextBackground(View convertView, MsgItem msgItem, int sdk)
 	{
 		TextView messageText = ViewHolderHelper.get(convertView, R.id.messageText);
-		LinearLayout messageLayout = ViewHolderHelper.get(convertView, R.id.messageLayout);
-		if (messageText == null || (msgItem.isShareCommentMsg()&&messageLayout == null))
+		if (messageText == null)
 			return;
 
 		boolean isLelfHorn = false;
@@ -1258,21 +1213,11 @@ public final class MessagesAdapter extends BaseAdapter
 
 		if (sdk < android.os.Build.VERSION_CODES.JELLY_BEAN)
 		{
-			if(msgItem.isShareCommentMsg()) {
-				messageLayout.setBackgroundDrawable(c.getResources().getDrawable(ResUtil.getId(c, "drawable", background)));
-				return;
-			}else {
-				messageText.setBackgroundDrawable(c.getResources().getDrawable(ResUtil.getId(c, "drawable", background)));
-			}
+			messageText.setBackgroundDrawable(c.getResources().getDrawable(ResUtil.getId(c, "drawable", background)));
 		}
 		else
 		{
-			if(msgItem.isShareCommentMsg()) {
-				messageLayout.setBackground(c.getResources().getDrawable(ResUtil.getId(c, "drawable", background)));
-				return;
-			}else {
-				messageText.setBackground(c.getResources().getDrawable(ResUtil.getId(c, "drawable", background)));
-			}
+			messageText.setBackground(c.getResources().getDrawable(ResUtil.getId(c, "drawable", background)));
 		}
 
 		// 根据左右喇叭设置padding,color(必须在setbackground后执行)
@@ -1404,17 +1349,12 @@ public final class MessagesAdapter extends BaseAdapter
 	{
 		int itemType = getItemViewType(position);
 		if(ChatServiceController.getInstance().isArOrPrGameLang()){
-			if (type == MsgItem.MSGITEM_TYPE_MESSAGE) {
+			if (type == MsgItem.MSGITEM_TYPE_MESSAGE)
+			{
 				if (itemType == ITEM_MESSAGE_SEND)
 					return inflater.inflate(R.layout.ar_msgitem_message_send, null);
 				else if (itemType == ITEM_MESSAGE_RECEIVE)
 					return inflater.inflate(R.layout.ar_msgitem_message_receive, null);
-			}
-			else if(type == MsgItem.MSGITEM_TYPE_MESSAGE_COMMENT){
-				if (itemType == ITEM_MSG_COMMENT_SEND)
-					return inflater.inflate(R.layout.ar_msgitem_msg_comment_send, null);
-				else if (itemType == ITEM_MSG_COMMENT_RECEIVE)
-					return inflater.inflate(R.layout.ar_msgitem_msg_cooment_receive, null);
 			}
 			else if (type == MsgItem.MSGITEM_TYPE_GIF)
 			{
@@ -1452,11 +1392,6 @@ public final class MessagesAdapter extends BaseAdapter
 					return inflater.inflate(R.layout.msgitem_message_send, null);
 				else if (itemType == ITEM_MESSAGE_RECEIVE)
 					return inflater.inflate(R.layout.msgitem_message_receive, null);
-			} else if(type == MsgItem.MSGITEM_TYPE_MESSAGE_COMMENT){
-				if (itemType == ITEM_MSG_COMMENT_SEND)
-					return inflater.inflate(R.layout.msgitem_msg_comment_send, null);
-				else if (itemType == ITEM_MSG_COMMENT_RECEIVE)
-					return inflater.inflate(R.layout.msgitem_msg_comment_receive, null);
 			} else if (type == MsgItem.MSGITEM_TYPE_GIF) {
 				if (itemType == ITEM_GIF_SEND)
 					return inflater.inflate(R.layout.msgitem_gif_send, null);
@@ -1529,12 +1464,6 @@ public final class MessagesAdapter extends BaseAdapter
 			case 7:
 				color = 0xFFFF0000;
 				break;
-			case 8:
-				color = 0xFFE7B554;
-				break;
-			case 9:
-				color = 0xFFC4C4C4;
-				break;
 			default:
 				color = 0xFFFFFFFF;
 				break;
@@ -1554,186 +1483,165 @@ public final class MessagesAdapter extends BaseAdapter
 			String equipName = "";
 			String taskName = "";
 			String allianceTreasureName = "";
-			String pngName = "u_gwislands_camp"; //全面战争旗帜图标
-			int cityOrFlagId = 0;
-			List<String> gwChangeColorStr = new ArrayList<String>();
-			int pngIndex = 0; //中间图标插入的位置
 			int colorIndex = -1;
-			if (item.isEquipMessage() || item.isNewCreateEquipMessage()) {
+			if (item.isEquipMessage()||item.isNewCreateEquipMessage()) {
 				String msgStr = item.attachmentId;
-				if (StringUtils.isNotEmpty(msgStr)) {
+				if (StringUtils.isNotEmpty(msgStr))
+				{
 					String[] equipInfo = msgStr.split("\\|");
-					if (equipInfo.length == 2) {
+					if (equipInfo.length == 2)
+					{
 						equipName = LanguageManager.getLangByKey(equipInfo[1]);
 						if (StringUtils.isNumeric(equipInfo[0]))
 							colorIndex = Integer.parseInt(equipInfo[0]);
 					}
 				}
 				str = LanguageManager.getLangByKey(LanguageKeys.TIP_EQUIP_SHARE, equipName);
-			} else if (item.isEquipmentMedalShare()) {
-				String msgStr = item.msg;
-				if (StringUtils.isNotEmpty(msgStr)) {
-					String[] equipInfo = msgStr.split("\\;");
-					if (equipInfo.length == 2) {
-						equipName = LanguageManager.getLangByKey(equipInfo[0]);
+			}
+			else if (item.isEquipmentMedalShare())
+			{
+                String[] attachmentIds = item.attachmentId.split("\\|");
+                if (attachmentIds.length > 1 && StringUtils.isNotEmpty(attachmentIds[1])) {
+                    str = LanguageManager.getLangByKey(attachmentIds[0],attachmentIds[1]);
+                }else{
+                    str = item.msg;
+                }
+			}
+			else if (item.isEnemyPutDownPointShare())
+			{
+				String msgStr = item.attachmentId;
+				if (StringUtils.isNotEmpty(msgStr))
+				{
+					String[] equipInfo = msgStr.split("\\|");
+					if (equipInfo.length >= 3)
+					{
+						equipName = equipInfo[2];
 						if (StringUtils.isNumeric(equipInfo[1]))
 							colorIndex = Integer.parseInt(equipInfo[1]);
-
-						str = "[" + equipName + "]";
-					} else if (equipInfo.length == 3) {
-
-						if (StringUtils.isNumeric(equipInfo[2]) && Integer.parseInt(equipInfo[2]) == 1) {
-							equipName = LanguageManager.getLangByKey(equipInfo[0]);
-							if (StringUtils.isNumeric(equipInfo[1]))
-								colorIndex = Integer.parseInt(equipInfo[1]);
-
-							str = LanguageManager.getLangByKey(LanguageKeys.TIP_EQUIP_SHARE, equipName);
-						} else {
-							equipName = LanguageManager.getLangByKey(equipInfo[0]);
-							if (StringUtils.isNumeric(equipInfo[1]))
-								colorIndex = Integer.parseInt(equipInfo[1]);
-
-							str = "[" + equipName + "]";
-						}
 					}
+					str = LanguageManager.getLangByKey(equipInfo[0], equipName);
 				}
 
-			} else if (item.isAllianceTaskMessage()) {
+			}
+			else if (item.isActivityHeroShare())
+			{
 				String msgStr = item.msg;
-				if (StringUtils.isNotEmpty(msgStr)) {
+				if (StringUtils.isNotEmpty(msgStr))
+				{
+					String[] equipInfo = msgStr.split("\\;");
+					if(equipInfo.length == 3)
+					{
+
+						if(StringUtils.isNumeric(equipInfo[2]))
+						{
+							equipName = LanguageManager.getLangByKey(equipInfo[1]);
+							if (StringUtils.isNumeric(equipInfo[2]))
+								colorIndex = Integer.parseInt(equipInfo[2]);
+
+							str = LanguageManager.getLangByKey(equipInfo[0], equipName);
+
+						}
+					}
+
+				}
+			}
+			else if (item.isFBFormationShare())
+			{
+				String[] attachmentIds = item.attachmentId.split("\\|");
+				if (attachmentIds.length > 1 && StringUtils.isNotEmpty(attachmentIds[1])) {
+					str = LanguageManager.getLangByKey(attachmentIds[0],attachmentIds[1]);
+				}else{
+					str = item.msg;
+				}
+			}
+			else if (item.isAllianceTaskMessage())
+			{
+				String msgStr = item.msg;
+				if (StringUtils.isNotEmpty(msgStr))
+				{
 					String[] taskInfo = msgStr.split("\\|");
-					if (taskInfo.length >= 4) {
+					if (taskInfo.length >= 4)
+					{
 						taskName = LanguageManager.getLangByKey(taskInfo[2]);
 						if (StringUtils.isNumeric(taskInfo[0]))
 							colorIndex = Integer.parseInt(taskInfo[0]);
 						String taskPlayerName = taskInfo[3];
-						if (taskInfo.length > 4) {
-							for (int i = 4; i < taskInfo.length; i++) {
+						if (taskInfo.length > 4)
+						{
+							for (int i = 4; i < taskInfo.length; i++)
+							{
 								taskPlayerName += "|" + taskInfo[i];
 							}
 						}
-						if (StringUtils.isNotEmpty(taskPlayerName)) {
-							try {
+						if (StringUtils.isNotEmpty(taskPlayerName))
+						{
+							try
+							{
 								List<AllianceTaskInfo> taskInfoArr = JSON.parseArray(taskPlayerName, AllianceTaskInfo.class);
-								if (taskInfoArr != null && taskInfoArr.size() >= 1 && taskInfoArr.get(0) != null) {
+								if (taskInfoArr != null && taskInfoArr.size() >= 1 && taskInfoArr.get(0) != null)
+								{
 									String publisher = taskInfoArr.get(0).getName();
-									if (taskInfoArr.size() == 1 && taskInfo[1].equals(LanguageKeys.TIP_ALLIANCE_TASK_SHARE_1)) {
+									if (taskInfoArr.size() == 1 && taskInfo[1].equals(LanguageKeys.TIP_ALLIANCE_TASK_SHARE_1))
+									{
 										str = LanguageManager.getLangByKey(LanguageKeys.TIP_ALLIANCE_TASK_SHARE_1, publisher, taskName);
-									} else if (taskInfoArr.size() == 2 && taskInfo[1].equals(LanguageKeys.TIP_ALLIANCE_TASK_SHARE_2)) {
+									}
+									else if (taskInfoArr.size() == 2 && taskInfo[1].equals(LanguageKeys.TIP_ALLIANCE_TASK_SHARE_2))
+									{
 										AllianceTaskInfo taskInfo2 = taskInfoArr.get(1);
-										if (taskInfo2 != null) {
+										if (taskInfo2 != null)
+										{
 											str = LanguageManager.getLangByKey(LanguageKeys.TIP_ALLIANCE_TASK_SHARE_2, publisher, taskName,
 													taskInfo2.getName());
 										}
 									}
 								}
-							} catch (Exception e) {
+							}
+							catch (Exception e)
+							{
 								e.printStackTrace();
 							}
 						}
 					}
 				}
 
-			} else if (item.isAllianceTreasureMessage()) {
+			}
+			else if (item.isAllianceTreasureMessage())
+			{
 				String name = item.getAllianceTreasureInfo(1);
-				if (StringUtils.isNotEmpty(name) && StringUtils.isNumeric(name))
+				if(StringUtils.isNotEmpty(name) && StringUtils.isNumeric(name))
 					allianceTreasureName = LanguageManager.getLangByKey(name);
-				if (StringUtils.isNotEmpty(allianceTreasureName))
+				if(StringUtils.isNotEmpty(allianceTreasureName))
 					str = LanguageManager.getLangByKey(LanguageKeys.TIP_ALLIANCE_TREASURE_SHARE, allianceTreasureName);
 				String colorStr = item.getAllianceTreasureInfo(0);
-				if (StringUtils.isNotEmpty(colorStr) && StringUtils.isNumeric(colorStr))
+				if(StringUtils.isNotEmpty(colorStr) && StringUtils.isNumeric(colorStr))
 					colorIndex = Integer.parseInt(colorStr);
-			} else if (item.isGWSysTips()) {
-				String attachmentId = item.attachmentId;
-				String[] attachments = attachmentId.split("__");
-				if (attachments.length == 0)
-					return;
-				String[] attachmentIds = attachments[1].split("\\|");
-				String dialogKey = attachmentIds[0];
-				gwChangeColorStr.add(attachmentIds[1]);
-				if (attachmentIds.length == 3) {
-					if (NumberUtils.isNumber(attachmentIds[2])) {
-						cityOrFlagId = Integer.parseInt(attachmentIds[2]);
-						pngName = pngName.concat(String.valueOf(cityOrFlagId));
-					}
-					item.msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], pngName);
-					pngIndex = item.msg.indexOf(pngName) + 1;
-					item.msg = item.msg.replace(pngName, "");
-				} else if (attachmentIds.length == 4) {
-					if (NumberUtils.isNumber(attachmentIds[2])) {
-						cityOrFlagId = Integer.parseInt(attachmentIds[2]);
-					}
-					if (cityOrFlagId > 1000) {
-						String cityName = LanguageManager.getLangByKey("82000992", String.valueOf(cityOrFlagId - 1000));
-						gwChangeColorStr.add(cityName);
-						gwChangeColorStr.add("Lv.".concat(attachmentIds[3]));
-						item.msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], cityName, attachmentIds[3]);
-					} else {
-						pngName = pngName.concat(String.valueOf(cityOrFlagId));
-						gwChangeColorStr.add(attachmentIds[3]);
-						item.msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], pngName, attachmentIds[3]);
-						pngIndex = item.msg.indexOf(pngName) + 1;
-						item.msg = item.msg.replace(pngName, "");
-					}
+			}
+			else if(item.isFormationBattle()){
+				String []attachmentIds = item.attachmentId.split("_",1);
+				if(attachmentIds.length == 2){
+					String []dialogs = attachmentIds[1].split("\\|");
+					if(dialogs.length == 2)
+						item.msg = LanguageManager.getLangByKey(dialogs[0],dialogs[1]);
 				}
-
-				str = item.msg;
-			} else if (item.isNewsCenterShare()) {
-				String newsIdStr = "";
-				String titleParams = "";
-				String[] attachmentIDArray = item.attachmentId.split("_", 3); //只分割两次,防止将名字分割了
-				if (attachmentIDArray.length == 3) {
-					newsIdStr = attachmentIDArray[1];
-					titleParams = attachmentIDArray[2];
-				}
-				String []titleParamsArr =titleParams.split("\\|\\|");
-				String typeName = JniController.getInstance().excuteJNIMethod("getPropByIdType",new Object[]{newsIdStr,"name","newscontent",ConfigManager.LocalController.NewsCenterXml});
-				typeName = LanguageManager.getLangByKey(typeName).concat("\n");
-				String dialogKey = JniController.getInstance().excuteJNIMethod("getPropByIdType",new Object[]{newsIdStr,"title","newscontent",ConfigManager.LocalController.NewsCenterXml});
-				String title1s = JniController.getInstance().excuteJNIMethod("getPropByIdType",new Object[]{newsIdStr,"title1","newscontent",ConfigManager.LocalController.NewsCenterXml});
-				String []title1Arr = title1s.split("\\|");
-
-				ArrayList<String> paramsArr = new ArrayList<>();
-				int i = 0;
-				for (String params : titleParamsArr){
-					String type = title1Arr[i];
-					String outMsg = "";
-					if (type.equals("1")){//名称，直接使用后台
-						outMsg = params;
-					} else if (type.equals("2")){//官职名称(官职id)
-						outMsg = JniController.getInstance().excuteJNIMethod("getPropByIdGroup",new Object[]{params,"name","office"});
-					}else if (type.equals("6")){//大帝官职(官职id)
-						outMsg = JniController.getInstance().excuteJNIMethod("getPropByIdGroup",new Object[]{params,"name","great_office"});
-					} else if (type.equals("9")){//段位(段位id)
-						outMsg = JniController.getInstance().excuteJNIMethod("getPropByIdType",new Object[]{newsIdStr,"name","newscontent", ConfigManager.LocalController.ArenaRankXml});
-					}
-					paramsArr.add(outMsg);
-				}
-				if (titleParamsArr.length == 0) {
-					str = LanguageManager.getLangByKey(dialogKey);
-				} else if (titleParamsArr.length == 1) {
-					str = LanguageManager.getLangByKey(dialogKey,paramsArr.get(0));
-				} else if (titleParamsArr.length == 2) {
-					str = LanguageManager.getLangByKey(dialogKey,paramsArr.get(0),paramsArr.get(1));
-				} else if (titleParamsArr.length == 3) {
-					str = LanguageManager.getLangByKey(dialogKey,paramsArr.get(0),paramsArr.get(1),paramsArr.get(2));
-				} else if (titleParamsArr.length == 4) {
-					str = LanguageManager.getLangByKey(dialogKey,paramsArr.get(0),paramsArr.get(1),paramsArr.get(2),paramsArr.get(3));
-				}
-				str = typeName.concat(str);
-				item.msg = str;
-				str = item.msg;
-
-			} else if (item.isViewQuestionActivity()) {
-				colorIndex = 8;
-				str = item.msg;
-			} else if (item.isFavourPointShare()) {
-				str = item.msg;
-			} else if (item.isVersionInvalid()) {
+			}
+			else if (item.isFavourPointShare())
+			{
+				str=item.msg;
+			}
+			else if (item.isVersionInvalid())
+			{
 				str = LanguageManager.getLangByKey(LanguageKeys.MSG_VERSION_NO_SUPPORT);
-			} else if (item.isWoundedShare()) {
+			}
+			else if (item.isWoundedShare())
+			{
 				str = item.msg;
-			} else if (item.isShamoInhesionShare()) {
+			}
+			else if (item.isShamoInhesionShare())
+			{
+				str = item.msg;
+			}
+			else if (item.isFBScoutReport())
+			{
 				str = item.msg;
 			}
 
@@ -1745,19 +1653,16 @@ public final class MessagesAdapter extends BaseAdapter
 			String htmlLinkText = str;
 			htmlLinkText = insertCoordinateLink(convertLineBreak(str));
 			// annouce invite的链接，玩家不在联盟中才可见
-//		if (item.isAnnounceInvite() && UserManager.getInstance().getCurrentUser().allianceId.equals(""))
-//		{
-//			htmlLinkText += "<a href='" + JOIN_NOW_URL + "," + item.attachmentId + "'> <u>"
-//					+ LanguageManager.getLangByKey(LanguageKeys.BTN_JOIN_NOW) + " </u></a>";
-//		}
-			if (item.isCreateEquipMessage()) {
-				htmlLinkText = "";
+			if (item.isAnnounceInvite() && UserManager.getInstance().getCurrentUser().allianceId.equals(""))
+			{
+				htmlLinkText += "<a href='" + JOIN_NOW_URL + "," + item.attachmentId + "'> <u>"
+						+ LanguageManager.getLangByKey(LanguageKeys.BTN_JOIN_NOW) + " </u></a>";
 			}
-			if (item.isFavourPointShare()) {
-				htmlLinkText = str;
+			if(item.isCreateEquipMessage()){
+				htmlLinkText="";
 			}
-			if (item.isShareCommentMsg() && textView.getId() == R.id.commentText) {
-				htmlLinkText = "";
+			if(item.isFavourPointShare()){
+				htmlLinkText=str;
 			}
 			Spanned spannedText = Html.fromHtml(htmlLinkText);
 			textView.setText(spannedText);
@@ -1766,48 +1671,34 @@ public final class MessagesAdapter extends BaseAdapter
 
 
 			CharSequence text = textView.getText();
-			if (text instanceof Spannable) {
+			if (text instanceof Spannable)
+			{
 				int end = text.length();
 				CharSequence text2 = textView.getText();
 
 				SpannableStringBuilder style = new SpannableStringBuilder(text2);
 				style.clearSpans();
 
-				if (item.isShareCommentMsg() && textView.getId() == R.id.commentText) {
-					String commentStr = "";
-					if (isTranslated) {
-						if (item.translateMsg.equals("90200021")) {
-							commentStr = LanguageManager.getLangByKey("90200021");
-						} else {
-							commentStr = item.translateMsg;
-						}
-					} else {
-
-						if (item.shareComment.equals("90200021")) {
-							commentStr = LanguageManager.getLangByKey("90200021");
-						} else {
-							commentStr = item.shareComment;
-						}
-					}
-					SpannableString styledResultText1 = new SpannableString(Html.fromHtml("<font color='#FFFFFF'>" + commentStr + "</font>"));
-					style.append(styledResultText1);
-					textView.setText(style);
-					return;
-				}
-				if ((ChatServiceController.getCurrentChannelType() < DBDefinition.CHANNEL_TYPE_USER && item.isSystemMessage()
-						&& !item.isHornMessage()) || item.isLiveRoomSys()) {
-					ImageGetter imageGetter = new ImageGetter() {
+				if (ChatServiceController.getCurrentChannelType() < DBDefinition.CHANNEL_TYPE_USER && item.isSystemMessage()
+						&& !item.isHornMessage())
+				{
+					ImageGetter imageGetter = new ImageGetter()
+					{
 						@Override
-						public Drawable getDrawable(String source) {
+						public Drawable getDrawable(String source)
+						{
 							if (c == null)
 								return null;
 
 							Drawable d = c.getResources().getDrawable(R.drawable.sys);
-							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0) {
+							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0)
+							{
 								d.setBounds(0, -10,
 										(int) (d.getIntrinsicWidth() * 0.8f * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
 										(int) (d.getIntrinsicHeight() * 0.9f * ConfigManager.scaleRatio * getScreenCorrectionFactor()) - 10);
-							} else {
+							}
+							else
+							{
 								d.setBounds(0, -10, (int) (d.getIntrinsicWidth() * 0.8f), (int) (d.getIntrinsicHeight() * 0.9f) - 10);
 							}
 							// ((BitmapDrawable) d).setGravity(Gravity.TOP);
@@ -1818,67 +1709,27 @@ public final class MessagesAdapter extends BaseAdapter
 					style.insert(0, Html.fromHtml("<img src='" + R.drawable.sys + "'/>", imageGetter, null));
 				}
 
-				//添加中间的图片
-				if (item.isGWSysTips()) {
-
-					{
-//					style = new SpannableStringBuilder(text2);
-//					style.clearSpans();
-						String txt = text.toString();
-						style.setSpan(new ForegroundColorSpan(getColorByIndex(9)), 0, text.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-//					String regexStr ="/"; ;
-//					regexStr.concat(LanguageManager.getLangByKey("82000992","[0-9]+")).concat("|Lv.[0-9]+".concat("/ig"));
-//					Pattern p = Pattern
-//							.compile(regexStr);
-//					Matcher m = p.matcher(str);
-						for (Iterator<String> tempStr = gwChangeColorStr.iterator(); tempStr.hasNext(); ) {
-							String temp = (String) tempStr.next();
-							int color = 0;
-							if (temp.contains("No.") || temp.contains("Lv.")) {
-								color = getColorByIndex(8);
-							} else {
-								color = getColorByIndex(0);
-							}
-							int start = txt.indexOf(temp) + 1;
-							style.setSpan(new ForegroundColorSpan(color), start, start + temp.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-						}
-						final String pngNameStr = pngName;
-						if (cityOrFlagId >= 1 && cityOrFlagId <= 13 && pngIndex > 1) {
-							ImageGetter imageGetter = new ImageGetter() {
-								@Override
-								public Drawable getDrawable(String source) {
-									if (c == null)
-										return null;
-
-									Drawable d = c.getResources().getDrawable(ResUtil.getId(c, "drawable", pngNameStr));
-									if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0) {
-										d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
-												(int) (d.getIntrinsicHeight() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()));
-									} else {
-										d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.5), (int) (d.getIntrinsicHeight() * 0.5));
-									}
-									return d;
-								}
-							};
-							style.insert(pngIndex, Html.fromHtml("<img src='" + c.getResources().getDrawable(ResUtil.getId(c, "drawable", pngNameStr)) + "'/>", imageGetter, null));
-						}
-					}
-				}
 				// 添加末尾的战报图标
-				boolean canViewBattleReport = ((item.isBattleReport() || item.isDetectReport()) && !UserManager.getInstance().getCurrentUser().allianceId
+				boolean canViewBattleReport = ((item.isBattleReport() || item.isDetectReport() || item.isFormationBattle()) && !UserManager.getInstance().getCurrentUser().allianceId
 						.equals(""));
-				if (canViewBattleReport) {
-					ImageGetter imageGetter = new ImageGetter() {
+				if (canViewBattleReport)
+				{
+					ImageGetter imageGetter = new ImageGetter()
+					{
 						@Override
-						public Drawable getDrawable(String source) {
+						public Drawable getDrawable(String source)
+						{
 							if (c == null)
 								return null;
 
 							Drawable d = c.getResources().getDrawable(R.drawable.mail_battlereport);
-							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0) {
+							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0)
+							{
 								d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
 										(int) (d.getIntrinsicHeight() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()));
-							} else {
+							}
+							else
+							{
 								d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.5), (int) (d.getIntrinsicHeight() * 0.5));
 							}
 							return d;
@@ -1888,18 +1739,24 @@ public final class MessagesAdapter extends BaseAdapter
 					style.append(Html.fromHtml("<img src='" + R.drawable.mail_battlereport + "'/>", imageGetter, null));
 				}
 
-				if (item.isFavourPointShare()) {
-					ImageGetter imageGetter = new ImageGetter() {
+				if(item.isFavourPointShare())
+				{
+					ImageGetter imageGetter = new ImageGetter()
+					{
 						@Override
-						public Drawable getDrawable(String source) {
+						public Drawable getDrawable(String source)
+						{
 							if (c == null)
 								return null;
 
 							Drawable d = c.getResources().getDrawable(R.drawable.point_share);
-							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0) {
+							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0)
+							{
 								d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
 										(int) (d.getIntrinsicHeight() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()));
-							} else {
+							}
+							else
+							{
 								d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.5), (int) (d.getIntrinsicHeight() * 0.5));
 							}
 							return d;
@@ -1909,31 +1766,65 @@ public final class MessagesAdapter extends BaseAdapter
 					style.append(Html.fromHtml("<img src='" + R.drawable.point_share + "'/>", imageGetter, null));
 				}
 
+				if(item.isFBFormationShare())
+				{
+					ImageGetter imageGetter = new ImageGetter()
+					{
+						@Override
+						public Drawable getDrawable(String source)
+						{
+							if (c == null)
+								return null;
+
+							Drawable d = c.getResources().getDrawable(R.drawable.formation_share);
+							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0)
+							{
+								d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
+										(int) (d.getIntrinsicHeight() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()));
+							}
+							else
+							{
+								d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.5), (int) (d.getIntrinsicHeight() * 0.5));
+							}
+							return d;
+						}
+					};
+
+					style.append(Html.fromHtml("<img src='" + R.drawable.formation_share + "'/>", imageGetter, null));
+				}
+
 				//打造装备分享
-				if (item.isCreateEquipMessage()) {
+				if (item.isCreateEquipMessage())
+				{
 					SpannableString styledResultText1 = new SpannableString(Html.fromHtml(item.msg));
 					style.append(styledResultText1);
 				}
 
 				// 添加末尾的装备分享`
-				if (item.isEquipMessage() || item.isNewCreateEquipMessage()) {
+				if (item.isEquipMessage()||item.isNewCreateEquipMessage())
+				{
 
 					int color = getColorByIndex(colorIndex);
 					String txt = text.toString();
 					int start = txt.indexOf(equipName) + 1;
 					style.setSpan(new ForegroundColorSpan(color), start, start + equipName.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-					ImageGetter imageGetter = new ImageGetter() {
+					ImageGetter imageGetter = new ImageGetter()
+					{
 						@Override
-						public Drawable getDrawable(String source) {
+						public Drawable getDrawable(String source)
+						{
 							if (c == null)
 								return null;
 
 							Drawable d = c.getResources().getDrawable(R.drawable.equip_share);
-							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0) {
+							if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0)
+							{
 								d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.8 * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
 										(int) (d.getIntrinsicHeight() * 0.8 * ConfigManager.scaleRatio * getScreenCorrectionFactor()));
-							} else {
+							}
+							else
+							{
 								d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.8), (int) (d.getIntrinsicHeight() * 0.8));
 							}
 							return d;
@@ -1941,36 +1832,47 @@ public final class MessagesAdapter extends BaseAdapter
 					};
 
 					style.append(Html.fromHtml("<img src='" + R.drawable.equip_share + "'/>", imageGetter, null));
-				} else if (item.isAllianceTaskMessage()) {
+				}
+				else if (item.isAllianceTaskMessage())
+				{
 
 					int color = getColorByIndex(colorIndex);
 					String txt = text.toString();
 					int start = txt.indexOf(taskName) + 1;
 					style.setSpan(new ForegroundColorSpan(color), start, start + taskName.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-				} else if (item.isEquipmentMedalShare()) {
+				}
+				else if (item.isEquipmentMedalShare())
+				{
 					int color = getColorByIndex(colorIndex);
 					String txt = text.toString();
 					int start = txt.indexOf(equipName) + 1;
 					style.setSpan(new ForegroundColorSpan(color), start, start + equipName.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-
 					String msgStr = item.msg;
-					if (StringUtils.isNotEmpty(msgStr)) {
+					if (StringUtils.isNotEmpty(msgStr))
+					{
 						String[] equipInfo = msgStr.split("\\;");
-						if (equipInfo.length == 3) {
-							if (StringUtils.isNumeric(equipInfo[2]) && Integer.parseInt(equipInfo[2]) == 1) {
+						if(equipInfo.length == 3)
+						{
+							if(StringUtils.isNumeric(equipInfo[2])&&Integer.parseInt(equipInfo[2])==1)
+							{
 
-								ImageGetter imageGetter = new ImageGetter() {
+								ImageGetter imageGetter = new ImageGetter()
+								{
 									@Override
-									public Drawable getDrawable(String source) {
+									public Drawable getDrawable(String source)
+									{
 										if (c == null)
 											return null;
 
 										Drawable d = c.getResources().getDrawable(R.drawable.equip_share);
-										if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0) {
+										if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0)
+										{
 											d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.8 * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
 													(int) (d.getIntrinsicHeight() * 0.8 * ConfigManager.scaleRatio * getScreenCorrectionFactor()));
-										} else {
+										}
+										else
+										{
 											d.setBounds(0, 0, (int) (d.getIntrinsicWidth() * 0.8), (int) (d.getIntrinsicHeight() * 0.8));
 										}
 										return d;
@@ -1981,29 +1883,47 @@ public final class MessagesAdapter extends BaseAdapter
 							}
 						}
 					}
-				} else if (item.isAllianceTreasureMessage()) {
-					if (StringUtils.isNotEmpty(allianceTreasureName)) {
+				}
+				else if (item.isActivityHeroShare())
+				{
+					int color = getColorByIndex(colorIndex);
+					String txt = text.toString();
+					int start = txt.indexOf(equipName) + 1;
+					style.setSpan(new ForegroundColorSpan(color), start, start + equipName.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+				}
+				else if (item.isEnemyPutDownPointShare())
+				{
+					int color = getColorByIndex(colorIndex);
+					String txt = text.toString();
+					int start = txt.indexOf(equipName) + 1;
+					style.setSpan(new ForegroundColorSpan(color), start, start + equipName.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+				}
+				else if (item.isAllianceTreasureMessage())
+				{
+					if(StringUtils.isNotEmpty(allianceTreasureName))
+					{
 						int color = getColorByIndex(colorIndex);
 						String txt = text.toString();
 						int start = txt.indexOf(allianceTreasureName) + 1;
 						style.setSpan(new ForegroundColorSpan(color), start, start + allianceTreasureName.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 					}
-				} else if (item.isViewQuestionActivity()) {
-					int color = getColorByIndex(colorIndex);
-					String txt = text.toString();
-					int start = 1;
-					style.setSpan(new ForegroundColorSpan(color), start, start + txt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 				}
 
 				// 添加时间、翻译信息
 				String time = item.getSendTimeHM();
-				if (!item.isSelfMsg()) {
-					if (isTranslated) {
-						String originalLang = item.originalLang == null ? "" : item.originalLang;
+				if (!item.isSelfMsg())
+				{
+					if (isTranslated)
+					{
+						String originalLang = item.originalLang == null?"":item.originalLang;
 						String[] originalLangArr = originalLang.split(",");
 						String lang = originalLang;
-						for (int i = 0; i < originalLangArr.length; i++) {
-							if (StringUtils.isNotEmpty(originalLangArr[i])) {
+						for (int i = 0; i < originalLangArr.length; i++)
+						{
+							if (StringUtils.isNotEmpty(originalLangArr[i]))
+							{
 								lang = LanguageManager.getOriginalLangByKey(originalLangArr[i]);
 								if (!lang.startsWith("lang."))
 									break;
@@ -2013,11 +1933,13 @@ public final class MessagesAdapter extends BaseAdapter
 							lang = originalLang;
 						}
 						time += " " + LanguageManager.getLangByKey(LanguageKeys.TIP_TRANSLATED_BY, lang);
-					} else if (!isTranslated
+					}
+					else if (!isTranslated
 							&& TranslateManager.getInstance().isTranslateMsgValid(item)
 							&& !item.isTranlateDisable()
 							&& !item.isOriginalSameAsTargetLang()
-							&& (ChatServiceController.isDefaultTranslateEnable || (!ChatServiceController.isDefaultTranslateEnable && item.hasTranslatedByForce))) {
+							&& (ChatServiceController.isDefaultTranslateEnable || (!ChatServiceController.isDefaultTranslateEnable && item.hasTranslatedByForce)))
+					{
 						time += " " + LanguageManager.getLangByKey(LanguageKeys.MENU_ORIGINALLAN);
 					}
 				}
@@ -2036,14 +1958,18 @@ public final class MessagesAdapter extends BaseAdapter
 
 				Spannable sp = (Spannable) textView.getText();
 				URLSpan[] urls = sp.getSpans(0, end, URLSpan.class);
-				for (URLSpan url : urls) {
+				for (URLSpan url : urls)
+				{
 					MyURLSpan myURLSpan = new MyURLSpan(url.getURL());
-					if (item.isSystemMessage()) {
+					if (item.isSystemMessage())
+					{
 						int endPos = sp.getSpanEnd(url) + 1 <= end - 1 ? sp.getSpanEnd(url) + 1 : end;
-						if (item.isCordinateShareMessage())
-							endPos = sp.getSpanEnd(url) + 1 <= end ? sp.getSpanEnd(url) + 1 : end;
+						if(item.isCordinateShareMessage())
+							endPos = sp.getSpanEnd(url) + 1 <= end  ? sp.getSpanEnd(url) + 1 : end;
 						style.setSpan(myURLSpan, sp.getSpanStart(url) + 1, endPos, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-					} else {
+					}
+					else
+					{
 						style.setSpan(myURLSpan, sp.getSpanStart(url), sp.getSpanEnd(url) - 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 					}
 				}
@@ -2079,7 +2005,7 @@ public final class MessagesAdapter extends BaseAdapter
 		/***********添加图片和改变文字颜色。*******************************/
 		if(item.isAllianceCreate() || item.isAlllianceMessage() || item.isAnnounceInvite()
 				){
-		}else if(item.isBattleReport() || item.isDetectReport()) {
+		}else if(item.isBattleReport() || item.isDetectReport() ||item.isFBScoutReport()) {
 		}
 		//6,7,8,9无用
 		else if(item.isLotteryMessage()){
@@ -2126,40 +2052,6 @@ public final class MessagesAdapter extends BaseAdapter
 			tempContent = equipName;
 		}else if(item.isShamoInhesionShare()){
 
-		}else if (item.isGWSysTips()) {
-			String attachmentId = item.attachmentId;
-			String[] attachments = attachmentId.split("__");
-			String msg = "";
-			if (attachments.length == 0)
-				return null;
-			String[] attachmentIds = attachments[1].split("\\|");
-			String dialogKey = attachmentIds[0];
-			gwChangeColorStr.add(attachmentIds[1]);
-			if (attachmentIds.length == 3) {
-				if (NumberUtils.isNumber(attachmentIds[2])) {
-					cityOrFlagId = Integer.parseInt(attachmentIds[2]);
-					pngName = pngName.concat(String.valueOf(cityOrFlagId));
-				}
-				msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], pngName);
-				pngIndex = msg.indexOf(pngName) + 1;
-			} else if (attachmentIds.length == 4) {
-				if (NumberUtils.isNumber(attachmentIds[2])) {
-					cityOrFlagId = Integer.parseInt(attachmentIds[2]);
-				}
-				if (cityOrFlagId > 1000) {
-					String cityName = LanguageManager.getLangByKey("82000992", String.valueOf(cityOrFlagId - 1000));
-					gwChangeColorStr.add(cityName);
-					gwChangeColorStr.add("Lv.".concat(attachmentIds[3]));
-				} else {
-					pngName = pngName.concat(String.valueOf(cityOrFlagId));
-					gwChangeColorStr.add(attachmentIds[3]);
-					msg = LanguageManager.getLangByKey(dialogKey, attachmentIds[1], pngName, attachmentIds[3]);
-					pngIndex = msg.indexOf(pngName) + 1;
-				}
-			}
-		}else if(item.isViewQuestionActivity()){
-
-		}else if (item.isNewsCenterShare()) {
 		}
 
 		CharSequence text = textView.getText();
@@ -2173,43 +2065,22 @@ public final class MessagesAdapter extends BaseAdapter
 			int ResId = 0;
 			int insertIndex = 0;
 			String txt = text.toString();
-			if (item.isShareCommentMsg() && textView.getId() == R.id.commentText) {
+			if (item.isShareCommentMsg()) {
 				setTextColors(style, txt, new String[]{txt}, new int[]{colorIndex});
 				textView.setText(style);
 				return style;
 			}
 			//添加系统图片
 			if ((ChatServiceController.getCurrentChannelType() < DBDefinition.CHANNEL_TYPE_USER && item.isSystemMessage()
-					&& !item.isHornMessage()) || item.isLiveRoomSys()) { //1
+					&& !item.isHornMessage())) { //1
 				ResId = ResUtil.getId(c, "drawable", "sys");
 				setInsertImage(style,item, 0,ResId);
-			}
-
-			//添加中间的图片
-			if (item.isGWSysTips()) { //2
-				{
-					style.setSpan(new ForegroundColorSpan(getColorByIndex(9)), 0, text.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-					for (Iterator<String> tempStr = gwChangeColorStr.iterator(); tempStr.hasNext(); ) {
-						String temp = (String) tempStr.next();
-						if (temp.contains("No.") || temp.contains("Lv.")) {
-							colorIndex = 8;
-						} else {
-							colorIndex = 0;
-						}
-						setTextColors(style, txt, new String[]{temp}, new int[]{colorIndex});
-					}
-					final String pngNameStr = pngName;
-					if (cityOrFlagId >= 1 && cityOrFlagId <= 13 && pngIndex > 1) {
-						ResId = ResUtil.getId(c, "drawable", pngNameStr);
-						setInsertImage(style,item, pngIndex,ResId);
-					}
-				}
 			}
 
 
 			// 添加末尾的各种图片
 			insertIndex = txt.length()+1;
-			boolean canViewBattleReport = ((item.isBattleReport() || item.isDetectReport()) && !UserManager.getInstance().getCurrentUser().allianceId
+			boolean canViewBattleReport = ((item.isBattleReport() || item.isDetectReport() || item.isFBScoutReport()) && !UserManager.getInstance().getCurrentUser().allianceId
 					.equals(""));
 			if (canViewBattleReport) { //1
 				ResId = ResUtil.getId(c, "drawable", "mail_battlereport");
@@ -2221,6 +2092,10 @@ public final class MessagesAdapter extends BaseAdapter
 
 			if(item.isNewCreateEquipMessage() || item.isEquipmentMedalShare() || item.isEquipmentMedalShare()){
 				ResId = ResUtil.getId(c, "drawable", "equip_share");
+			}
+
+			if(item.isFBFormationShare()){
+				ResId = ResUtil.getId(c, "drawable", "formation_share");
 			}
 
 			setTextColors(style, txt, new String[]{tempContent}, new int[]{colorIndex});
@@ -2282,7 +2157,10 @@ public final class MessagesAdapter extends BaseAdapter
 		for (URLSpan url : urls)
 		{
 			MyURLSpan myURLSpan = new MyURLSpan(url.getURL());
-			if (item.isSystemMessage() && !item.isFavourPointShare())
+			if(item.isFavourPointShare()){
+				break;
+			}
+			if (item.isSystemMessage())
 			{
 				int endPos = sp.getSpanEnd(url) + 1 <= end - 1 ? sp.getSpanEnd(url) + 1 : end;
 				if(item.isCordinateShareMessage())
@@ -2367,7 +2245,7 @@ public final class MessagesAdapter extends BaseAdapter
 		Rect rect= new Rect();
 		if(type == 0) {
 			if ((ChatServiceController.getCurrentChannelType() < DBDefinition.CHANNEL_TYPE_USER && item.isSystemMessage()
-					&& !item.isHornMessage()) || item.isLiveRoomSys()) {
+					&& !item.isHornMessage()) ) {
 				if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0) {
 					rect.set(0, -10,
 							(int) (d.getIntrinsicWidth() * 0.8f * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
@@ -2380,9 +2258,9 @@ public final class MessagesAdapter extends BaseAdapter
 
 			//添加中间的图片
 			// 添加末尾的战报图标
-			boolean canViewBattleReport = ((item.isBattleReport() || item.isDetectReport()) && !UserManager.getInstance().getCurrentUser().allianceId
+			boolean canViewBattleReport = ((item.isBattleReport() || item.isDetectReport() || item.isFBScoutReport()) && !UserManager.getInstance().getCurrentUser().allianceId
 					.equals(""));
-			if (item.isGWSysTips() || item.isFavourPointShare() || canViewBattleReport) {
+			if (item.isFavourPointShare() || canViewBattleReport) {
 				if (ConfigManager.getInstance().scaleFontandUI && ConfigManager.scaleRatio > 0) {
 					rect.set(0, 0, (int) (d.getIntrinsicWidth() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()),
 							(int) (d.getIntrinsicHeight() * 0.5 * ConfigManager.scaleRatio * getScreenCorrectionFactor()));
@@ -2483,7 +2361,7 @@ public final class MessagesAdapter extends BaseAdapter
 			{
 				Activity activity = (Activity)c;
 				if (activity != null) {
-					ServiceInterface.safeMakeText(activity,"coordinate (" + coords[0] + "," + coords[1] + ") is invalid!", Toast.LENGTH_LONG);
+					ServiceInterface.safeMakeText(activity, "coordinate (" + coords[0] + "," + coords[1] + ") is invalid!", Toast.LENGTH_LONG);
 				}
 				return;
 			}
@@ -2491,7 +2369,7 @@ public final class MessagesAdapter extends BaseAdapter
 		}
 	}
 
-	public class MyURLSpan extends ClickableSpan
+	private class MyURLSpan extends ClickableSpan
 	{
 		private String	mUrl;
 

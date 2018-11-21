@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.chatsdk.controller.JniController;
 import com.chatsdk.model.LanguageKeys;
 import com.chatsdk.model.LanguageManager;
-import com.chatsdk.model.MailManager;
 import com.chatsdk.model.mail.MailData;
 import com.chatsdk.util.LogUtil;
 
@@ -35,20 +34,11 @@ public class WorldBossMailData extends MailData
 					return;
 				String bossId = "";
 				String bossName = "";
-				if(getType() == MailManager.MAIL_TYPE_ALLIANCE_BOSS_TREASURE){
-					bossName = LanguageManager.getLangByKey(LanguageKeys.ALLIANCE_BOSS_TREASURE);
-					String content = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_ALLIANCE_TREASURE,bossName);
-					String myTeam = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_MYARMY);
-					contentText = myTeam.concat(content);
-				}else if (detail.getAttList() != null && detail.getAttList().size() > 0)
+				if (detail.getAttList() != null && detail.getAttList().size() > 0)
 				{
 					String leaderName = "";
 					bossId = detail.getDef().getId();
-					if(getType() == MailManager.MAIL_TYPE_ALLIANCE_BOSS){
-						bossName = JniController.getInstance().excuteJNIMethod("getAllianceBossName",new Object[]{bossId});
-					}else {
-						bossName = JniController.getInstance().excuteJNIMethod("getNameById", new Object[]{bossId});
-					}
+					bossName = JniController.getInstance().excuteJNIMethod("getNameById", new Object[] { bossId });
 					for (int i = 0; i < detail.getAttList().size(); i++)
 					{
 						AttListParams att = detail.getAttList().get(i);

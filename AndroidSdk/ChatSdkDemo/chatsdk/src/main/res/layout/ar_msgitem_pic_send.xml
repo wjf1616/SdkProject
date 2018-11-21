@@ -62,7 +62,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:layout_weight="0.48"
+            android:layout_weight="0.8"
             android:gravity="start"
             android:orientation="vertical" >
 
@@ -73,6 +73,18 @@
                 android:paddingLeft="12dp"
                 android:gravity="center_vertical"
                 android:visibility="visible" >
+
+                <TextView
+                    android:id="@+id/careerLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:autoLink="none"
+                    android:layout_marginRight="8dp"
+                    android:maxLines="1"
+                    android:text="@string/cs__chat_name_sample"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="#8099ba"
+                    android:textSize="@dimen/cs__textSizeName" />
 
                 <TextView
                     android:id="@+id/nameLabel"
@@ -89,8 +101,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:autoLink="none"
-                    android:layout_marginRight="2dp"
                     android:text="@string/cs__chat_alliance_sample"
+                    android:layout_marginRight="3dp"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textColor="@color/hs__messages_name_color"
                     android:textSize="@dimen/cs__textSizeName" />

@@ -10,18 +10,6 @@ public class ArmyParams
 	private int		dead;
 	private int		star;
 	private int		rescue;
-	private int		revive;
-	private int		remain;
-
-
-	public int getRemain() {
-		return remain;
-	}
-
-	public void setRemain(int remain) {
-		this.remain = remain;
-	}
-
 
 	public int getExp()
 	{
@@ -101,13 +89,5 @@ public class ArmyParams
 	public void setRescue(int rescue)
 	{
 		this.rescue = rescue;
-	}
-
-	public int getRevive() {
-		return revive;
-	}
-
-	public void setRevive(int revive) {
-		this.revive = revive;
 	}
 }

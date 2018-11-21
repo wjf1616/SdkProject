@@ -46,14 +46,12 @@ public class MainChannelAdapter extends ChannelAdapter
         if (item != null && item instanceof ChatChannel)
         {
             ChatChannel channel = (ChatChannel) item;
-            if (!channel.channelID.equals(MailManager.CHANNELID_MONSTER) && !channel.channelID.equals(MailManager.CHANNELID_MOD)
+            if (!channel.channelID.equals(MailManager.CHANNELID_MOD)
                     && !channel.channelID.equals(MailManager.CHANNELID_RESOURCE)
                     && !channel.channelID.equals(MailManager.CHANNELID_KNIGHT)
                     && !channel.channelID.equals(MailManager.CHANNELID_RESOURCE_HELP)
                     && !channel.channelID.equals(MailManager.CHANNELID_MISSILE)
-					&& !channel.channelID.equals(MailManager.CHANNELID_GIFT)
-					&& !channel.channelID.equals(MailManager.CHANNELID_MOBILIZATION_CENTER)
-					&& !channel.channelID.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE))
+										&& !channel.channelID.equals(MailManager.CHANNELID_GIFT))
 
                 return VIEW_TYPE_READ;
             else
@@ -81,9 +79,7 @@ public class MainChannelAdapter extends ChannelAdapter
 			MailManager.CHANNELID_SHAMOGAME,
 			MailManager.CHANNELID_SHAMOEXPLORE,
 			MailManager.CHANNELID_BORDERFIGHT,
-			MailManager.CHANNELID_SHAMOGOLDDIGGER,
-			MailManager.CHANNELID_MOBILIZATION_CENTER,
-			MailManager.CHANNELID_COMBOTFACTORY_FIRE
+			MailManager.CHANNELID_MANORFIGHT
 	};
 
 

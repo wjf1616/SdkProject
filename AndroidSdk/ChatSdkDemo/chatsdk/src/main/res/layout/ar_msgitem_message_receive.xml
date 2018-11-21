@@ -54,7 +54,17 @@
                     android:textColor="@color/hs__messages_vip_color"
                     android:textSize="@dimen/cs__textSizeName"
                     android:textStyle="bold" /> -->
-
+				<TextView
+					android:id="@+id/careerLabel"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:autoLink="none"
+					android:layout_marginRight="8dp"
+					android:maxLines="1"
+					android:text="@string/cs__chat_name_sample"
+					android:textAppearance="?android:attr/textAppearanceSmall"
+					android:textColor="#8099ba"
+					android:textSize="@dimen/cs__textSizeName" />
 
 				<TextView
 					android:id="@+id/nameLabel"
@@ -70,9 +80,10 @@
 					android:id="@+id/allianceLabel"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
+					android:layout_marginLeft="2dp"
 					android:autoLink="none"
-					android:layout_marginRight="2dp"
 					android:text="@string/cs__chat_alliance_sample"
+					android:layout_marginRight="3dp"
 					android:textAppearance="?android:attr/textAppearanceSmall"
 					android:textColor="#d5dca8"
 					android:textSize="@dimen/cs__textSizeName" />

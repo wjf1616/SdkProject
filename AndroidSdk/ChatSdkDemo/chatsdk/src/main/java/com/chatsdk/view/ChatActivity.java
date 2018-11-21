@@ -40,11 +40,9 @@ public final class ChatActivity extends MyActionBarActivity
 			if (extras.getInt("channelType") >= 0)
 			{
 				channelType = extras.getInt("channelType");
-				if(ChatServiceController.isInLiveRoom()){
-					channelType = 3;
+				if(!ChatServiceController.isFromBd){
+					ChatServiceController.setCurrentChannelType(channelType);
 				}
-				ChatServiceController.setCurrentChannelType(channelType);
-				ChatServiceController.isFromLiveExist = false;
 			}
 		}
 
@@ -69,7 +67,16 @@ public final class ChatActivity extends MyActionBarActivity
 	{
 		super.onResume();
 
-		ChatServiceController.setCurrentChannelType(channelType);
+		//TODO -----------
+		// 这里以前代码是ChatServiceController.setCurrentChannelType(channelType);
+		// 如果在切换频道后，游戏失去焦点，再恢复焦点的后会重新把创建面板时channelType再重新赋值，但当前的频道已经切换了，会导致频道错误
+		if(ChatServiceController.getCurrentChannelType() == -1)
+		{
+			ChatServiceController.setCurrentChannelType(channelType);
+		}else{
+			channelType = ChatServiceController.getCurrentChannelType();
+		}
+		//------------------
 		ChatServiceController.isRunning = true;
 		//channelType,解决聊天室刷新未读书问题
 		if(ChatServiceController.isTabRoom){
@@ -77,7 +84,7 @@ public final class ChatActivity extends MyActionBarActivity
 			ChatServiceController.getChatFragment().notifyDataSetChanged();
 		}
 		if (ChatServiceController.getChatFragment() != null) {
-			if(channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && !ChatServiceController.isFromBd) {
+			if(channelType == DBDefinition.CHANNEL_TYPE_CHATROOM) {
 				ChatServiceController.getChatFragment().changeChatRoomName(UserManager.getInstance().getCurrentMail().opponentName);
 				ChatServiceController.getChatFragment().notifyDataSetChanged();
 			}else{
@@ -167,7 +174,6 @@ public final class ChatActivity extends MyActionBarActivity
 			int medumValue = 17;
 			if (Math.abs(x) > medumValue || Math.abs(y) > medumValue || Math.abs(z) > medumValue) {
 				//Log.d(TAG, "检测到摇晃，执行操作！");
-				if(ChatServiceController.isFromBd) return;
 				Map<String, MsgItem> map = ChannelManager.getInstance().getUnHandleRedPackageMap();
 				if(map == null)return;
 				Iterator<String> it = map.keySet().iterator();

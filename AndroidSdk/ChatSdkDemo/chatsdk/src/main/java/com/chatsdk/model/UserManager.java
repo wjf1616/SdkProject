@@ -1,17 +1,5 @@
 package com.chatsdk.model;
 
-import android.util.Log;
-
-import com.chatsdk.controller.ChatServiceController;
-import com.chatsdk.controller.JniController;
-import com.chatsdk.controller.ServiceInterface;
-import com.chatsdk.model.db.DBManager;
-import com.chatsdk.util.LogUtil;
-
-import org.apache.commons.lang.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,8 +9,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
+
+import org.apache.commons.lang.StringUtils;
+
+import android.util.Log;
+
+import com.chatsdk.controller.ChatServiceController;
+import com.chatsdk.controller.JniController;
+import com.chatsdk.controller.ServiceInterface;
+import com.chatsdk.model.db.DBManager;
+import com.chatsdk.util.LogUtil;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class UserManager
 {
@@ -30,17 +28,14 @@ public class UserManager
 	private String									currentUserId;
 	private MailInfo								currentMail;
 	private ArrayList<String>						banUidList;
-	private ArrayList<String>						banLiveUidList;
 	private ArrayList<ChatBanInfo>                  banInfoCountryList;  //禁言玩家信息列表
 	private ArrayList<ChatBanInfo>                  banInfoAllianceList; //禁言联盟玩家列表
-	private ArrayList<UserInfo>                  	banUserLiveList; //禁言联盟玩家列表
 	private ArrayList<String>						banNoticeUidList;
 	private ArrayList<String>						blockUidList;
 	private ArrayList<String>						reportUidList;
 	private ArrayList<MsgItem>						reportContentList;
 	private ArrayList<MsgItem>						reportContentTranslationList;
 	private ArrayList<UserInfo>						userList;
-	public ArrayList<String>						userAnimateList;
 	private HashMap<String, ArrayList<UserInfo>>	allianceMemberMap;
 	/** 好友列表 */
 	private HashMap<String, UserInfo>				friendMemberMap;
@@ -69,14 +64,13 @@ public class UserManager
 	public static final int							REPORT_CONTETN_LIST				= 4;
 	public static final int							REPORT_TRANSLATION_LIST			= 5;
 	public static final int							BAN_NOTICE_LIST					= 6;
-	public static final int							BAN_HEAD_PIC					= 7;
 
 	public static final int							NOTIFY_USERINFO_TYPE_ALLIANCE	= 0;
 	public static final int							NOTIFY_USERINFO_TYPE_FRIEND		= 1;
 
 	public boolean isInitUserInfo = false;
-	private static ExecutorService executorService			= Executors.newFixedThreadPool(4);
-	private static ExecutorService executorServiceUids      = Executors.newSingleThreadExecutor();
+	private static ExecutorService executorService			= null;
+	private static ExecutorService executorServiceUids      = null;
 	private UserManager()
 	{
 		reset();
@@ -84,6 +78,13 @@ public class UserManager
 
 	public void reset()
 	{
+		executorService = Executors.newFixedThreadPool(4);
+		executorServiceUids = Executors.newSingleThreadExecutor();
+		banInfoCountryList = new ArrayList<ChatBanInfo>();
+		banInfoAllianceList = new ArrayList<ChatBanInfo>();
+		banUidList = new ArrayList<String>();
+		banNoticeUidList = new ArrayList<String>();
+		blockUidList = new ArrayList<String>();
 		reportUidList = new ArrayList<String>();
 		reportContentList = new ArrayList<MsgItem>();
 		reportContentTranslationList = new ArrayList<MsgItem>();
@@ -124,15 +125,6 @@ public class UserManager
 		return instance;
 	}
 
-	public void resetBanOrBlock(){
-		banLiveUidList = new ArrayList<String>();
-		banInfoCountryList = new ArrayList<ChatBanInfo>();
-		banInfoAllianceList = new ArrayList<ChatBanInfo>();
-		banUidList = new ArrayList<String>();
-		banNoticeUidList = new ArrayList<String>();
-		blockUidList = new ArrayList<String>();
-		userAnimateList = new ArrayList<String>();
-	}
 	/**
 	 * 仅在get不到的时候才调用
 	 */
@@ -567,7 +559,7 @@ public class UserManager
 			isOld = updateTime > 0 ? updateTime > user.lastUpdateTime : false;
 			if(user.userName==null||user.userName.equals("")){
 				user.userName=name==null?"":name;
-				DBManager.getInstance().updateUser(user);
+//                DBManager.getInstance().updateUser(user);
 			}
 			
 			LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_MSG, "uid", uid, "user", user, "updateTime", updateTime,
@@ -762,7 +754,7 @@ public class UserManager
 		lastCallSuccessTime = System.currentTimeMillis() * 2;
 	}
 
-	public  void onReceiveUserInfo(Object[] userInfoArray) {
+	public void onReceiveUserInfo(Object[] userInfoArray) {
 		if (userInfoArray == null)
 			return;
 
@@ -803,7 +795,7 @@ public class UserManager
 		}
 		if (fechingUids.size() > 0) {
 			LogUtil.trackMessage("取不到：fechingUids is not empty");
-			LogUtil.printVariablesWithFuctionName(Log.WARN, LogUtil.TAG_MSG, "取不到：", array2Str(fechingUids));
+//			LogUtil.printVariablesWithFuctionName(Log.WARN, LogUtil.TAG_MSG, "取不到：", array2Str(fechingUids));
 			for (int i = 0; i < fechingUids.size(); i++) {
 				unknownUids.add(fechingUids.get(i));
 				LogUtil.printVariables(Log.WARN, LogUtil.TAG_MSG, fechingUids.get(i));
@@ -819,20 +811,23 @@ public class UserManager
 
 	public void onReceiveSearchUserInfo(Object[] userInfoArray)
 	{
-		if (userInfoArray == null) {
+		if (userInfoArray == null)
 			return;
-		}
 
 		final ArrayList<UserInfo> userArr = new ArrayList<UserInfo>();
 		ArrayList<String> nonAllianceMemberArr = getSelctedMemberArr(false);
-		for (int i = 0; i < userInfoArray.length; i++) {
+		for (int i = 0; i < userInfoArray.length; i++)
+		{
 			UserInfo user = (UserInfo) userInfoArray[i];
+//			if (nonAllianceMemberArr.contains(user.uid))
+//				continue;
 			userArr.add(user);
 			putChatRoomMemberInMap(user);
 			user.initNullField();
 			UserInfo oldUser = getUser(user.uid);
 
-			if (oldUser == null) {
+			if (oldUser == null)
+			{
 				addUser(user);
 			}
 			else if (oldUser.isDummy || user.lastUpdateTime > oldUser.lastUpdateTime || (oldUser.lang == null && user.lang != null))
@@ -841,14 +836,15 @@ public class UserManager
 				ChatServiceController.getInstance().notifyCurrentDataSetChanged();
 			}
 		}
-
 		ChatServiceController.hostActivity.runOnUiThread(new Runnable()
 		{
 			@Override
-			public void run() {
+			public void run()
+			{
 				try
 				{
-					if (ChatServiceController.getMemberSelectorFragment() != null) {
+					if (ChatServiceController.getMemberSelectorFragment() != null)
+					{
 						ChatServiceController.getMemberSelectorFragment().refreshSearchListData(userArr);
 					}
 
@@ -1206,62 +1202,5 @@ public class UserManager
 //				map.put(key, userArr);
 		}
 		return map;
-	}
-
-	public void addLiveBanUser(String result) {
-		if(banLiveUidList.contains(result))
-			return;
-		checkUser(result,"",0);
-		banLiveUidList.add(result);
-	}
-
-	public void removeLiveBanUser(String result) {
-		if(banLiveUidList.contains(result))
-		banLiveUidList.remove(result);
-	}
-
-	public void initLiveBanUserUid(JSONArray array) {
-		if(array == null)
-			return;
-		int count = array.length();
-//		addLiveBanUser("103978000041");
-//		addLiveBanUser("51552592000002");
-//		addLiveBanUser("147058235000352");
-//		addLiveBanUser("1749072572000279");
-		ChatServiceController.refreshBanListData();
-		for(int i = 0;i< count; i++) {
-			String uid = null;
-			try {
-				uid = array.getString(i);
-				addLiveBanUser(uid);
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public ArrayList<String> getBanLiveUidList(){
-		return banLiveUidList;
-	}
-
-	public boolean isNotInLiveBanUser(String uid){
-		if(banLiveUidList.contains(uid))
-			return false;
-		return true;
-	}
-
-	public void  addUerAnimateList(String uid){
-//		synchronized(this) {
-			if (this.userAnimateList.contains(uid))
-				return;
-			this.userAnimateList.add(uid);
-//		}
-	}
-
-	public void removeuerAnimateList(String uid){
-//		synchronized(this) {
-			if (this.userAnimateList.contains(uid))
-				this.userAnimateList.remove(uid);
-//		}
 	}
 }

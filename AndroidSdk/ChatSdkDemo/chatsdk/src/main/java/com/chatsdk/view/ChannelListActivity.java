@@ -57,11 +57,6 @@ public class ChannelListActivity extends MyActionBarActivity
 				if(!isGoBack) LogUtil.trackPageView("ShowChannelList-" + channelId);
 				fragmentClass = MsgMailListFragment.class;
 			}
-			else if(channelId.equals(MailManager.CHANNELID_EVENT))
-			{
-				if(!isGoBack) LogUtil.trackPageView("ShowChannelList-" + channelId);
-				fragmentClass = EventMainListFragment.class;
-			}
 			else
 			{
 				if(!isGoBack && !ChatServiceController.canJumpToSecondaryList())

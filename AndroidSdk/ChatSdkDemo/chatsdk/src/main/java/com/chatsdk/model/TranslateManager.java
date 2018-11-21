@@ -1,20 +1,14 @@
 package com.chatsdk.model;
 
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-
-import com.alibaba.fastjson.JSON;
-import com.chatsdk.controller.ChatServiceController;
-import com.chatsdk.controller.JniController;
-import com.chatsdk.model.db.DBDefinition;
-import com.chatsdk.model.db.DBManager;
-import com.chatsdk.util.HeadPicUtil.MD5;
-import com.chatsdk.util.LogUtil;
-import com.chatsdk.util.TranslateListener;
-import com.chatsdk.util.TranslateNewParams;
-import com.chatsdk.util.TranslateUtil;
-import com.chatsdk.util.TranslatedByLuaResult;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
@@ -29,17 +23,23 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 
+import com.alibaba.fastjson.JSON;
 //import com.chatsdk.BuildConfig;
+import com.chatsdk.controller.ChatServiceController;
+import com.chatsdk.controller.JniController;
+import com.chatsdk.model.db.DBDefinition;
+import com.chatsdk.model.db.DBManager;
+import com.chatsdk.util.LogUtil;
+import com.chatsdk.util.TranslateListener;
+import com.chatsdk.util.TranslateNewParams;
+import com.chatsdk.util.TranslateParam;
+import com.chatsdk.util.TranslateUtil;
+import com.chatsdk.util.TranslatedByLuaResult;
+import com.chatsdk.util.HeadPicUtil.MD5;
 
 public class TranslateManager
 {
@@ -382,14 +382,7 @@ public class TranslateManager
 			try
 			{
 				//System.out.println("TranslateRunnable  "+Thread.currentThread().getName()+ " is running.");
-				String origStr = msgItem.msg;
-				if(msgItem.msg.contains(LanguageManager.getLangByKey(LanguageKeys.TIP_TO_ALL))){
-					origStr = origStr.replace(LanguageManager.getLangByKey(LanguageKeys.TIP_TO_ALL),"");
-				}
-			    String ret = translateNew(origStr, msgItem.getLang(),msgItem.channelType);
-				if(msgItem.isShareCommentMsg()){
-					ret = translateNew(msgItem.shareComment, msgItem.getLang(),msgItem.channelType);
-				}
+			    String ret = translateNew(msgItem.msg, msgItem.getLang(),msgItem.channelType);
 				TranslateNewParams params = JSON.parseObject(ret, TranslateNewParams.class);
 				String translateMsg = params.getTranslateMsg();
 				String originalLang = params.getOriginalLang();
@@ -462,11 +455,11 @@ public class TranslateManager
 			//String translateLang = "[\"" + key + "\"]";
 			String translateLang =  key;
 			BasicNameValuePair tf = new BasicNameValuePair("tf", translateLang);
-			BasicNameValuePair ch = new BasicNameValuePair("ch", "warz");
+			BasicNameValuePair ch = new BasicNameValuePair("ch", "lastshelter");
 			String currentTime = Long.toString(System.currentTimeMillis());
 			BasicNameValuePair t = new BasicNameValuePair("t", currentTime);
-			//String md5 = MD5.getMD5Str(srcMsg + originalLangStr + translateLang + "warz" + currentTime + "4cP_sdf3se&gcxN-NDb5__Y$%d3fz_-ZF3");
-			String md5 = MD5.getMD5Str(originalLangStr + translateLang + "warz" + currentTime + "4cP_sdf3se&gcxN-NDb5__Y$%d3fz_-ZF3");
+			//String md5 = MD5.getMD5Str(srcMsg + originalLangStr + translateLang + "warz" + currentTime + "4cP_eWNdWgcxN-NDb5__Y-rTz_gK-ZF3");
+			String md5 = MD5.getMD5Str(originalLangStr + translateLang + "lastshelter" + currentTime + "Dsd3fg-efr6gm,vgsdfike45");
 			BasicNameValuePair sig = new BasicNameValuePair("sig", md5);
 
 			UserInfo userInfo = UserManager.getInstance().getUser(UserManager.getInstance().getCurrentUserId());

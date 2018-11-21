@@ -1,8 +1,8 @@
 package com.chatsdk.view.actionbar;
 
 import android.content.Context;
-
 import android.support.v4.view.MenuItemCompat;
+
 import android.support.v7.widget.SearchView;
 import android.text.Editable;
 import android.text.TextWatcher;

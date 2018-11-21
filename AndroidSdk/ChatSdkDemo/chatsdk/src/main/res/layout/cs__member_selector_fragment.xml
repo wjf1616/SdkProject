@@ -215,7 +215,7 @@
         android:visibility="gone" >
     </ExpandableListView>
 
-    <com.lee.pullrefresh.ui.PullToRefreshListView
+    <com.pullrefresh.PullToRefreshListView
         android:id="@+id/cs__selectedListView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -227,7 +227,7 @@
         android:paddingRight="5dp"
         android:paddingTop="3dp"
         android:visibility="gone" >
-    </com.lee.pullrefresh.ui.PullToRefreshListView>
+    </com.pullrefresh.PullToRefreshListView>
 
     <ExpandableListView
         android:id="@+id/cs__friendListView"

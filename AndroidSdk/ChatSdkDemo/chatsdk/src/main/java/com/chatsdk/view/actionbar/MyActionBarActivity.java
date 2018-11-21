@@ -3,8 +3,6 @@ package com.chatsdk.view.actionbar;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -49,6 +47,7 @@ import com.chatsdk.model.LanguageManager;
 import com.chatsdk.model.MsgItem;
 import com.chatsdk.model.UserInfo;
 import com.chatsdk.model.db.DBDefinition;
+import com.chatsdk.net.WebSocketManager;
 import com.chatsdk.util.ImageUtil;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.NetworkUtil;
@@ -70,6 +69,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import static android.icu.lang.UCharacter.GraphemeClusterBreak.V;
 
 //import com.chatsdk.view.ChannelListFragment;
 
@@ -131,11 +132,6 @@ public abstract class MyActionBarActivity extends FragmentActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //处理系统字体缩放导致布局错乱情况，这里设置缩放比例始终保持为1
-        Resources resource = getResources();
-        Configuration configuration =resource.getConfiguration();
-        configuration.fontScale = 1.0f;//设置字体的缩放比例
-        resource.updateConfiguration(configuration , resource.getDisplayMetrics());
         super.onCreate(savedInstanceState);
         ChatServiceController.setCurrentActivity(this);
         ServiceInterface.pushActivity(this);
@@ -164,6 +160,7 @@ public abstract class MyActionBarActivity extends FragmentActivity {
         contactsButton= (Button) findViewById(R.id.cs__actionbar_contactsButton);
         returnButton = (Button) findViewById(R.id.cs__actionbar_returnButton);
         returnGameUIButton = (Button)findViewById(R.id.cs__actionbar_returnGameUIButton);//add at 20171102 for returnGameUIButton
+//        returnGameUIButton.setVisibility(View.GONE); //暂时屏蔽返回主界面的按键
 //        showFriend = (Button) findViewById(R.id.cs__actionbar_showFriendButton);
         createChatRoomButton = (Button) findViewById(R.id.cs__actionbar_createChatRoom);
         redPackageButton = (Button) findViewById(R.id.cs__actionbar_redPackageButton);
@@ -822,13 +819,13 @@ public abstract class MyActionBarActivity extends FragmentActivity {
         if (backButton.getWidth() != 0 && !adjustSizeCompleted) {
             actionbarLayout.setLayoutParams(new RelativeLayout.LayoutParams((int) actionbarLayout.getWidth(),
                     (int) (76 * ConfigManager.scaleRatioButton)));
-            RelativeLayout.LayoutParams param = new RelativeLayout.LayoutParams((int) (76 * ConfigManager.scaleRatioButton),
+            RelativeLayout.LayoutParams param = new RelativeLayout.LayoutParams((int) (160 * ConfigManager.scaleRatioButton),
                     (int) (76 * ConfigManager.scaleRatioButton));
             param.setMargins(ScaleUtil.dip2px(this, -4), 0, 0, 0);
             backButton.setLayoutParams(param);
-            RelativeLayout.LayoutParams returnGameUIparam = new RelativeLayout.LayoutParams((int) (76 * ConfigManager.scaleRatioButton),
-                    (int) (76 * ConfigManager.scaleRatioButton));
-            param.setMargins(ScaleUtil.dip2px(this, -4), 0, 0, 0);
+            RelativeLayout.LayoutParams returnGameUIparam = new RelativeLayout.LayoutParams((int) (47 * ConfigManager.scaleRatioButton),
+                    (int) (46 * ConfigManager.scaleRatioButton));
+            returnGameUIparam.setMargins(ScaleUtil.dip2px(this, 10), 0, ScaleUtil.dip2px(this, 10), 0);
             returnGameUIparam.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             returnGameUIparam.addRule(RelativeLayout.CENTER_VERTICAL);
             returnGameUIButton.setLayoutParams(returnGameUIparam);
@@ -860,7 +857,11 @@ public abstract class MyActionBarActivity extends FragmentActivity {
             param5.setMargins(0, 0, (int) (60 * ConfigManager.scaleRatioButton)+25, 0);
             param5.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             param5.addRule(RelativeLayout.CENTER_VERTICAL);
-            contactsButton.setLayoutParams(param5);
+            contactsButton.setLayoutParams(param4);
+            if(returnGameUIButton.getVisibility() == View.VISIBLE && contactsButton.getVisibility() == View.VISIBLE){
+                param5.setMargins(0,0, ScaleUtil.dip2px(this, 45),0);
+                contactsButton.setLayoutParams(param5);
+            }
 
 //            RelativeLayout.LayoutParams param5 = new RelativeLayout.LayoutParams((int) (88 * ConfigManager.scaleRatioButton),
 //                    (int) (88 * ConfigManager.scaleRatioButton));
@@ -911,11 +912,7 @@ public abstract class MyActionBarActivity extends FragmentActivity {
 
             RelativeLayout.LayoutParams param11 = new RelativeLayout.LayoutParams((int) (46 * ConfigManager.scaleRatioButton),
                     (int) (54 * ConfigManager.scaleRatioButton));
-            if(ChatServiceController.isAnchorHost) {
-                param11.setMargins(0, 0, (int) (70 * ConfigManager.scaleRatioButton), 0);
-            }else{
-                param11.setMargins(0, 0, (int) (26 * ConfigManager.scaleRatioButton), 0);
-            }
+            param11.setMargins(0, 0, (int) (25 * ConfigManager.scaleRatioButton), 0);
             param11.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             param11.addRule(RelativeLayout.CENTER_VERTICAL);
             goLiveListButton.setLayoutParams(param11);
@@ -976,38 +973,35 @@ public abstract class MyActionBarActivity extends FragmentActivity {
         LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "this", this);
 
         super.onResume();
+        ChatServiceController.setCurrentActivity(this);
+        if (isScreenLocked) {
+            isScreenLocked = false;
+            // 锁屏返回，超时，退出聊天界面
+            // 仅调用2dx的onResume
+			if ((System.currentTimeMillis() - screenLockTime) > (1000 * 62))
+			{
+                ChatServiceController.isReturnFromScreenLock = true;
+				ChatServiceController.showGameActivity(ChatServiceController.getCurrentActivity());
+			}
+			// 锁屏返回，未超时，不退出聊天界面
+			else
+			{
+				if (previousActivity != null && (previousActivity instanceof ICocos2dxScreenLockListener))
+				{
+					previousActivity.handle2dxResume();
+				}
+			}
 
-        try {
-            ChatServiceController.setCurrentActivity(this);
-            if (isScreenLocked) {
-                isScreenLocked = false;
-                // 锁屏返回，超时，退出聊天界面
-                // 仅调用2dx的onResume
-                if ((System.currentTimeMillis() - screenLockTime) > (1000 * 62))
-                {
-                    ChatServiceController.isReturnFromScreenLock = true;
-                    ChatServiceController.showGameActivity(ChatServiceController.getCurrentActivity());
-                }
-                // 锁屏返回，未超时，不退出聊天界面
-                else
-                {
-                    if (previousActivity != null && (previousActivity instanceof ICocos2dxScreenLockListener))
-                    {
-                        previousActivity.handle2dxResume();
-                    }
-                }
-
-            } else if (!isJumpToInnerActivity()) {
-                if (previousActivity != null && (previousActivity instanceof ICocos2dxScreenLockListener)) {
-                    LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "previousActivity.handle2dxResume()");
-                    previousActivity.handle2dxResume();
-                }
+        } else if (!isJumpToInnerActivity()) {
+            if (previousActivity != null && (previousActivity instanceof ICocos2dxScreenLockListener)) {
+                LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "previousActivity.handle2dxResume()");
+                previousActivity.handle2dxResume();
             }
+        }
 
-            ChatServiceController.isNativeStarting = false;
-            refreshNetWorkState();
-            refreshFrameEffState();
-
+        ChatServiceController.isNativeStarting = false;
+        refreshNetWorkState();
+        refreshFrameEffState();
 
 //        if (ChatServiceController.getMainListFragment() != null )
 //        {
@@ -1015,14 +1009,6 @@ public abstract class MyActionBarActivity extends FragmentActivity {
 //        }
 //        ChannelListFragment.onChannelRefresh();
 
-            //处理系统字体缩放导致布局错乱情况，这里设置缩放比例始终保持为1
-            Resources resource = getResources();
-            Configuration configuration =resource.getConfiguration();
-            configuration.fontScale = 1.0f;//设置字体的缩放比例
-            resource.updateConfiguration(configuration , resource.getDisplayMetrics());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private boolean isJumpToInnerActivity() {
@@ -1042,11 +1028,6 @@ public abstract class MyActionBarActivity extends FragmentActivity {
 
         super.onPause();
         removeSendTimer();
-        if(ChatServiceController.isFromBd){
-            ChatServiceController.isFromLiveExist = true;
-        }else{
-            ChatServiceController.isFromLiveExist = false;
-        }
         if (!isScreenOn) // !isExiting &&
         {
             // 聊天界面锁屏
@@ -1094,13 +1075,21 @@ public abstract class MyActionBarActivity extends FragmentActivity {
         ServiceInterface.popActivity(this);
         if ( ServiceInterface.getNativeActivityCount() == 0 ) {
             if(ChatServiceController.isCurrentSecondList ) {
-                ServiceInterface.showChannelListFrom2dx(false);
+                ServiceInterface.showChannelListFrom2dx(false,-1);
             }else {
                 ChatServiceController.isReturningToGame = true;
             }
         } else {
             ChatServiceController.isCurrentSecondList = false;
             ChatServiceController.isNativeStarting = true;
+        }
+        if(ChatServiceController.isWarZoneRoomEnable && ChatServiceController.getCurrentChannelType() != DBDefinition.CHANNEL_TYPE_USER ){
+            //判断是否离开战区聊天室
+            boolean isAddWarZoneRoom = JniController.getInstance().excuteJNIMethod("isNeedAddWarZone",null);
+            if(!isAddWarZoneRoom && ChatServiceController.isAddWarZoneRoom){
+                WebSocketManager.getInstance().leaveWarZoneRoom();
+                ChannelManager.getInstance().deleteChannel(ChannelManager.getInstance().getWarZoneChannel());
+            }
         }
 
         try {

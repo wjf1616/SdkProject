@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import com.chatsdk.controller.ChatServiceController;
 import com.chatsdk.controller.JniController;
@@ -21,6 +22,7 @@ import com.chatsdk.model.MailManager;
 import com.chatsdk.model.TimeManager;
 import com.chatsdk.model.db.DBManager;
 import com.chatsdk.util.LogUtil;
+import com.chatsdk.util.ScaleUtil;
 import com.chatsdk.view.adapter.MainChannelAdapter;
 import com.chatsdk.view.adapter.MsgChannelAdapter;
 
@@ -55,13 +57,14 @@ public class MainListFragment extends ChannelListFragment
 		super.onViewCreated(view, savedInstanceState);
 
 		showWriteButton();
+
 	}
 
 	protected void showWriteButton()
 	{
         getEditButton().setVisibility(View.GONE);
         getReturnButton().setVisibility(View.GONE);
-		getReturnGameUIButton().setVisibility(View.GONE);
+		getReturnGameUIButton().setVisibility(View.VISIBLE);
 
 		if (ChatServiceController.chat_v2_personal){
 			getWriteButton().setVisibility(View.GONE);
@@ -69,18 +72,23 @@ public class MainListFragment extends ChannelListFragment
 		}
 		else
 		{
-			getWriteButton().setVisibility(View.VISIBLE);
-			getWriteButton().setOnClickListener(new View.OnClickListener()
-			{
-				@Override
-				public void onClick(View view)
-				{
-					writeNewMail();
-				}
-			});
+//			if(ChatServiceController.mail_all_read){
+				getWriteButton().setVisibility(View.GONE);
+//			}else{
+//				getWriteButton().setVisibility(View.VISIBLE);
+//				getWriteButton().setOnClickListener(new View.OnClickListener()
+//				{
+//					@Override
+//					public void onClick(View view)
+//					{
+//						writeNewMail();
+//					}
+//				});
+//			}
 
 			if (ChatServiceController.convenient_contact) {
 				getContactsButton().setVisibility(View.VISIBLE);
+
 				getContactsButton().setOnClickListener(new View.OnClickListener()
 				{
 					@Override
@@ -91,7 +99,6 @@ public class MainListFragment extends ChannelListFragment
 				});
 			}
 		}
-
 	}
 	
 //	public static boolean canJumpToSecondaryList()

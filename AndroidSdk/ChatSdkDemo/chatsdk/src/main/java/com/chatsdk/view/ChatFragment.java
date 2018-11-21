@@ -8,13 +8,9 @@ import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.InputFilter;
-import android.text.InputType;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -63,8 +59,6 @@ import com.chatsdk.model.ChannelView;
 import com.chatsdk.model.ChatBanInfo;
 import com.chatsdk.model.ChatChannel;
 import com.chatsdk.model.ConfigManager;
-import com.chatsdk.model.FallObject;
-import com.chatsdk.model.FallingView;
 import com.chatsdk.model.LanguageKeys;
 import com.chatsdk.model.LanguageManager;
 import com.chatsdk.model.MailManager;
@@ -77,7 +71,6 @@ import com.chatsdk.model.db.DBManager;
 import com.chatsdk.model.mail.MailData;
 import com.chatsdk.net.WebSocketManager;
 import com.chatsdk.util.CompatibleApiUtil;
-import com.chatsdk.util.ImageUtil;
 import com.chatsdk.util.LogUtil;
 import com.chatsdk.util.ResUtil;
 import com.chatsdk.util.ScaleUtil;
@@ -101,6 +94,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static android.app.Activity.RESULT_OK;
+import static com.chatsdk.controller.ChatServiceController.isAddWarZoneRoom;
 
 public class ChatFragment extends ActionBarFragment
 {
@@ -122,6 +116,7 @@ public class ChatFragment extends ActionBarFragment
 	private Button				buttonCountry;
 	private Button				buttonAlliance;
 	private Button				buttonChatRoom;
+	private Button				buttonWarZone;
 	private ArrayList<Button>	channelButton;
 	//private ImageView			imageView1;
 	//protected ImageView			imageView2;
@@ -129,8 +124,6 @@ public class ChatFragment extends ActionBarFragment
 	private TextView			noAllianceTipText;
 	private Timer				mTimer;
 	private TimerTask			mTimerTask;
-	private Timer				mLanterTimer;
-	private TimerTask			mLanterTimerTask;
 	private CheckBox			horn_checkbox;
 	private LinearLayout		horn_tip_layout;
 	private RelativeLayout		horn_scroll_layout;
@@ -144,16 +137,12 @@ public class ChatFragment extends ActionBarFragment
 	private LinearLayout		hs__dragon_chat_tip_layout;
 	private TextView			dragon_chat_tip_text;
 	private View 				sendRedPackage;
-	private ImageView			icon_net_btn;
 
 	private RelativeLayout		anchor_info_layout; //所有直播信息界面
-	private ImageView			anchor_pic_icon;
-	private TextView			listenNumText;
 	private TextView			anchor_room_name;
 	private TextView			anchor_state_text;
 	private TextView			anchor_tip_text;
 	private Button 				voice_player_btn;
-	private FallingView			fall_lantern_view;
 	private boolean				changeAnchorComplete = false;
 
 	private int					oldAdapterCount				= 0;
@@ -173,7 +162,6 @@ public class ChatFragment extends ActionBarFragment
 	public boolean				isKeyBoradChange			= false;
 
 	private boolean				isSelectMemberBtnEnable		= false;
-	private boolean				isNeedShowWifi				= false;
 
 	// ---------------------聊天室新增-----------------------
 	protected ChatRoomListAdapter 			chatRoomAdapter = null;
@@ -185,7 +173,6 @@ public class ChatFragment extends ActionBarFragment
 	protected static boolean				dataChanged	= false;
 	protected static int	chatRoomlastScrollX				= -1;
 	protected static int	chatRoomlastScrollY				= -1;
-	private Handler mHandler;
 
 	public void setNoMailTipVisible(boolean isVisble)
 	{
@@ -496,13 +483,6 @@ public class ChatFragment extends ActionBarFragment
 
 		try
 		{
-			if(ChatServiceController.isFromBd){
-				isSelectMemberBtnEnable = false;
-				if(ChatServiceController.isAnchorHost && ChatServiceController.isInSelfLiveRoom()) {
-					isSelectMemberBtnEnable = true;
-				}
-				return;
-			}
 			if (ChatServiceController.isInChatRoom()
 					&& (UserManager.getInstance().getCurrentMail().opponentUid.equals("")
 					|| !ChannelManager.getInstance().getIsMemberFlag(UserManager.getInstance().getCurrentMail().opponentUid)))
@@ -550,10 +530,6 @@ public class ChatFragment extends ActionBarFragment
 		this.messageBox.setVisibility(View.VISIBLE);
 		this.buttonsLinearLayout.setVisibility(View.VISIBLE);
 		this.anchor_info_layout.setVisibility(View.GONE);
-		if(ChatServiceController.isInLiveRoom()){
-			this.buttonsLinearLayout.setVisibility(View.GONE);
-			this.anchor_info_layout.setVisibility(View.VISIBLE);
-		}
 		refreshWordCount();
 
 		if (this.attachScreenshotMenu != null)
@@ -793,8 +769,7 @@ public class ChatFragment extends ActionBarFragment
 			{
 				gotoLastLine();
 			}
-//			else if (inLastScreen||post==150)
-			else if (post==150)
+			else if (inLastScreen||post==150)
 			{
 				gotoLastLine();
 			}
@@ -1023,79 +998,61 @@ public class ChatFragment extends ActionBarFragment
 		hs__dragon_chat_tip_layout = (LinearLayout) view.findViewById(R.id.hs__dragon_chat_tip_layout);
 		dragon_chat_tip_text = (TextView) view.findViewById(R.id.dragon_chat_tip_text);
 		dragon_chat_tip_text.setText(LanguageManager.getLangByKey(LanguageKeys.TIP_DRAGON_CHAT));
-
-		icon_net_btn = (ImageView) view.findViewById(R.id.icon_net_btn) ;
-		icon_net_btn.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				MenuController.showNetPingShowAndChange();
-			}
-		});
-		
 		// ----------------语音直播------------
- 		anchor_info_layout = (RelativeLayout) view.findViewById(R.id.anchor_info_layout);
- 		listenNumText = (TextView) view.findViewById(R.id.listenNumText);
- 		anchor_room_name = (TextView) view.findViewById(R.id.anchor_room_name);
- 		anchor_pic_icon = (ImageView) view.findViewById(R.id.anchor_icon);
- 		anchor_state_text = (TextView) view.findViewById(R.id.anchor_state_text);
- 		anchor_tip_text = (TextView)view.findViewById(R.id.anchor_tip_text);
- 		voice_player_btn = (Button)view.findViewById(R.id.voice_play_btn);
-// 		refreshLiveView();
-// 		anchor_pic_icon.setOnClickListener(new OnClickListener() {
-// 			@Override
-// 			public void onClick(View view) {
-// 				ChatServiceController.getInstance().showAnchorInfoView();
-// 			}
-// 		});
- 
-// 		if (activity != null && !activity.isFinishing()) {//80000843 = 未开播
-// 			ServiceInterface.safeMakeText(activity,LanguageManager.getLangByKey("80000843"), Toast.LENGTH_LONG);
-// 		}
-
-// 		voice_player_btn.setOnClickListener(new OnClickListener() {
-// 			@Override
-// 			public void onClick(View view) {
-// 				if(ChatServiceController.livePushStatus){
-// 					if (ChatServiceController.livePullStatus) {
-// 						ChatServiceController.livePullStatus = false;
-// //						voice_player_btn.setBackgroundDrawable(activity.getResources().getDrawable(ResUtil.getId(activity, "drawable", "voice_pause")));
-// 						voice_player_btn.setText(LanguageManager.getLangByKey(LanguageKeys.PLAY_TITLE));
-// 						voice_player_btn.setTextColor(ResUtil.getColor(getContext(),"start_title"));
-// 						Log.d("BroadCast", "收听直播开始");
-// 						JniController.getInstance().excuteJNIVoidMethod("postToCppSwithOn", new Object[]{false,ChatServiceController.livePullStatus});
-// 						return;
-// 					} else {
-// 						ChatServiceController.livePullStatus = true;
-// //						voice_player_btn.setBackgroundDrawable(activity.getResources().getDrawable(ResUtil.getId(activity, "drawable", "voice_play")));
-// 						voice_player_btn.setText(LanguageManager.getLangByKey(LanguageKeys.STOP_PLAY_TITLE));
-// 						voice_player_btn.setTextColor(ResUtil.getColor(getContext(),"stop_title"));
-// 						Log.d("BroadCast", "收听直播结束");
-// 						JniController.getInstance().excuteJNIVoidMethod("postToCppSwithOn", new Object[]{false,ChatServiceController.livePullStatus});
-// 						return;
-// 					}
-// 				}else{
-// 					if (activity != null && !activity.isFinishing()) {//80000843 = 未开播
-// 						ServiceInterface.safeMakeText(activity, LanguageManager.getLangByKey("80000843"), Toast.LENGTH_LONG);
-// 					}
-// 				}
-// 			}
-// 		});
-// 		ViewTreeObserver anchorObsever = anchor_info_layout.getViewTreeObserver();
-// 		anchorObsever.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-// 			@Override
-// 			public void onGlobalLayout() {
-// 				if(changeAnchorComplete){
-// 					return;
-// 				}
-// 				RelativeLayout.LayoutParams params4 = (RelativeLayout.LayoutParams) messagesListFrameLayout.getLayoutParams();
-// 				if(anchor_info_layout != null && anchor_info_layout.getVisibility() == View.VISIBLE && anchor_info_layout.getHeight() > 0){
-// 					params4.topMargin = anchor_info_layout.getHeight();
-// 					messagesListFrameLayout.setLayoutParams(params4);
-// 					changeAnchorComplete = true;
-// 				}
-
-// 			}
-// 		});
+		anchor_info_layout = (RelativeLayout) view.findViewById(R.id.anchor_info_layout);
+		anchor_room_name = (TextView) view.findViewById(R.id.anchor_room_name);
+		anchor_state_text = (TextView) view.findViewById(R.id.anchor_state_text);
+		anchor_tip_text = (TextView)view.findViewById(R.id.anchor_tip_text);
+		voice_player_btn = (Button)view.findViewById(R.id.voice_play_btn);
+//		refreshLiveView();
+//
+//		if (activity != null && !activity.isFinishing()) {
+//			ServiceInterface.safeMakeText(activity,LanguageManager.getLangByKey("80000843"), Toast.LENGTH_LONG); //80000843 = 未开播
+//		}
+//
+//		voice_player_btn.setOnClickListener(new OnClickListener() {
+//			@Override
+//			public void onClick(View view) {
+//				if(ChatServiceController.livePushStatus){
+//					if (ChatServiceController.livePullStatus) {
+//						ChatServiceController.livePullStatus = false;
+//						voice_player_btn.setBackgroundDrawable(activity.getResources().getDrawable(ResUtil.getId(activity, "drawable", "voice_pause")));
+//						Log.d("BroadCast", "收听直播开始");
+//						JniController.getInstance().excuteJNIVoidMethod("postToCppSwithOn", new Object[]{false,ChatServiceController.livePullStatus});
+//						return;
+//					} else {
+//						ChatServiceController.livePullStatus = true;
+//						voice_player_btn.setBackgroundDrawable(activity.getResources().getDrawable(ResUtil.getId(activity, "drawable", "voice_play")));
+//						Log.d("BroadCast", "收听直播结束");
+//						JniController.getInstance().excuteJNIVoidMethod("postToCppSwithOn", new Object[]{false,ChatServiceController.livePullStatus});
+//						return;
+//					}
+//				}else{
+//					if (activity != null) {
+//						ServiceInterface.safeMakeText(activity,LanguageManager.getLangByKey("80000843"), Toast.LENGTH_LONG); //80000843 = 未开播
+//					}
+//				}
+//			}
+//		});
+//		ViewTreeObserver anchorObsever = anchor_info_layout.getViewTreeObserver();
+//		anchorObsever.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+//			@Override
+//			public void onGlobalLayout() {
+//				if(changeAnchorComplete){
+//					return;
+//				}
+//                if (messagesListFrameLayout == null) {
+//                    return;
+//                }
+//				RelativeLayout.LayoutParams params4 = (RelativeLayout.LayoutParams) messagesListFrameLayout.getLayoutParams();
+//				if(anchor_info_layout != null && anchor_info_layout.getVisibility() == View.VISIBLE && anchor_info_layout.getHeight() > 0){
+//					params4.topMargin = anchor_info_layout.getHeight();
+//					messagesListFrameLayout.setLayoutParams(params4);
+//					changeAnchorComplete = true;
+//				}
+//
+//			}
+//		});
 
 
 		// ----------------聊天室------------
@@ -1209,40 +1166,6 @@ public class ChatFragment extends ActionBarFragment
 
 			}
 		});
-
-		/********************************************************/
-		fall_lantern_view = (FallingView)view.findViewById(R.id.fall_lantern_view);
-		mHandler = new Handler(){
-			@Override
-			public void handleMessage(Message msg) {
-				switch (msg.what){
-					case 1:
-						if(fall_lantern_view.getFallObjectNum() == 0) {
-							fall_lantern_view.setVisibility(View.VISIBLE);
-							FallObject.Builder builder = new FallObject.Builder(ChatServiceController.hostActivity.getResources().getDrawable(R.drawable.lantern));
-							FallObject fallObject = builder
-									.setSpeed(5, false)
-									.setSize(100, 100, false)
-									.setWind(10, true, true)
-									.build();
-							fall_lantern_view.addFallObject(fallObject, 15);
-							fall_lantern_view.start();
-						}else{
-							fall_lantern_view.setVisibility(View.VISIBLE);
-							fall_lantern_view.start();
-						}
-						ChatServiceController.isInLantern = true;
-						break;
-					case 2:
-						if(ChatServiceController.isInLantern) {
-							fall_lantern_view.cancel();
-							endAnimation();
-						}
-						break;
-
-				}
-			}
-		};
 		// ----------------聊天室------------
 
 		if (!lazyLoading)
@@ -1258,11 +1181,7 @@ public class ChatFragment extends ActionBarFragment
 			}
 			else
 			{
-				if(ChatServiceController.isInLiveRoom()){
-					getTitleLabel().setText(ChatServiceController.liveRoomName);
-				}else{
-					getTitleLabel().setText(LanguageManager.getLangByKey(LanguageKeys.TITLE_CHAT));
-				}
+				getTitleLabel().setText(LanguageManager.getLangByKey(LanguageKeys.TITLE_CHAT));
 			}
 		}
 		else
@@ -1295,6 +1214,9 @@ public class ChatFragment extends ActionBarFragment
 				if (title.equals(""))
 					title = "Group";
 			}
+			if(ChatServiceController.isInLiveRoom()){
+				title = ChatServiceController.liveRoomName;
+			}
 			if (UserManager.getInstance().getCurrentMail().opponentUid.endsWith(DBDefinition.CHANNEL_ID_POSTFIX_MOD))
 				title += "(MOD)";
 			getTitleLabel().setText(title);
@@ -1319,6 +1241,7 @@ public class ChatFragment extends ActionBarFragment
 
 		addReply = (Button) view.findViewById(ResUtil.getId(this.activity, "id", "hs__sendMessageBtn"));
 		voice_btn = (Button) view.findViewById(ResUtil.getId(this.activity, "id", "hs__voiceMessageBtn"));
+
 //		addReply.setText(LanguageManager.getLangByKey(LanguageKeys.BTN_SEND));
 
 		this.messageBox = ((RelativeLayout) view.findViewById(ResUtil.getId(this.activity, "id", "relativeLayout1")));
@@ -1330,6 +1253,7 @@ public class ChatFragment extends ActionBarFragment
 		buttonCountry = (Button) view.findViewById(ResUtil.getId(this.activity, "id", "buttonCountry"));
 		buttonAlliance = (Button) view.findViewById(ResUtil.getId(this.activity, "id", "buttonAllie"));
 		buttonChatRoom = (Button) view.findViewById(ResUtil.getId(this.activity, "id", "buttonChatRoom"));
+		buttonWarZone = (Button) view.findViewById(ResUtil.getId(this.activity, "id", "buttonWarZone"));
 		if (UserManager.getInstance().getCurrentUser()!=null && !UserManager.getInstance().getCurrentUser().allianceId.equals("")&& ChatServiceController.isInTempAlliance)
 		{
 			buttonAlliance.setText(LanguageManager.getLangByKey(LanguageKeys.TEMP_ALLIANCE));
@@ -1340,9 +1264,11 @@ public class ChatFragment extends ActionBarFragment
 		}
 		buttonCountry.setText(LanguageManager.getLangByKey(LanguageKeys.BTN_COUNTRY));
 		buttonChatRoom.setText(LanguageManager.getLangByKey(LanguageKeys.BTN_CHATROOM_NAME));
+		buttonWarZone.setText(LanguageManager.getLangByKey(LanguageKeys.BTN_WARZONE_NAME));
 		CompatibleApiUtil.getInstance().setButtonAlpha(buttonCountry, true);
 		CompatibleApiUtil.getInstance().setButtonAlpha(buttonAlliance, false);
 		CompatibleApiUtil.getInstance().setButtonAlpha(buttonChatRoom, false);
+		CompatibleApiUtil.getInstance().setButtonAlpha(buttonWarZone, false);
 
 		tooltipLayout = ((LinearLayout) view.findViewById(ResUtil.getId(this.activity, "id", "tooltipLayout")));
 		tooltipLabel = ((TextView) view.findViewById(ResUtil.getId(this.activity, "id", "tooltipLabel")));
@@ -1366,85 +1292,131 @@ public class ChatFragment extends ActionBarFragment
 //			}
 //		});
 
-        channelButton = new ArrayList<Button>();
-        channelButton.add(buttonCountry);
-        channelButton.add(buttonAlliance);
-        channelButton.add(buttonChatRoom);
+		channelButton = new ArrayList<Button>();
+		channelButton.add(buttonCountry);
+		channelButton.add(buttonAlliance);
+		channelButton.add(buttonChatRoom);
+		channelButton.add(buttonWarZone);
 
-        buttonJoinAlliance = (Button) view.findViewById(ResUtil.getId(this.activity, "id", "joinAllianceBtn"));
-        buttonJoinAlliance.setText(LanguageManager.getLangByKey(LanguageKeys.MENU_JOIN));
+		buttonJoinAlliance = (Button) view.findViewById(ResUtil.getId(this.activity, "id", "joinAllianceBtn"));
+		buttonJoinAlliance.setText(LanguageManager.getLangByKey(LanguageKeys.MENU_JOIN));
 
-        buttonJoinAlliance.setOnClickListener(new View.OnClickListener() {
+		buttonJoinAlliance.setOnClickListener(new View.OnClickListener()
+		{
 
-            @Override
-            public void onClick(View v) {
-                ChatServiceController.doHostAction("joinAllianceBtnClick", "", "", "", true);
-            }
-        });
+			@Override
+			public void onClick(View v)
+			{
+				ChatServiceController.doHostAction("joinAllianceBtnClick", "", "", "", true);
+			}
+		});
 
-        horn_close_btn.setOnClickListener(new View.OnClickListener() {
+		horn_close_btn.setOnClickListener(new View.OnClickListener()
+		{
 
-            @Override
-            public void onClick(View v) {
-                hideHornScrollText();
-            }
-        });
+			@Override
+			public void onClick(View v)
+			{
+				hideHornScrollText();
+			}
+		});
 
-        noAllianceTipText = ((TextView) view.findViewById(ResUtil.getId(this.activity, "id", "joinAllianceTipText")));
-        noAllianceTipText.setText(LanguageManager.getLangByKey(LanguageKeys.TIP_JOIN_ALLIANCE));
+		noAllianceTipText = ((TextView) view.findViewById(ResUtil.getId(this.activity, "id", "joinAllianceTipText")));
+		noAllianceTipText.setText(LanguageManager.getLangByKey(LanguageKeys.TIP_JOIN_ALLIANCE));
 
-        refreshSendButton();
+		refreshSendButton();
 
-        for (int i = 0; i < channelButton.size(); i++) {
-			final int index = i;
-            channelButton.get(i).setTag(getChannelView(i));
-            channelButton.get(i).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-					try {
-						if(ChatServiceController.getCurrentChannelType() != index) {
-							endAnimation();
-							fall_lantern_view.cancel();
-							fall_lantern_view.setVisibility(View.GONE);
-						}
-						ChannelView channel = ((ChannelView) view.getTag());
+		for (int i = 0; i < channelButton.size(); i++)
+		{
+			if(i== 3){
+				channelButton.get(i).setTag(getChannelView(4));
+			}else{
+				channelButton.get(i).setTag(getChannelView(i));
+			}
+			channelButton.get(i).setOnClickListener(new View.OnClickListener()
+			{
+				@Override
+				public void onClick(View view)
+				{
+					ChannelView channel = ((ChannelView) view.getTag());
 
-						if (ConfigManager.isEnterArena && channel.tab == TAB_COUNTRY) {
-							String tipStr = LanguageManager.getLangByKey("172335");
-							ServiceInterface.flyHint("", "", tipStr, 2, 0, false);
-							return;
-						}
-						channel.setLoadingStart(false);
-						showTab(channel.tab);
-						refreshNetState(channel.tab, isNeedShowWifi);
-						if (channel.tab == TAB_COUNTRY) {
-							ChatServiceController.isTabRoom = false;
-							JniController.getInstance().excuteJNIVoidMethod("postCurChannel",
-									new Object[]{Integer.valueOf(DBDefinition.CHANNEL_TYPE_COUNTRY)});
-						} else if (channel.tab == TAB_ALLIANCE) {
-							ChatServiceController.isTabRoom = false;
-							JniController.getInstance().excuteJNIVoidMethod("postCurChannel",
-									new Object[]{Integer.valueOf(DBDefinition.CHANNEL_TYPE_ALLIANCE)});
-						} else if (channel.tab == TAB_CHATROOM) {
-							ChatServiceController.isTabRoom = true;
-	//						JniController.getInstance().excuteJNIVoidMethod("postCurChannel",
-	//								new Object[] { Integer.valueOf(DBDefinition.CHANNEL_TYPE_CHATROOM) });
-						}
-						if (channel.tab == TAB_ALLIANCE && UserManager.getInstance().getCurrentUser().allianceId.equals("")) {
-							return;
-						}
-
-						// TODO isFirstVisit变量是否还必要
-						getChannelView(0).isFirstVisit = !ChannelManager.getInstance().getCountryChannel().hasRequestDataBefore;
-						if (UserManager.getInstance().isCurrentUserInAlliance()) {
-							getChannelView(1).isFirstVisit = !ChannelManager.getInstance().getAllianceChannel().hasRequestDataBefore;
-						}
+					if (ConfigManager.isEnterArena && channel.tab == TAB_COUNTRY){
+						String tipStr = LanguageManager.getLangByKey("172335");
+						ServiceInterface.flyHint("", "", tipStr, 2, 0, false);
+						return;
 					}
-					catch (Exception ex) {
-						ex.printStackTrace();
+					channel.setLoadingStart(false);
+					showTab(channel.tab);
+
+					if (channel.tab == TAB_COUNTRY)
+					{
+						ChatServiceController.isTabRoom = false;
+						JniController.getInstance().excuteJNIVoidMethod("postCurChannel",
+								new Object[] { Integer.valueOf(DBDefinition.CHANNEL_TYPE_COUNTRY) });
+					}
+					else if (channel.tab == TAB_ALLIANCE)
+					{
+						ChatServiceController.isTabRoom = false;
+						JniController.getInstance().excuteJNIVoidMethod("postCurChannel",
+								new Object[] { Integer.valueOf(DBDefinition.CHANNEL_TYPE_ALLIANCE) });
+					}
+					else if (channel.tab == TAB_WARZONE)
+					{
+						ChatServiceController.isTabRoom = false;
+						ChatServiceController.topChatRoomUid = ChatServiceController.warZoneRoomId;
+						JniController.getInstance().excuteJNIVoidMethod("postCurChannel",
+								new Object[] { Integer.valueOf(DBDefinition.CHANNEL_TYPE_CHATROOM) });
+					}
+					else if (channel.tab == TAB_CHATROOM)
+					{
+						ChatServiceController.isTabRoom = true;
+						ChatServiceController.topChatRoomUid = "";
+//						JniController.getInstance().excuteJNIVoidMethod("postCurChannel",
+//								new Object[] { Integer.valueOf(DBDefinition.CHANNEL_TYPE_CHATROOM) });
+					}
+                    
+                    if (UserManager.getInstance() == null)
+                    {
+                        return;
+                    }
+
+                    if (UserManager.getInstance().getCurrentUser() == null)
+                    {
+                    	return;
+                    }
+                    
+					if (channel.tab == TAB_ALLIANCE && UserManager.getInstance().getCurrentUser().allianceId.equals(""))
+					{
+						return;
+					}
+					if (channel.tab == TAB_WARZONE && ChatServiceController.warZoneRoomId.equals(""))
+					{
+						return;
+					}
+                    if (ChannelManager.getInstance().getCountryChannel() == null)
+                    {
+                        return;
+                    }
+
+                    ChannelView channelView0 = getChannelView(0);
+                    if (channelView0 == null) {
+                        return;
+                    }
+                        
+					// TODO isFirstVisit变量是否还必要
+					channelView0.isFirstVisit = !ChannelManager.getInstance().getCountryChannel().hasRequestDataBefore;
+					if (UserManager.getInstance().isCurrentUserInAlliance())
+					{
+                        ChannelView channelView1 = getChannelView(1);
+                        if (channelView1 == null) {
+                            return;
+                        }
+						channelView1.isFirstVisit = !ChannelManager.getInstance().getAllianceChannel().hasRequestDataBefore;
 					}
 
-
+					if(ChatServiceController.isWarZoneRoomEnable && !WebSocketManager.getInstance().getWarZoneRoomId().equals("") && getChannelView(4)!= null){
+						getChannelView(4).isFirstVisit = !ChannelManager.getInstance().getWarZoneChannel().hasRequestDataBefore;
+					}
 					// if (channel.isFirstVisit)
 					// {
 					// if (getCurrentChannel().tab == TAB_COUNTRY)
@@ -1463,103 +1435,117 @@ public class ChatFragment extends ActionBarFragment
 					// {
 					// requestMsgRecord(DBDefinition.CHANNEL_TYPE_ALLIANCE);
 					// }
-                }
-            });
-        }
+				}
+			});
+		}
 
-        getMemberSelectButton().setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                hideSoftKeyBoard();
-                //ServiceInterface.showMemberSelectorActivity(activity, true);
-                if (ChatServiceController.isFromBd) {
-                    ChatServiceController.getInstance().showLiveRoomSetting();
-                } else {
-                    ServiceInterface.showChatRoomSettingActivity(activity);
-                }
-            }
-        });
+		getMemberSelectButton().setOnClickListener(new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View view)
+			{
+				hideSoftKeyBoard();
+				//ServiceInterface.showMemberSelectorActivity(activity, true);
+				ServiceInterface.showChatRoomSettingActivity(activity);
+			}
+		});
 
-        addReply.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+		addReply.setOnClickListener(new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View view)
+			{
 
-                ChatBanInfo banInfo = UserManager.getInstance().isHaveUidBan(1);
-                if (banInfo != null) {
+				ChatBanInfo banInfo = UserManager.getInstance().isHaveUidBan(1);
+				if (banInfo!=null){
 
-                    // 发送按钮点击后关闭软键盘
-                    if (getActivity() != null) {
-                        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(getActivity().INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(addReply.getApplicationWindowToken(), 0);
-                    }
-                    String tipStr = "";
-                    if (banInfo.banTime == -1) {
-                        tipStr = LanguageManager.getLangByKey("171307");
-                    } else {
-                        tipStr = LanguageManager.getLangByKey("105201", "", TimeManager.getInstance().getTimeFormatWithRemainTime((int) banInfo.banTime));
-                    }
-                    ServiceInterface.flyHint("", "", tipStr, 3, 0, false);
-                    return;
-                }
+					// 发送按钮点击后关闭软键盘
+					if (getActivity() != null) {
+						InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(getActivity().INPUT_METHOD_SERVICE);
+						imm.hideSoftInputFromWindow(addReply.getApplicationWindowToken(), 0);
+					}
+					String tipStr = "";
+					if (banInfo.banTime == -1){
+						tipStr = LanguageManager.getLangByKey("171307");
+					}else{
+						tipStr = LanguageManager.getLangByKey("105201", "", TimeManager.getInstance().getTimeFormatWithRemainTime((int) banInfo.banTime));
+					}
+					ServiceInterface.flyHint("","",tipStr,3,0,false);
+					return;
+				}
 
 
-                String replyText = replyField.getText().toString().trim();
 
-                if (!TextUtils.isEmpty(replyText)) {
+
+				String replyText = replyField.getText().toString().trim();
+
+				if (!TextUtils.isEmpty(replyText))
+				{
 //					if(replyText.endsWith("png"))
 //					{
 //						//System.out.println("setCommonImage");
 //						ImageUtil.setCommonImage(activity, replyText, imageView2);
 //					}
 
-                    // 换行>5提示：171253=发送的内容中存在过多换行，不能发送。
-                    String[] sourceStrArray = replyText.split("\n");
-                    if (sourceStrArray.length > 5) {
-                        ServiceInterface.flyHint("", "", LanguageManager.getLangByKey("171253"), 3, 0, false);
-                        return;
-                    }
+					// 换行>5提示：171253=发送的内容中存在过多换行，不能发送。
+					String[] sourceStrArray = replyText.split("\n");
+					if(sourceStrArray.length > 5){
+						ServiceInterface.flyHint("","",LanguageManager.getLangByKey("171253"),3,0,false);
+						return;
+					}
+					
+					if(horn_checkbox.isChecked() && ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY)
+					{
+						int hornBanedTime = JniController.getInstance().excuteJNIMethod("getHornBanedTime", null);
+						if (hornBanedTime == 0)
+						{
+							int price = JniController.getInstance().excuteJNIMethod("isHornEnough", null);
+							String horn = LanguageManager.getLangByKey(LanguageKeys.TIP_HORN);
+							if (price == 0)
+							{
+								if (ConfigManager.isFirstUserHorn)
+									MenuController.showSendHornMessageConfirm(LanguageManager.getLangByKey(LanguageKeys.TIP_USEITEM, horn),
+											replyText);
+								else
+									ChatServiceController.sendMsg(replyText, true, false, null);
+							}
+							else if (price > 0)
+							{
+//								if (ConfigManager.isFirstUserCornForHorn)
+								MenuController.showSendHornWithCornConfirm(
+										LanguageManager.getLangByKey(LanguageKeys.TIP_ITEM_NOT_ENOUGH, horn), replyText, price);
+//								else
+//								{
+//									boolean isCornEnough = JniController.getInstance().excuteJNIMethod("isCornEnough",
+//											new Object[] { Integer.valueOf(price) });
+//									if (isCornEnough)
+//									{
+//										ChatServiceController.sendMsg(replyText, true, true, null);
+//									}
+//									else
+//									{
+//										MenuController.showCornNotEnoughConfirm(LanguageManager
+//												.getLangByKey(LanguageKeys.TIP_CORN_NOT_ENOUGH));
+//									}
+//								}
+							}
+						}
+					}
+					else
+					{
+						ChatServiceController.sendMsg(replyText, false, false, null);
+					}
+					
+					
+				}
 
-                    if (horn_checkbox.isChecked() && ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY) {
-                        int hornBanedTime = JniController.getInstance().excuteJNIMethod("getHornBanedTime", null);
-                        if (hornBanedTime == 0) {
-                            int price = JniController.getInstance().excuteJNIMethod("isHornEnough", null);
-                            String horn = LanguageManager.getLangByKey(LanguageKeys.TIP_HORN);
-                            if (price == 0) {
-                                if (ConfigManager.isFirstUserHorn)
-                                    MenuController.showSendHornMessageConfirm(LanguageManager.getLangByKey(LanguageKeys.TIP_USEITEM, horn),
-                                            replyText);
-                                else
-                                    ChatServiceController.sendMsg(replyText, true, false, null);
-                            } else if (price > 0) {
-                                if (ConfigManager.isFirstUserCornForHorn)
-                                    MenuController.showSendHornWithCornConfirm(
-                                            LanguageManager.getLangByKey(LanguageKeys.TIP_ITEM_NOT_ENOUGH, horn), replyText, price);
-                                else {
-                                    boolean isCornEnough = JniController.getInstance().excuteJNIMethod("isCornEnough",
-                                            new Object[]{Integer.valueOf(price)});
-                                    if (isCornEnough) {
-                                        ChatServiceController.sendMsg(replyText, true, true, null);
-                                    } else {
-                                        MenuController.showCornNotEnoughConfirm(LanguageManager
-                                                .getLangByKey(LanguageKeys.TIP_CORN_NOT_ENOUGH));
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        ChatServiceController.sendMsg(replyText, false, false, null);
-                    }
-
-
-                }
-
-                // 发送按钮点击后关闭软键盘
-                if (getActivity() != null) {
-                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(getActivity().INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(addReply.getApplicationWindowToken(), 0);
-                }
-            }
-        });
+				// 发送按钮点击后关闭软键盘
+				if (getActivity() != null) {
+					InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(getActivity().INPUT_METHOD_SERVICE);
+					imm.hideSoftInputFromWindow(addReply.getApplicationWindowToken(), 0);
+				}
+			}
+		});
 		voice_btn.setVisibility(View.GONE);
 		if(ConfigManager.isSpeechRecognition) {
 			voice_btn.setVisibility(View.VISIBLE);
@@ -1573,56 +1559,60 @@ public class ChatFragment extends ActionBarFragment
 				}
 			});
 		}
-        this.replyField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == 4) {
-                    addReply.performClick();
-                }
-                return false;
-            }
-        });
 
-        replyField.setOnTouchListener(new View.OnTouchListener(){
-
-
+		this.replyField.setOnEditorActionListener(new TextView.OnEditorActionListener()
+		{
 			@Override
-			public boolean onTouch(View view, MotionEvent motionEvent) {
-				if(motionEvent.getAction() == MotionEvent.ACTION_DOWN){
-					if(ChatServiceController.isNeedReName && !ChatServiceController.isInMailDialog()){
-						MenuController.showContentConfirm(LanguageManager.getLangByKey("81000713"));
-						return true;
-					}
-//				if (ChatServiceController.isChatRestrict())
-//				{
-//					MenuController.showChatRestrictConfirm(LanguageManager.getLangByKey(LanguageKeys.TIP_CHAT_RESTRICT));
-//				}
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+			{
+				if (actionId == 4)
+				{
+					addReply.performClick();
 				}
 				return false;
 			}
 		});
 
-        textChangedListener = new TextWatcher() {
-            @Override
-            public void afterTextChanged(Editable s) {
-                replyField.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        refreshWordCount();
-                    }
-                });
-            }
+		replyField.setOnClickListener(new OnClickListener()
+		{
 
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+			@Override
+			public void onClick(View v)
+			{
+//				if (ChatServiceController.isChatRestrict())
+//				{
+//					MenuController.showChatRestrictConfirm(LanguageManager.getLangByKey(LanguageKeys.TIP_CHAT_RESTRICT));
+//				}
+			}
+		});
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                refreshSendButton();
-            }
-        };
-        this.replyField.addTextChangedListener(textChangedListener);
+		textChangedListener = new TextWatcher()
+		{
+			@Override
+			public void afterTextChanged(Editable s)
+			{
+				replyField.post(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						refreshWordCount();
+					}
+				});
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after)
+			{
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count)
+			{
+				refreshSendButton();
+			}
+		};
+		this.replyField.addTextChangedListener(textChangedListener);
 
 //		getShowFriendButton().setVisibility(ChatServiceController.isInMailDialog() ? View.GONE : View.VISIBLE);
 //		getShowFriendButton().setOnClickListener(new View.OnClickListener()
@@ -1634,917 +1624,1118 @@ public class ChatFragment extends ActionBarFragment
 //			}
 //		});
 
-        showMessageBox();
+		showMessageBox();
 
-        horn_checkbox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                refreshBottomUI(isChecked);
-                if (isChecked)
-                    ConfigManager.isHornBtnEnable = true;
-                else
-                    ConfigManager.isHornBtnEnable = false;
-            }
-        });
+		horn_checkbox.setOnCheckedChangeListener(new OnCheckedChangeListener()
+		{
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+			{
+				refreshBottomUI(isChecked);
+				if (isChecked)
+					ConfigManager.isHornBtnEnable = true;
+				else
+					ConfigManager.isHornBtnEnable = false;
+			}
+		});
 
-        onGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                checkFirstGlobalLayout();
-                adjustHeight();
-            }
-        };
-        messagesListFrameLayout.getViewTreeObserver().addOnGlobalLayoutListener(onGlobalLayoutListener);
-        ((ChatActivity) getActivity()).fragment = this;
+		onGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener()
+		{
+			@Override
+			public void onGlobalLayout()
+			{
+				checkFirstGlobalLayout();
+				adjustHeight();
+			}
+		};
+		messagesListFrameLayout.getViewTreeObserver().addOnGlobalLayoutListener(onGlobalLayoutListener);
+		((ChatActivity) getActivity()).fragment = this;
 
-        if (!lazyLoading) {
-            refreshToolTip();
-            refreshHasMoreData();
-        }
+		if (!lazyLoading)
+		{
+			refreshToolTip();
+			refreshHasMoreData();
+		}
 
-        if (ScrollTextManager.getInstance().getScrollQueueLength() > 0) {
-            MsgItem msgItem = ScrollTextManager.getInstance().getNextText();
-            if (msgItem != null)
-                showHornScrollText(msgItem);
-        }
-    }
+		if (ScrollTextManager.getInstance().getScrollQueueLength() > 0)
+		{
+			MsgItem msgItem = ScrollTextManager.getInstance().getNextText();
+			if (msgItem != null)
+				showHornScrollText(msgItem);
+		}
+	}
 
-    public void showHornScrollText(MsgItem msgItem) {
-        if (!msgItem.isHornMessage())
-            return;
-        // 目前不在聊天里显示滚动消息
+	public void showHornScrollText(MsgItem msgItem)
+	{
+		if (!msgItem.isHornMessage())
+			return;
+		// 目前不在聊天里显示滚动消息
 //		if (horn_scroll_layout != null)
 //		{
 //			horn_scroll_layout.setVisibility(View.VISIBLE);
 //			ScrollTextManager.getInstance().showScrollText(msgItem, horn_scroll_text, horn_name, horn_scroll_layout);
 //		}
 
-    }
+	}
 
-    public void hideHornScrollText() {
-        ScrollTextManager.getInstance().shutDownScrollText(horn_scroll_text);
-    }
+	public void hideHornScrollText()
+	{
+		ScrollTextManager.getInstance().shutDownScrollText(horn_scroll_text);
+	}
 
-    private boolean lazyLoading = true;
+	private boolean	lazyLoading	= true;
 
-    protected void onBecomeVisible() {
-        if (inited)
-            return;
+	protected void onBecomeVisible()
+	{
+		if (inited)
+			return;
 
-        timerDelay = 500;
-        startTimer();
-    }
+		timerDelay = 500;
+		startTimer();
+	}
 
-    public static final int CHANNEL_COUNT = 4;
-    private int currentChannelViewIndex;
-    private ArrayList<ChannelView> channelViews;
+	public static final int			CHANNEL_COUNT	= 5;
+	private int						currentChannelViewIndex;
+	private ArrayList<ChannelView>	channelViews;
 
-    private void initChannelViews() {
-        channelViews = new ArrayList<ChannelView>();
-        for (int i = 0; i < CHANNEL_COUNT; i++) {
-            ChannelView channelView = new ChannelView();
+	private void initChannelViews()
+	{
+		channelViews = new ArrayList<ChannelView>();
+		for (int i = 0; i < CHANNEL_COUNT; i++)
+		{
+			ChannelView channelView = new ChannelView();
 
-            channelView.tab = i;
+			channelView.tab = i;
 
-            channelViews.add(channelView);
-        }
-    }
-
-    public int getChannelViewCount() {
-        return CHANNEL_COUNT;
-    }
-
-    public ChannelView getChannelView(int index) {
-        return channelViews.get(index);
-    }
-
-    public void setChannelViewIndex(int i) {
-        if (i >= 0 && i < channelViews.size()) {
-            currentChannelViewIndex = i;
-        }
-    }
-
-    public ChannelView getCurrentChannelView() {
-        try {
-            if (channelViews == null || currentChannelViewIndex < 0 || currentChannelViewIndex >= channelViews.size())
-                return null;
-            return channelViews.get(currentChannelViewIndex);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public ChannelView getCountryChannelView() {
-        try {
-            return getChannelView(0);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public void resetChannelView() {
-        for (int i = 0; i < CHANNEL_COUNT; i++) {
-            if (getChannelView(i).chatChannel != null) {
-                getChannelView(i).chatChannel.setChannelView(null);
-            }
-            getChannelView(i).init();
-        }
-    }
-
-    protected void createList() {
-        chatRoomAdapter = new ChatRoomChannelAdapter((ChatActivity) getActivity(), this);
-        chatRoomAdapter.fragment = this;
-        refreshScrollLoadEnabled();
-        super.createList();
-    }
-
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    protected void renderList() {
-        for (int i = 0; i < getChannelViewCount(); i++) {
-            final ChannelView channelView = getChannelView(i);
-            ChatChannel chatChannel = null;
-            if (i < 2) {
-                chatChannel = ChannelManager.getInstance().getChannel(i, "");
-                channelView.channelType = i;
-            } else if (i == 2) {
-                channelView.channelType = 3;
-                mListView.setAdapter(chatRoomAdapter);
-                restorePosition();
-                continue;
-            } else if (ChatServiceController.isInMailDialog() || ChatServiceController.isInLiveRoom()) {
-                String channelId = UserManager.getInstance().getCurrentMail().opponentUid;
-                if (ChatServiceController.isContactMod && !channelId.endsWith(DBDefinition.CHANNEL_ID_POSTFIX_MOD))
-                    channelId += DBDefinition.CHANNEL_ID_POSTFIX_MOD;
-                chatChannel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType(), channelId);
-                channelView.channelType = ChatServiceController.getCurrentChannelType();
-            } else {
-                continue;
-            }
-            if (chatChannel != null) {
-                LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "chatChannel", chatChannel, "msgList.size()", chatChannel.msgList.size());
-                chatChannel.clearFirstNewMsg();
-                chatChannel.setChannelView(channelView);
-            }
-            channelView.chatChannel = chatChannel;
-
-            PullDownToLoadMoreView pullDownToLoadListView = new PullDownToLoadMoreView(activity);
-            pullDownToLoadListView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-
-            pullDownToLoadListView.setTopViewInitialize(true);
-            pullDownToLoadListView.setAllowPullDownRefersh(false);
-            pullDownToLoadListView.setBottomViewWithoutScroll(false);
-            pullDownToLoadListView.setListViewLoadListener(mListViewLoadListener);
-            pullDownToLoadListView.setListViewTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    onContentAreaTouched();
-                    return false;
-                }
-            });
-
-            ListView messagesListView = new ListView(activity);
-            messagesListView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-            messagesListView.setVerticalFadingEdgeEnabled(false);
-            messagesListView.setCacheColorHint(Color.TRANSPARENT);
-            messagesListView.setDivider(null);
-
-            // TODO 增加摩擦力，测试流畅性
-            // scroll speed decreases as friction increases. a value of 2 worked
-            // well in an emulator; i need to test it on a real device
-            // messagesListView.setFriction(ViewConfiguration.getScrollFriction()
-            // * 2);
-
-            if (chatChannel != null && chatChannel.msgList != null) {
-                // this.getActivity() 可能为null
-                channelView.setMessagesAdapter(new MessagesAdapter(this, 17367043, chatChannel.msgList));
-            } else {
-                channelView.setMessagesAdapter(new MessagesAdapter(this, 17367043, new ArrayList<MsgItem>()));
-            }
-            messagesListView.setAdapter(channelView.getMessagesAdapter());
-
-            messagesListView.setOnScrollListener(mOnScrollListener);
-            messagesListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_NORMAL);
-            messagesListView.setKeepScreenOn(true);
-
-            pullDownToLoadListView.addView(messagesListView);
-
-            channelView.pullDownToLoadListView = pullDownToLoadListView;
-            channelView.messagesListView = messagesListView;
-
-            // TODO 删除不用代码
-            messagesListView.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (channelView != null && channelView.messagesListView != null) {
-                        // 可能出NullPointerException异常
-                        // channelView.messagesListView.setSelection(channelView.messagesListView.getCount());
-                    }
-                }
-            });
-
-            if (chatChannel != null) {
-                if (chatChannel.lastPosition.x != -1 && rememberPosition) {
-                    channelView.messagesListView.setSelectionFromTop(chatChannel.lastPosition.x, chatChannel.lastPosition.y);
-                } else {
-                    channelView.messagesListView.setSelection(channelView.getMessagesAdapter().getCount() - 1);
-                }
-            }
-
-            messagesListFrameLayout.addView(pullDownToLoadListView);
-        }
-        if (lazyLoading) {
-            refreshTab();
-        }
-        activity.hideProgressBar();
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    protected void restorePosition() {
-        int lastX = chatRoomlastScrollX;
-        int lastY = chatRoomlastScrollY;
-        if (lastX != -1) {
-            mListView.setSelectionFromTop(lastX, lastY);
-        }
-        chatRoomlastScrollX = chatRoomlastScrollY = -1;
-    }
-
-    protected void refreshTab() {
-        if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_ALLIANCE) {
-            showTab(TAB_ALLIANCE);
-        } else if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY) {
-            showTab(TAB_COUNTRY);
-        } else if (ChatServiceController.isInMailDialog() || ChatServiceController.isInLiveRoom()) {
-            showTab(TAB_MAIL);
-        } else {
-            showTab(TAB_COUNTRY);
-        }
-        refreshWordCount();
-    }
-
-    private void refreshSendButton() {
-        if (this.replyField.getText().length() == 0) {
-            addReply.setEnabled(false);
-//			CompatibleApiUtil.getInstance().setButtonAlpha(addReply, false);
-        } else {
-            addReply.setEnabled(true);
-//			CompatibleApiUtil.getInstance().setButtonAlpha(addReply, true);
-        }
-    }
-
-    public void showToolTip(boolean b) {
-//		tooltipLayout.setVisibility(b ? View.VISIBLE : View.GONE); //此功能先不加，因为ios还没有此功能
-        tooltipLayout.setVisibility(View.GONE);
-    }
-
-    /**
-     * 点击发送红包
-     */
-    private void onSendRedPackage() {
-        ChatServiceController.getInstance().setSendRedPackage();
-    }
-
-    private void onClickToolTip() {
-        ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
-        if (channel == null) return;
-
-        if (!WebSocketManager.isRecieveFromWebSocket(channel.channelType)) {
-            if (channel.canLoadAllNew()) {
-                getCurrentChannel().setLoadingStart(true);
-                oldAdapterCount = getCurrentChannel().getMessagesAdapter().getCount();
-                loadMoreCount = 0;
-                channel.isLoadingAllNew = true;
-                channel.hasLoadingAllNew = true;
-                ChannelManager.getInstance().loadAllNew(channel);
-
-                refreshToolTip();
-            }
-        } else {
-            if (channel.wsNewMsgCount > ChannelManager.LOAD_ALL_MORE_MIN_COUNT) {
-                channel.wsNewMsgCount = 0;
-                updateListPositionForOldMsg(channel.channelType, 0, false);
-            }
-        }
-    }
-
-    public void refreshToolTip() {
-        ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
-        // 未加入联盟时，channel不存在
-        if (channel == null || isInMail()) {
-            return;
-        }
-
-        if (!WebSocketManager.isRecieveFromWebSocket(channel.channelType)) {
-            refreshToolTipInGameServer(channel);
-        } else {
-            refreshToolTipInWSServer(channel);
-        }
-    }
-
-    private void refreshToolTipInGameServer(ChatChannel channel) {
-        if (channel != null && channel.canLoadAllNew()) {
-            String newMsgCount = channel.getNewMsgCount() < ChannelManager.LOAD_ALL_MORE_MAX_COUNT ? channel.getNewMsgCount() + ""
-                    : ChannelManager.LOAD_ALL_MORE_MAX_COUNT + "+";
-            tooltipLabel.setText(LanguageManager.getLangByKey(LanguageKeys.NEW_MESSAGE_ALERT, newMsgCount));
-            showToolTip(true);
-        } else {
-            showToolTip(false);
-        }
-    }
-
-    private void refreshToolTipInWSServer(ChatChannel channel) {
-        // 第一次加载历史消息后，重置channel.wsNewMsgCount
-        // TODO 应该改为显示到第一条消息后重置
-        // if(channel.wsNewMsgCount > 0 && channel.msgList.size() !=
-        // channel.wsNewMsgCount)
-        // {
-        // channel.wsNewMsgCount = 0;
-        // }
-
-        if (channel != null && channel.wsNewMsgCount > ChannelManager.LOAD_ALL_MORE_MIN_COUNT) {
-            String newMsgCount = channel.wsNewMsgCount < ChannelManager.LOAD_ALL_MORE_MAX_COUNT ? channel.wsNewMsgCount + ""
-                    : ChannelManager.LOAD_ALL_MORE_MAX_COUNT + "+";
-            tooltipLabel.setText(LanguageManager.getLangByKey(LanguageKeys.NEW_MESSAGE_ALERT, newMsgCount));
-            showToolTip(true);
-        } else {
-            showToolTip(false);
-        }
-    }
-
-    public void clearInput() {
-        replyField.setText("");
-    }
-
-    private void refreshBottomUI(boolean isChecked) {
-        if (!isChecked)
-            ChatServiceController.isHornItemUsed = false;
-        boolean isHornUI = isChecked && ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY
-                && ConfigManager.enableChatHorn;
-        String background = isHornUI ? "send_horn_btn" : "send_normal_btn";
-        String bottomBg = isHornUI ? "send_horn_bg" : "send_normal_bg";
-        String inputBg = isHornUI ? "text_field_box" : "text_field_box";
-
-        int addReplyId = ResUtil.getId(activity, "drawable", background);
-        int relativeLayout1Id = ResUtil.getId(activity, "drawable", bottomBg);
-        int replyFieldId = ResUtil.getId(activity, "drawable", inputBg);
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            addReply.setBackgroundDrawable(null);
-            addReply.setBackgroundDrawable(activity.getResources().getDrawable(addReplyId));
-            relativeLayout1.setBackgroundDrawable(null);
-            relativeLayout1.setBackgroundDrawable(activity.getResources().getDrawable(relativeLayout1Id));
-            replyField.setBackgroundDrawable(null);
-            replyField.setBackgroundDrawable(activity.getResources().getDrawable(replyFieldId));
-        } else {
-            addReply.setBackground(null);
-            addReply.setBackground(activity.getResources().getDrawable(addReplyId));
-            relativeLayout1.setBackground(null);
-            relativeLayout1.setBackground(activity.getResources().getDrawable(relativeLayout1Id));
-            replyField.setBackground(null);
-            replyField.setBackground(activity.getResources().getDrawable(replyFieldId));
-        }
-
-//		horn_tip_layout.setVisibility(isHornUI ? View.VISIBLE : View.GONE);
-        //imageView1.setVisibility(isHornUI ? View.GONE : View.VISIBLE);
-        //imageView1.setVisibility(View.INVISIBLE);
-        setMaxInputLength(isHornUI);
-		if(ChatServiceController.isNeedReName && !ChatServiceController.isInMailDialog() && ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_ALLIANCE) {
-			replyField.setInputType(InputType.TYPE_NULL);
+			channelViews.add(channelView);
 		}
-    }
+	}
 
-    private void setMaxInputLength(boolean isHornUI) {
-        curMaxInputLength = isHornUI && ConfigManager.maxHornInputLength > 0 ? ConfigManager.maxHornInputLength : 500;
-		if(ChatServiceController.special_symbol_check) {
-			replyField.setFilters(new InputFilter[]{new InputFilter() {
+	public int getChannelViewCount()
+	{
+		return CHANNEL_COUNT;
+	}
+
+	public ChannelView getChannelView(int index)
+	{
+		return channelViews.get(index);
+	}
+
+	public void setChannelViewIndex(int i)
+	{
+		if (i >= 0 && i < channelViews.size())
+		{
+			currentChannelViewIndex = i;
+		}
+	}
+
+	public ChannelView getCurrentChannelView()
+	{
+		try
+		{
+			if (channelViews == null || currentChannelViewIndex < 0 || currentChannelViewIndex >= channelViews.size())
+				return null;
+			return channelViews.get(currentChannelViewIndex);
+		}
+		catch (Exception e)
+		{
+			return null;
+		}
+	}
+
+	public ChannelView getCountryChannelView()
+	{
+		try
+		{
+			return getChannelView(0);
+		}
+		catch (Exception e)
+		{
+			return null;
+		}
+	}
+
+	public void resetChannelView()
+	{
+		for (int i = 0; i < CHANNEL_COUNT; i++)
+		{
+			if (getChannelView(i).chatChannel != null)
+			{
+				getChannelView(i).chatChannel.setChannelView(null);
+			}
+			getChannelView(i).init();
+		}
+	}
+
+	protected void createList()
+	{
+		chatRoomAdapter = new ChatRoomChannelAdapter((ChatActivity) getActivity(), this);
+		chatRoomAdapter.fragment = this;
+		refreshScrollLoadEnabled();
+		super.createList();
+	}
+
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	protected void renderList()
+	{
+		for (int i = 0; i < getChannelViewCount(); i++)
+		{
+			final ChannelView channelView = getChannelView(i);
+			ChatChannel chatChannel = null;
+			if (i < 2)
+			{
+				chatChannel = ChannelManager.getInstance().getChannel(i, "");
+				channelView.channelType = i;
+			}
+			else if(i==2){
+				channelView.channelType = 3;
+				mListView.setAdapter(chatRoomAdapter);
+				restorePosition();
+				continue;
+			}
+			else if(i == 4){
+				chatChannel = ChannelManager.getInstance().getWarZoneChannel();
+				channelView.channelType = 3;
+			}
+			else if (ChatServiceController.isInMailDialog())
+			{
+				String channelId = UserManager.getInstance().getCurrentMail().opponentUid;
+				if (ChatServiceController.isContactMod && !channelId.endsWith(DBDefinition.CHANNEL_ID_POSTFIX_MOD))
+					channelId += DBDefinition.CHANNEL_ID_POSTFIX_MOD;
+				chatChannel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType(), channelId);
+				channelView.channelType = ChatServiceController.getCurrentChannelType();
+			}
+			else
+			{
+				continue;
+			}
+			if (chatChannel != null)
+			{
+				LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "chatChannel", chatChannel, "msgList.size()", chatChannel.msgList.size());
+				chatChannel.clearFirstNewMsg();
+				chatChannel.setChannelView(channelView);
+			}
+			channelView.chatChannel = chatChannel;
+
+			PullDownToLoadMoreView pullDownToLoadListView = new PullDownToLoadMoreView(activity);
+			pullDownToLoadListView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+
+			pullDownToLoadListView.setTopViewInitialize(true);
+			pullDownToLoadListView.setAllowPullDownRefersh(false);
+			pullDownToLoadListView.setBottomViewWithoutScroll(false);
+			pullDownToLoadListView.setListViewLoadListener(mListViewLoadListener);
+			pullDownToLoadListView.setListViewTouchListener(new View.OnTouchListener()
+			{
 				@Override
-				public CharSequence filter(CharSequence charSequence, int i, int i1, Spanned spanned, int i2, int i3) {
-					return ChatServiceController.replaceSpecialSymbolChar(charSequence.toString());
+				public boolean onTouch(View v, MotionEvent event)
+				{
+					onContentAreaTouched();
+					return false;
 				}
-			}, new InputFilter.LengthFilter(curMaxInputLength)});
-		}else{
-			replyField.setFilters(new InputFilter[]{new InputFilter.LengthFilter(curMaxInputLength)});
+			});
+
+			ListView messagesListView = new ListView(activity);
+			messagesListView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+			messagesListView.setVerticalFadingEdgeEnabled(false);
+			messagesListView.setCacheColorHint(Color.TRANSPARENT);
+			messagesListView.setDivider(null);
+
+			// TODO 增加摩擦力，测试流畅性
+			// scroll speed decreases as friction increases. a value of 2 worked
+			// well in an emulator; i need to test it on a real device
+			// messagesListView.setFriction(ViewConfiguration.getScrollFriction()
+			// * 2);
+
+			if (chatChannel != null && chatChannel.msgList != null)
+			{
+				// this.getActivity() 可能为null
+				channelView.setMessagesAdapter(new MessagesAdapter(this, 17367043, chatChannel.msgList));
+			}
+			else
+			{
+				channelView.setMessagesAdapter(new MessagesAdapter(this, 17367043, new ArrayList<MsgItem>()));
+			}
+			messagesListView.setAdapter(channelView.getMessagesAdapter());
+
+			messagesListView.setOnScrollListener(mOnScrollListener);
+			messagesListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_NORMAL);
+			messagesListView.setKeepScreenOn(true);
+
+			pullDownToLoadListView.addView(messagesListView);
+
+			channelView.pullDownToLoadListView = pullDownToLoadListView;
+			channelView.messagesListView = messagesListView;
+
+			// TODO 删除不用代码
+			messagesListView.post(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if (channelView != null && channelView.messagesListView != null)
+					{
+						// 可能出NullPointerException异常
+						// channelView.messagesListView.setSelection(channelView.messagesListView.getCount());
+					}
+				}
+			});
+
+			if (chatChannel != null)
+			{
+				if (chatChannel.lastPosition.x != -1 && rememberPosition)
+				{
+					channelView.messagesListView.setSelectionFromTop(chatChannel.lastPosition.x, chatChannel.lastPosition.y);
+				}
+				else
+				{
+					channelView.messagesListView.setSelection(channelView.getMessagesAdapter().getCount() - 1);
+				}
+			}
+
+			messagesListFrameLayout.addView(pullDownToLoadListView);
 		}
-    }
+		if (lazyLoading)
+		{
+			refreshTab();
+		}
+		activity.hideProgressBar();
+	}
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
+	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+	protected void restorePosition()
+	{
+		int lastX = chatRoomlastScrollX;
+		int lastY = chatRoomlastScrollY;
+		if (lastX != -1)
+		{
+			mListView.setSelectionFromTop(lastX, lastY);
+		}
+		chatRoomlastScrollX = chatRoomlastScrollY = -1;
+	}
+
+	protected void refreshTab()
+	{
+		if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_ALLIANCE)
+		{
+			showTab(TAB_ALLIANCE);
+		}
+		else if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY)
+		{
+			showTab(TAB_COUNTRY);
+		}
+		else if(ChatServiceController.isInWarZoneRoom()){
+			showTab(TAB_WARZONE);
+		}
+		else if (ChatServiceController.isInMailDialog())
+		{
+			showTab(TAB_MAIL);
+		}
+		else
+		{
+			showTab(TAB_COUNTRY);
+		}
+		refreshWordCount();
+	}
+
+	private void refreshSendButton()
+	{
+		if (this.replyField.getText().length() == 0)
+		{
+			addReply.setEnabled(false);
+//			CompatibleApiUtil.getInstance().setButtonAlpha(addReply, false);
+		}
+		else
+		{
+			addReply.setEnabled(true);
+//			CompatibleApiUtil.getInstance().setButtonAlpha(addReply, true);
+		}
+	}
+
+	public void showToolTip(boolean b)
+	{
+//		tooltipLayout.setVisibility(b ? View.VISIBLE : View.GONE); //此功能先不加，因为ios还没有此功能
+		tooltipLayout.setVisibility(View.GONE);
+	}
+
+	/** 点击发送红包 */
+	private void onSendRedPackage()
+	{
+		ChatServiceController.getInstance().setSendRedPackage();
+	}
+
+	private void onClickToolTip()
+	{
+		ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
+		if (channel == null) return;
+		
+		if (!WebSocketManager.isRecieveFromWebSocket(channel.channelType))
+		{
+			if (channel.canLoadAllNew())
+			{
+				getCurrentChannel().setLoadingStart(true);
+				oldAdapterCount = getCurrentChannel().getMessagesAdapter().getCount();
+				loadMoreCount = 0;
+				channel.isLoadingAllNew = true;
+				channel.hasLoadingAllNew = true;
+				ChannelManager.getInstance().loadAllNew(channel);
+
+				refreshToolTip();
+			}
+		}
+		else
+		{
+			if (channel.wsNewMsgCount > ChannelManager.LOAD_ALL_MORE_MIN_COUNT)
+			{
+				channel.wsNewMsgCount = 0;
+				updateListPositionForOldMsg(channel.channelType, 0, false);
+			}
+		}
+	}
+
+	public void refreshToolTip()
+	{
+		ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
+		// 未加入联盟时，channel不存在
+		if (channel == null || isInMail())
+		{
+			return;
+		}
+
+		if (!WebSocketManager.isRecieveFromWebSocket(channel.channelType))
+		{
+			refreshToolTipInGameServer(channel);
+		}
+		else
+		{
+			refreshToolTipInWSServer(channel);
+		}
+	}
+
+	private void refreshToolTipInGameServer(ChatChannel channel)
+	{
+		if (channel != null && channel.canLoadAllNew())
+		{
+			String newMsgCount = channel.getNewMsgCount() < ChannelManager.LOAD_ALL_MORE_MAX_COUNT ? channel.getNewMsgCount() + ""
+					: ChannelManager.LOAD_ALL_MORE_MAX_COUNT + "+";
+			tooltipLabel.setText(LanguageManager.getLangByKey(LanguageKeys.NEW_MESSAGE_ALERT, newMsgCount));
+			showToolTip(true);
+		}
+		else
+		{
+			showToolTip(false);
+		}
+	}
+
+	private void refreshToolTipInWSServer(ChatChannel channel)
+	{
+		// 第一次加载历史消息后，重置channel.wsNewMsgCount
+		// TODO 应该改为显示到第一条消息后重置
+		// if(channel.wsNewMsgCount > 0 && channel.msgList.size() !=
+		// channel.wsNewMsgCount)
+		// {
+		// channel.wsNewMsgCount = 0;
+		// }
+
+		if (channel != null && channel.wsNewMsgCount > ChannelManager.LOAD_ALL_MORE_MIN_COUNT)
+		{
+			String newMsgCount = channel.wsNewMsgCount < ChannelManager.LOAD_ALL_MORE_MAX_COUNT ? channel.wsNewMsgCount + ""
+					: ChannelManager.LOAD_ALL_MORE_MAX_COUNT + "+";
+			tooltipLabel.setText(LanguageManager.getLangByKey(LanguageKeys.NEW_MESSAGE_ALERT, newMsgCount));
+			showToolTip(true);
+		}
+		else
+		{
+			showToolTip(false);
+		}
+	}
+
+	public void clearInput()
+	{
+		replyField.setText("");
+	}
+
+	private void refreshBottomUI(boolean isChecked)
+	{
+		if (!isChecked)
+			ChatServiceController.isHornItemUsed = false;
+		boolean isHornUI = isChecked && ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY
+				&& ConfigManager.enableChatHorn;
+		String background = isHornUI ? "send_horn_btn" : "send_normal_btn";
+		String bottomBg = isHornUI ? "send_horn_bg" : "send_normal_bg";
+		String inputBg = isHornUI ? "text_field_box" : "text_field_box";
+
+		int addReplyId = ResUtil.getId(activity, "drawable", background);
+		int relativeLayout1Id = ResUtil.getId(activity, "drawable", bottomBg);
+		int replyFieldId = ResUtil.getId(activity, "drawable", inputBg);
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN)
+		{
+			addReply.setBackgroundDrawable(null);
+			addReply.setBackgroundDrawable(activity.getResources().getDrawable(addReplyId));
+			relativeLayout1.setBackgroundDrawable(null);
+			relativeLayout1.setBackgroundDrawable(activity.getResources().getDrawable(relativeLayout1Id));
+			replyField.setBackgroundDrawable(null);
+			replyField.setBackgroundDrawable(activity.getResources().getDrawable(replyFieldId));
+		}else{
+			addReply.setBackground(null);
+			addReply.setBackground(activity.getResources().getDrawable(addReplyId));
+			relativeLayout1.setBackground(null);
+			relativeLayout1.setBackground(activity.getResources().getDrawable(relativeLayout1Id));
+			replyField.setBackground(null);
+			replyField.setBackground(activity.getResources().getDrawable(replyFieldId));
+		}
+//		horn_tip_layout.setVisibility(isHornUI ? View.VISIBLE : View.GONE);
+		//imageView1.setVisibility(isHornUI ? View.GONE : View.VISIBLE);
+		//imageView1.setVisibility(View.INVISIBLE);
+		setMaxInputLength(isHornUI);
+	}
+
+	private void setMaxInputLength(boolean isHornUI)
+	{
+		curMaxInputLength = isHornUI && ConfigManager.maxHornInputLength > 0 ? ConfigManager.maxHornInputLength : 500;
+		replyField.setFilters(new InputFilter[] { new InputFilter.LengthFilter(curMaxInputLength) });
+	}
+
+	@Override
+	public void onStart()
+	{
+		super.onStart();
+	}
 
 
-    public class LoadMoreMsgParam {
-        public long requestMinTime;
-        public long requestMaxTime;
+	public class LoadMoreMsgParam
+	{
+		public long		requestMinTime;
+		public long		requestMaxTime;
 
-        public int requestMinSeqId;
-        public int requestMaxSeqId;
+		public int		requestMinSeqId;
+		public int		requestMaxSeqId;
 
-        public boolean useTime;
+		public boolean	useTime;
 
-        public boolean fetchFromServer;
+		public boolean	fetchFromServer;
 
-        public LoadMoreMsgParam(int minSeqId, int maxSeqId, boolean fetchFromServer) {
-            useTime = false;
-            this.requestMinSeqId = minSeqId;
-            this.requestMaxSeqId = maxSeqId;
-            this.fetchFromServer = fetchFromServer;
-        }
+		public LoadMoreMsgParam(int minSeqId, int maxSeqId, boolean fetchFromServer)
+		{
+			useTime = false;
+			this.requestMinSeqId = minSeqId;
+			this.requestMaxSeqId = maxSeqId;
+			this.fetchFromServer = fetchFromServer;
+		}
 
-        public LoadMoreMsgParam(long requestMinTime, long requestMaxTime, boolean fetchFromServer) {
-            useTime = true;
-            this.requestMinTime = requestMinTime;
-            this.requestMaxTime = requestMaxTime;
-            this.fetchFromServer = fetchFromServer;
-        }
+		public LoadMoreMsgParam(long requestMinTime, long requestMaxTime, boolean fetchFromServer)
+		{
+			useTime = true;
+			this.requestMinTime = requestMinTime;
+			this.requestMaxTime = requestMaxTime;
+			this.fetchFromServer = fetchFromServer;
+		}
 
-        public int getRequestCount() {
-            return requestMaxSeqId - requestMinSeqId + 1;
-        }
-    }
+		public int getRequestCount()
+		{
+			return requestMaxSeqId - requestMinSeqId + 1;
+		}
+	}
 
-    /**
-     * 获取加载区间的逻辑，也是检查能否加载的逻辑
-     */
-    private LoadMoreMsgParam getLoadMoreMsgParam(int channelType) {
-        if (!(channelType == DBDefinition.CHANNEL_TYPE_COUNTRY || channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE || channelType == DBDefinition.CHANNEL_TYPE_CHATROOM)) {
-            return null;
-        }
-        ChatChannel channel = ChannelManager.getInstance().getChannel(channelType);
-        if (channel == null || channel.msgList == null || channel.getChannelView() == null) {
-            return null;
-        }
+	/**
+	 * 获取加载区间的逻辑，也是检查能否加载的逻辑
+	 */
+	private LoadMoreMsgParam getLoadMoreMsgParam(int channelType)
+	{
+		if (!(channelType == DBDefinition.CHANNEL_TYPE_COUNTRY || channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE || channelType == DBDefinition.CHANNEL_TYPE_CHATROOM))
+		{
+			return null;
+		}
+		ChatChannel channel = ChannelManager.getInstance().getChannel(channelType);
+		if (channel == null || channel.msgList == null || channel.getChannelView() == null)
+		{
+			return null;
+		}
 
-        if (WebSocketManager.isRecieveFromWebSocket(channelType)) {
-            return getLoadMoreMsgParamBySeqId(channel);
-        } else {
-            return getLoadMoreMsgParamByTime(channel);
-        }
-    }
+		if (WebSocketManager.isRecieveFromWebSocket(channelType))
+		{
+			return getLoadMoreMsgParamBySeqId(channel);
+		}
+		else
+		{
+			return getLoadMoreMsgParamByTime(channel);
+		}
+	}
 
-    private LoadMoreMsgParam getLoadMoreMsgParamByTime(ChatChannel channel) {
-        int minTime = channel.getMinCreateTime();
-        // 如果用时间，则肯定是webSocket服务，由于时间不连续，没法判断再前面的消息是在db还是server，所以初始化时将新消息全部加载到本地
-        Pair<Long, Long> range = DBManager.getInstance().getHistoryTimeRange(channel.getChatTable(), minTime,
-                ChannelManager.LOAD_MORE_COUNT);
-        if (range != null) {
-            return new LoadMoreMsgParam(range.first, range.second, false);
-        }
+	private LoadMoreMsgParam getLoadMoreMsgParamByTime(ChatChannel channel)
+	{
+		int minTime = channel.getMinCreateTime();
+		// 如果用时间，则肯定是webSocket服务，由于时间不连续，没法判断再前面的消息是在db还是server，所以初始化时将新消息全部加载到本地
+		Pair<Long, Long> range = DBManager.getInstance().getHistoryTimeRange(channel.getChatTable(), minTime,
+				ChannelManager.LOAD_MORE_COUNT);
+		if (range != null)
+		{
+			return new LoadMoreMsgParam(range.first, range.second, false);
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    private LoadMoreMsgParam getLoadMoreMsgParamBySeqId(ChatChannel channel) {
-        int viewMinSeqId = channel.getMinSeqId();
+	private LoadMoreMsgParam getLoadMoreMsgParamBySeqId(ChatChannel channel)
+	{
+		int viewMinSeqId = channel.getMinSeqId();
+		int createTime = channel.getMinCreateTime();
+		// 不能加载: 没有消息时viewMinSeqId为0，有消息时seqId最小为1
+		if (viewMinSeqId <= 1)
+		{
+			return null;
+		}
 
-        // 不能加载: 没有消息时viewMinSeqId为0，有消息时seqId最小为1
-        if (viewMinSeqId <= 1) {
-            return null;
-        }
+		// desireMaxSeqId可能等于desireMinSeqId，仅当二者都为1时
+		int desireMaxSeqId = viewMinSeqId-1;//DBManager.getInstance().getLoadMoreMaxSeqId(channel.getChatTable(), viewMinSeqId);
+		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "desireMaxSeqId", desireMaxSeqId, "viewMinSeqId", viewMinSeqId);
+		int desireMinSeqId = (desireMaxSeqId - 19) > 1 ? (desireMaxSeqId - 19) : 1;
 
-        // desireMaxSeqId可能等于desireMinSeqId，仅当二者都为1时
-        int desireMaxSeqId = viewMinSeqId - 1;//DBManager.getInstance().getLoadMoreMaxSeqId(channel.getChatTable(), viewMinSeqId);
-        LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "desireMaxSeqId", desireMaxSeqId, "viewMinSeqId", viewMinSeqId);
-        int desireMinSeqId = (desireMaxSeqId - 19) > 1 ? (desireMaxSeqId - 19) : 1;
+		// 如果desireMaxSeqId在本地db中有，就从db加载（不一定能满20条）
+		if (DBManager.getInstance().isMsgExistsLoad(channel.getChatTable(), desireMinSeqId,desireMaxSeqId,createTime))
+		{
+			return new LoadMoreMsgParam(desireMinSeqId, desireMaxSeqId, false);
+		}
 
-        // 如果desireMaxSeqId在本地db中有，就从db加载（不一定能满20条）
-        if (DBManager.getInstance().isMsgExists(channel.getChatTable(), desireMaxSeqId, -1)) {
-            return new LoadMoreMsgParam(desireMinSeqId, desireMaxSeqId, false);
-        }
+		// 否则，如果在server范围内，从server加载
+		// server中seqId连续，可以用交集判断
+		Point inter = getIntersection(new Point(channel.serverMinSeqId, channel.serverMaxSeqId), new Point(desireMinSeqId, desireMaxSeqId));
+		if (inter != null)
+		{
+			if (WebSocketManager.isWebSocketEnabled() && WebSocketManager.isRecieveFromWebSocket(channel.channelType)) {
+				MsgItem msg = DBManager.getInstance().getChatBySequeueIdAndCreatTime(channel.getChatTable(), desireMaxSeqId+1,channel.getMinCreateTime());
+				if (msg != null) {
+					return new LoadMoreMsgParam((long) 0, (long) msg.createTime, true);
+				}
+			}else{
+				return new LoadMoreMsgParam(inter.x, inter.y, true);
+			}
+		}
 
-        // 否则，如果在server范围内，从server加载
-        // server中seqId连续，可以用交集判断
-        Point inter = getIntersection(new Point(channel.serverMinSeqId, channel.serverMaxSeqId), new Point(desireMinSeqId, desireMaxSeqId));
-        if (inter != null) {
-            if (WebSocketManager.isWebSocketEnabled() && WebSocketManager.isRecieveFromWebSocket(channel.channelType)) {
-                MsgItem msg = DBManager.getInstance().getChatBySequeueId(channel.getChatTable(), desireMaxSeqId + 1);
-                if (msg != null) {
-                    return new LoadMoreMsgParam((long) 0, (long) msg.createTime, true);
-                }
-            } else {
-                return new LoadMoreMsgParam(inter.x, inter.y, true);
-            }
-        }
+		// 既不在db，又不在server（再往前的也肯定不在server），则找到db中最早的，加载之
+		Point range = DBManager.getInstance().getHistorySeqIAndTimedRange(channel.getChatTable(), desireMaxSeqId, channel.getMinCreateTime(),ChannelManager.LOAD_MORE_COUNT);
+		if (range != null)
+		{
+			return new LoadMoreMsgParam(range.x, range.y, false);
+		}
 
-        // 既不在db，又不在server（再往前的也肯定不在server），则找到db中最早的，加载之
-        Point range = DBManager.getInstance().getHistorySeqIdRange(channel.getChatTable(), desireMaxSeqId, ChannelManager.LOAD_MORE_COUNT);
-        if (range != null) {
-            return new LoadMoreMsgParam(range.x, range.y, false);
-        }
+		return null;
+	}
 
-        return null;
-    }
+	/**
+	 * 计算两段连续区间的交集
+	 * 
+	 * @param sec1
+	 *            [sec1.x, sec1.y]组成的区间
+	 * @param sec2
+	 *            [sec2.x, sec2.y]组成的区间
+	 * @return null，如果无交集
+	 */
+	public static Point getIntersection(Point sec1, Point sec2)
+	{
+		int[] fourValue = { sec1.x, sec1.y, sec2.x, sec2.y };
+		Arrays.sort(fourValue); // 升序排序
+		int lower = -1;
+		int upper = -1;
+		for (int i = 0; i < fourValue.length; i++)
+		{
+			if (fourValue[i] >= sec1.x && fourValue[i] <= sec1.y && fourValue[i] >= sec2.x && fourValue[i] <= sec2.y)
+			{
+				lower = fourValue[i];
+				break;
+			}
+		}
+		for (int i = fourValue.length - 1; i >= 0; i--)
+		{
+			if (fourValue[i] >= sec1.x && fourValue[i] <= sec1.y && fourValue[i] >= sec2.x && fourValue[i] <= sec2.y)
+			{
+				upper = fourValue[i];
+				break;
+			}
+		}
+		if (lower != -1 && upper != -1)
+		{
+			return new Point(lower, upper);
+		}
+		else
+		{
+			return null;
+		}
+	}
 
-    /**
-     * 计算两段连续区间的交集
-     *
-     * @param sec1 [sec1.x, sec1.y]组成的区间
-     * @param sec2 [sec2.x, sec2.y]组成的区间
-     * @return null，如果无交集
-     */
-    public static Point getIntersection(Point sec1, Point sec2) {
-        int[] fourValue = {sec1.x, sec1.y, sec2.x, sec2.y};
-        Arrays.sort(fourValue); // 升序排序
-        int lower = -1;
-        int upper = -1;
-        for (int i = 0; i < fourValue.length; i++) {
-            if (fourValue[i] >= sec1.x && fourValue[i] <= sec1.y && fourValue[i] >= sec2.x && fourValue[i] <= sec2.y) {
-                lower = fourValue[i];
-                break;
-            }
-        }
-        for (int i = fourValue.length - 1; i >= 0; i--) {
-            if (fourValue[i] >= sec1.x && fourValue[i] <= sec1.y && fourValue[i] >= sec2.x && fourValue[i] <= sec2.y) {
-                upper = fourValue[i];
-                break;
-            }
-        }
-        if (lower != -1 && upper != -1) {
-            return new Point(lower, upper);
-        } else {
-            return null;
-        }
-    }
+	private boolean checkMessagesAdapter()
+	{
+		if (getCurrentChannel() == null || getCurrentChannel().getMessagesAdapter() == null)
+		{
+			LogUtil.trackMessage("checkMessagesAdapter() fail: currentChannel = " + getCurrentChannel() + " messagesAdapter = "
+					+ (getCurrentChannel() == null ? "null" : getCurrentChannel().getMessagesAdapter()) + " currentChatType = "
+					+ ChatServiceController.getCurrentChannelType() + " chatActivity = " + ChatServiceController.getChatActivity()
+					+ " chatFragment = " + ChatServiceController.getChatFragment());
+			return false;
+		}
+		return true;
+	}
 
-    private boolean checkMessagesAdapter() {
-        if (getCurrentChannel() == null || getCurrentChannel().getMessagesAdapter() == null) {
-            LogUtil.trackMessage("checkMessagesAdapter() fail: currentChannel = " + getCurrentChannel() + " messagesAdapter = "
-                    + (getCurrentChannel() == null ? "null" : getCurrentChannel().getMessagesAdapter()) + " currentChatType = "
-                    + ChatServiceController.getCurrentChannelType() + " chatActivity = " + ChatServiceController.getChatActivity()
-                    + " chatFragment = " + ChatServiceController.getChatFragment());
-            return false;
-        }
-        return true;
-    }
+	private void loadMoreMsg()
+	{
+		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "channelID");
+		createTimerTask();
 
-    private void loadMoreMsg() {
-        LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "channelID");
-        createTimerTask();
+		if (!checkMessagesAdapter())
+			return;
 
-        if (!checkMessagesAdapter())
-            return;
+		ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
+		// 极少情况下会发生
+		if (channel == null)
+			return;
+		LoadMoreMsgParam loadMoreMsgParam = getLoadMoreMsgParam(channel.channelType);
 
-        ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
-        // 极少情况下会发生
-        if (channel == null)
-            return;
-        LoadMoreMsgParam loadMoreMsgParam = getLoadMoreMsgParam(channel.channelType);
+		if (!getCurrentChannel().getLoadingStart() && loadMoreMsgParam != null)
+		{
+			LogUtil.trackPageView("LoadMoreMsg");
+			getCurrentChannel().setLoadingStart(true);
+			// 可能有异常 getCount() on a null object reference
+			oldAdapterCount = getCurrentChannel().getMessagesAdapter().getCount();
+			loadMoreCount = 0;
+			channel.isLoadingAllNew = false;
+			if (loadMoreMsgParam.fetchFromServer)
+			{
+				LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "从server加载消息");
+				if (WebSocketManager.isWebSocketEnabled() && WebSocketManager.isRecieveFromWebSocket(channel.channelType))
+				{
+					String room = "";
+					if (channel.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY) {
+                          room = WebSocketManager.getCountryRoomId();
+					} else if (channel.channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE) {
+						  room = WebSocketManager.getAllianceRoomId();
+					}else if(channel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM && channel.channelID.contains("warzone_")){
+						room = WebSocketManager.getWarZoneRoomId();
+					}
+					WebSocketManager.getInstance().getHistoryMsgs(room,0,loadMoreMsgParam.requestMaxTime);
+				}else {
+					if(ChatServiceController.chat_msg_independent){
+						JniController.getInstance().excuteJNIVoidMethod(
+								"getMsgBySeqId",
+								new Object[]{
+										Integer.valueOf(loadMoreMsgParam.requestMinSeqId),
+										Integer.valueOf(loadMoreMsgParam.requestMaxSeqId),
+										Integer.valueOf(channel.channelType),
+										channel.channelID});
+					}
+				}
+			}
+			else
+			{
+				LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "从db加载消息");
+				if (!loadMoreMsgParam.useTime)
+				{
+					ChannelManager.getInstance().loadMoreMsgFromDB(channel, loadMoreMsgParam.requestMinSeqId,
+							loadMoreMsgParam.requestMaxSeqId, channel.getMinCreateTime(), false);
+				}
+				else
+				{
+					ChannelManager.getInstance().loadMoreMsgFromDB(channel, -1, -1, channel.getMinCreateTime(), true);
+				}
+			}
+		}
 
-        if (!getCurrentChannel().getLoadingStart() && loadMoreMsgParam != null) {
-            LogUtil.trackPageView("LoadMoreMsg");
-            getCurrentChannel().setLoadingStart(true);
-            // 可能有异常 getCount() on a null object reference
-            oldAdapterCount = getCurrentChannel().getMessagesAdapter().getCount();
-            loadMoreCount = 0;
-            channel.isLoadingAllNew = false;
-            if (loadMoreMsgParam.fetchFromServer) {
-                LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "从server加载消息");
-                if (WebSocketManager.isWebSocketEnabled() && WebSocketManager.isRecieveFromWebSocket(channel.channelType)) {
-                    String room = "";
-                    if (channel.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY) {
-                        room = WebSocketManager.getCountryRoomId();
-                    } else if (channel.channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE) {
-                        room = WebSocketManager.getAllianceRoomId();
-                    }
-                    WebSocketManager.getInstance().getHistoryMsgs(room, 0, loadMoreMsgParam.requestMaxTime);
-                } else {
-                    if (ChatServiceController.chat_msg_independent) {
-                        JniController.getInstance().excuteJNIVoidMethod(
-                                "getMsgBySeqId",
-                                new Object[]{
-                                        Integer.valueOf(loadMoreMsgParam.requestMinSeqId),
-                                        Integer.valueOf(loadMoreMsgParam.requestMaxSeqId),
-                                        Integer.valueOf(channel.channelType),
-                                        channel.channelID});
-                    }
-                }
-            } else {
-                LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "从db加载消息");
-                if (!loadMoreMsgParam.useTime) {
-                    ChannelManager.getInstance().loadMoreMsgFromDB(channel, loadMoreMsgParam.requestMinSeqId,
-                            loadMoreMsgParam.requestMaxSeqId, -1, false);
-                } else {
-                    ChannelManager.getInstance().loadMoreMsgFromDB(channel, -1, -1, channel.getMinCreateTime(), true);
-                }
-            }
-        }
+	}
 
-    }
+	private void loadMoreMail()
+	{
+		if (!checkMessagesAdapter())
+			return;
 
-    private void loadMoreMail() {
-        if (!checkMessagesAdapter())
-            return;
-
-        if (!getCurrentChannel().getLoadingStart() && hasMoreData()) {
-            LogUtil.trackPageView("LoadMoreMail");
+		if (!getCurrentChannel().getLoadingStart() && hasMoreData())
+		{
+			LogUtil.trackPageView("LoadMoreMail");
 
             ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
             ChannelManager.getInstance().loadMoreMsgFromDB(channel, -1, -1, channel.getMinCreateTime(), true);
-        }
+		}
 
-        createTimerTask();
-    }
+		createTimerTask();
+	}
 
-    /**
-     * 时机：各个参数变化时、初始化时 server数据变化时：GetNewMsg返回时 view数据变化时：获取到新消息时
-     */
-    public void refreshHasMoreData() {
-        LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW
-                , "isInMail()", isInMail()
-                , "isGetingNewMsg", ChannelManager.getInstance().isGetingNewMsg
-        );
-        if (!isInMail()) {
-            if (ChannelManager.getInstance().isGetingNewMsg) {
-                hasMoreData = false;
-            } else {
-                hasMoreData = getLoadMoreMsgParam(ChatServiceController.getCurrentChannelType()) != null;
-            }
-        } else {
-            ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
-            if (channel == null) {
-                LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "channel ==null");
-                hasMoreData = false;
-                return;
-            }
-            List<MsgItem> dbUserMails = DBManager.getInstance().getMsgsByTime(channel.getChatTable(), channel.getMinCreateTime(), 1);
-            hasMoreData = dbUserMails.size() > 0;
-            LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "hasMoreData", hasMoreData);
-        }
-        LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "hasMoreData1", hasMoreData);
-    }
+	/**
+	 * 时机：各个参数变化时、初始化时 server数据变化时：GetNewMsg返回时 view数据变化时：获取到新消息时
+	 */
+	public void refreshHasMoreData()
+	{
+		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW 
+				,"isInMail()",isInMail() 
+				,"isGetingNewMsg",ChannelManager.getInstance().isGetingNewMsg
+				);
+		if (!isInMail())
+		{
+			if (ChannelManager.getInstance().isGetingNewMsg)
+			{
+				hasMoreData = false;
+			}
+			else
+			{
+				hasMoreData = getLoadMoreMsgParam(ChatServiceController.getCurrentChannelType()) != null;
+			}
+		}
+		else
+		{
+			ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
+			if (channel == null)
+			{
+				LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW ,"channel ==null");
+				hasMoreData = false;
+				return;
+			}
+			List<MsgItem> dbUserMails = DBManager.getInstance().getMsgsByTime(channel.getChatTable(), channel.getMinCreateTime(), 1);
+			hasMoreData = dbUserMails.size() > 0;
+			LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW ,"hasMoreData",hasMoreData);
+		}
+		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW ,"hasMoreData1",hasMoreData);
+	}
 
-    private boolean isInMail() {
-        return getCurrentChannel().tab == TAB_MAIL && !ChatServiceController.isInChatRoom();
-    }
+	private boolean isInMail()
+	{
+		return getCurrentChannel().tab == TAB_MAIL && !ChatServiceController.isInChatRoom();
+	}
 
-    public static String chatStatus = "";
+	public static String	chatStatus	= "";
 
-    public static void setConnectionStatus(final String title) {
-        chatStatus = title;
-        if (!ChatServiceController.isInMailDialog() && ChatServiceController.getChatFragment() != null) {
-            ChatServiceController.hostActivity.runOnUiThread(new Runnable() {
-                public void run() {
-                    if (ChatServiceController.getChatFragment() != null) {
-                        if (StringUtils.isNotEmpty(title)) {
-                            ChatServiceController.getChatFragment().getTitleLabel().setText(title);
-                            ChatServiceController.getChatFragment().refreshNetState(ChatServiceController.getCurrentChannelType(), true);
-                        } else {
-                            ChatServiceController.getChatFragment().getTitleLabel()
-                                    .setText(LanguageManager.getLangByKey(LanguageKeys.TITLE_CHAT));
-                        }
-                    }
-                }
-            });
-        }
-    }
+	public static void setConnectionStatus(final String title)
+	{
+		chatStatus = title;
+		if (!ChatServiceController.isInMailDialog() && ChatServiceController.getChatFragment() != null)
+		{
+			ChatServiceController.hostActivity.runOnUiThread(new Runnable()
+			{
+				public void run()
+				{
+					if (ChatServiceController.getChatFragment() != null)
+					{
+						if (StringUtils.isNotEmpty(title))
+						{
+							ChatServiceController.getChatFragment().getTitleLabel().setText(title);
+						}
+						else
+						{
+							ChatServiceController.getChatFragment().getTitleLabel()
+									.setText(LanguageManager.getLangByKey(LanguageKeys.TITLE_CHAT));
+						}
+					}
+				}
+			});
+		}
+	}
 
-    public boolean hasMoreData() {
+	public boolean hasMoreData()
+	{
         return hasMoreData;
-    }
+	}
 
-    private ListViewLoadListener mListViewLoadListener = new ListViewLoadListener() {
-        @Override
-        public void refreshData() {
-            if (isInMail()) {
-                loadMoreMail();
-            } else {
-                loadMoreMsg();
-            }
-        }
+	private ListViewLoadListener	mListViewLoadListener	= new ListViewLoadListener()
+															{
+																@Override
+																public void refreshData()
+																{
+																	if (isInMail())
+																	{
+																		loadMoreMail();
+																	}
+																	else
+																	{
+																		loadMoreMsg();
+																	}
+																}
 
-        @Override
-        public boolean getIsListViewToTop() {
-            if (getCurrentChannel() == null
-                    || getCurrentChannel().messagesListView == null)
-                return false;
-            ListView listView = getCurrentChannel().messagesListView;
+																@Override
+																public boolean getIsListViewToTop()
+																{
+																	if (getCurrentChannel() == null
+																			|| getCurrentChannel().messagesListView == null)
+																		return false;
+																	ListView listView = getCurrentChannel().messagesListView;
 
-            View topListView = listView.getChildAt(listView
-                    .getFirstVisiblePosition());
-            if ((topListView == null) || (topListView.getTop() != 0)) {
-                return false;
-            } else {
-                return true;
-            }
-        }
+																	View topListView = listView.getChildAt(listView
+																			.getFirstVisiblePosition());
+																	if ((topListView == null) || (topListView.getTop() != 0))
+																	{
+																		return false;
+																	}
+																	else
+																	{
+																		return true;
+																	}
+																}
 
-        @Override
-        public boolean getIsListViewToBottom() {
-            if (getCurrentChannel() == null
-                    || getCurrentChannel().messagesListView == null)
-                return false;
-            ListView listView = getCurrentChannel().messagesListView;
-            View bottomView = listView.getChildAt(-1 + listView.getChildCount());
-            if (bottomView == null)
-                return false;
-            if (bottomView.getBottom() > listView.getHeight()
-                    || (listView.getLastVisiblePosition() != -1
-                    + listView.getAdapter().getCount())) {
-                return false;
-            } else {
-                return true;
-            }
-        }
-    };
+																@Override
+																public boolean getIsListViewToBottom()
+																{
+																	if (getCurrentChannel() == null
+																			|| getCurrentChannel().messagesListView == null)
+																		return false;
+																	ListView listView = getCurrentChannel().messagesListView;
+																	View bottomView = listView.getChildAt(-1 + listView.getChildCount());
+																	if (bottomView == null)
+																		return false;
+																	if (bottomView.getBottom() > listView.getHeight()
+																			|| (listView.getLastVisiblePosition() != -1
+																					+ listView.getAdapter().getCount()))
+																	{
+																		return false;
+																	}
+																	else
+																	{
+																		return true;
+																	}
+																}
+															};
 
-    private void createTimerTask() {
-        stopTimerTask();
-        mTimer = new Timer();
-        mTimerTask = new TimerTask() {
-            @Override
-            public void run() {
-                if (activity == null)
-                    return;
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            if (getCurrentChannel().pullDownToLoadListView != null) {
-                                getCurrentChannel().pullDownToLoadListView.hideProgressBar();
-                                resetMoreDataStart(getCurrentChannel().tab);
-                            }
-                        } catch (Exception e) {
-                            LogUtil.printException(e);
-                        }
-                    }
-                });
-            }
-        };
-        if (mTimer != null)
-            mTimer.schedule(mTimerTask, 2000);
-    }
+	private void createTimerTask()
+	{
+		stopTimerTask();
+		mTimer = new Timer();
+		mTimerTask = new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+				if (activity == null)
+					return;
+				activity.runOnUiThread(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						try
+						{
+							if (getCurrentChannel().pullDownToLoadListView != null)
+							{
+								getCurrentChannel().pullDownToLoadListView.hideProgressBar();
+								resetMoreDataStart(getCurrentChannel().tab);
+							}
+						}
+						catch (Exception e)
+						{
+							LogUtil.printException(e);
+						}
+					}
+				});
+			}
+		};
+		if (mTimer != null)
+			mTimer.schedule(mTimerTask, 2000);
+	}
 
-    private void stopTimerTask() {
-        if (mTimer != null) {
-            mTimer.cancel();
-            mTimer.purge();
-            mTimer = null;
-        }
-    }
+	private void stopTimerTask()
+	{
+		if (mTimer != null)
+		{
+			mTimer.cancel();
+			mTimer.purge();
+			mTimer = null;
+		}
+	}
 
-    private boolean hasMoreData = true;
+	private boolean				hasMoreData			= true;
 
-    private OnScrollListener mOnScrollListener = new AbsListView.OnScrollListener() {
+	private OnScrollListener	mOnScrollListener	= new AbsListView.OnScrollListener()
+													{
 
-        @Override
-        public void onScrollStateChanged(AbsListView view, int scrollState) {
-            if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-                if (getCurrentChannel() != null
-                        && getCurrentChannel().messagesListView != null) {
-                    View topView = getCurrentChannel().messagesListView
-                            .getChildAt(getCurrentChannel().messagesListView
-                                    .getFirstVisiblePosition());
-                    if ((topView != null) && (topView.getTop() == 0)
-                            && !getCurrentChannel().getLoadingStart()) {
-                        getCurrentChannel().pullDownToLoadListView.startTopScroll();
-                    }
-                }
+														@Override
+														public void onScrollStateChanged(AbsListView view, int scrollState)
+														{
+															if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE)
+															{
+																if (getCurrentChannel() != null
+																		&& getCurrentChannel().messagesListView != null)
+																{
+																	View topView = getCurrentChannel().messagesListView
+																			.getChildAt(getCurrentChannel().messagesListView
+																					.getFirstVisiblePosition());
+																	if ((topView != null) && (topView.getTop() == 0)
+																			&& !getCurrentChannel().getLoadingStart())
+																	{
+																		getCurrentChannel().pullDownToLoadListView.startTopScroll();
+																	}
+																}
 
-            }
+															}
 
-            if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING)
-                ChatServiceController.isListViewFling = true;
-            else
-                ChatServiceController.isListViewFling = false;
-        }
+															if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING)
+																ChatServiceController.isListViewFling = true;
+															else
+																ChatServiceController.isListViewFling = false;
+														}
 
-        @Override
-        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
-                             int totalItemCount) {
-            if (getCurrentChannel() != null
-                    && getCurrentChannel().pullDownToLoadListView != null
-                    && getCurrentChannel().pullDownToLoadListView.getVisibility() == View.VISIBLE) {
-                LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "onScroll_1");
-                if (hasMoreData()) {
-                    if (!getCurrentChannel().getLoadingStart()) {
-                        LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "onScroll_2");
-                        getCurrentChannel().pullDownToLoadListView
-                                .setAllowPullDownRefersh(false);
-                    } else {
-                        LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "onScroll_3");
-                        getCurrentChannel().pullDownToLoadListView
-                                .setAllowPullDownRefersh(true);
-                    }
-                } else {
-                    LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "onScroll_4");
-                    getCurrentChannel().pullDownToLoadListView
-                            .setAllowPullDownRefersh(true);
-                }
-            }
-        }
-    };
+														@Override
+														public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+																int totalItemCount)
+														{
+															if (getCurrentChannel() != null
+																	&& getCurrentChannel().pullDownToLoadListView != null
+																	&& getCurrentChannel().pullDownToLoadListView.getVisibility() == View.VISIBLE)
+															{
+																LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "onScroll_1");
+																if (hasMoreData())
+																{
+																	if (!getCurrentChannel().getLoadingStart())
+																	{
+																		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "onScroll_2");
+																		getCurrentChannel().pullDownToLoadListView
+																				.setAllowPullDownRefersh(false);
+																	}
+																	else
+																	{
+																		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "onScroll_3");
+																		getCurrentChannel().pullDownToLoadListView
+																				.setAllowPullDownRefersh(true);
+																	}
+																}
+																else
+																{
+																	LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_VIEW, "onScroll_4");
+																	getCurrentChannel().pullDownToLoadListView
+																			.setAllowPullDownRefersh(true);
+																}
+															}
+														}
+													};
 
-    public void onJoinAnnounceInvitationSuccess() {
-        if (getCountryChannelView() != null) {
-            // 隐藏noAllianceFrameLayout，点联盟自然会调用
-            getCountryChannelView().getMessagesAdapter().onJoinAnnounceInvitationSuccess();
-        }
-    }
+	public void onJoinAnnounceInvitationSuccess()
+	{
+		if (getCountryChannelView() != null)
+		{
+			// 隐藏noAllianceFrameLayout，点联盟自然会调用
+			getCountryChannelView().getMessagesAdapter().onJoinAnnounceInvitationSuccess();
+		}
+	}
 
-    public int getToastPosY() {
-        int[] location = {0, 0};
-        messagesListFrameLayout.getLocationOnScreen(location);
-        return location[1] + ScaleUtil.dip2px(activity, 5);
-    }
+	public int getToastPosY()
+	{
+		int[] location = { 0, 0 };
+		messagesListFrameLayout.getLocationOnScreen(location);
+		return location[1] + ScaleUtil.dip2px(activity, 5);
+	}
 
-    private final int TAB_COUNTRY = 0;
-    private final int TAB_ALLIANCE = 1;
-    private final int TAB_CHATROOM = 2;
-    private final int TAB_MAIL = 3;
+	private final int	TAB_COUNTRY		= 0;
+	private final int	TAB_ALLIANCE	= 1;
+	private final int	TAB_CHATROOM	= 2;
+	private final int	TAB_MAIL		= 3;
+	private final int	TAB_WARZONE		= 4;
 
-    private void showTab(int tab) {
-        CompatibleApiUtil.getInstance().setButtonAlpha(buttonCountry, tab == TAB_COUNTRY);
-        CompatibleApiUtil.getInstance().setButtonAlpha(buttonAlliance, tab == TAB_ALLIANCE);
-        CompatibleApiUtil.getInstance().setButtonAlpha(buttonChatRoom, tab == TAB_CHATROOM);
-        if (tab == TAB_MAIL) {
-            buttonsLinearLayout.setVisibility(View.GONE);
-            unread_layout.setVisibility(View.GONE);
-        } else {
-            buttonsLinearLayout.setVisibility(View.VISIBLE);
-            unread_layout.setVisibility(View.VISIBLE);
-            //imageView2.setVisibility(View.VISIBLE);
-            //imageView2.setVisibility(View.INVISIBLE);
-        }
+	private void showTab(int tab)
+	{
+		CompatibleApiUtil.getInstance().setButtonAlpha(buttonCountry, tab == TAB_COUNTRY);
+		CompatibleApiUtil.getInstance().setButtonAlpha(buttonAlliance, tab == TAB_ALLIANCE);
+		CompatibleApiUtil.getInstance().setButtonAlpha(buttonChatRoom, tab == TAB_CHATROOM);
+		CompatibleApiUtil.getInstance().setButtonAlpha(buttonWarZone, tab == TAB_WARZONE);
+		if (tab == TAB_MAIL)
+		{
+			buttonsLinearLayout.setVisibility(View.GONE);
+			if(ChatServiceController.isFromBd){
+				anchor_info_layout.setVisibility(View.VISIBLE);
+			}
+			unread_layout.setVisibility(View.GONE);
+			getReturnGameUIButton().setVisibility(View.VISIBLE);
+			getReturnGameUIButton().setOnClickListener(new View.OnClickListener(){
+				@Override
+				public void onClick(View view)
+				{
+					ServiceInterface.activityStackExit();
+				}
+			});
+		}
+		else
+		{
+			buttonsLinearLayout.setVisibility(View.VISIBLE);
+			anchor_info_layout.setVisibility(View.GONE);
+			unread_layout.setVisibility(View.VISIBLE);
+			getReturnGameUIButton().setVisibility(View.GONE);
+			//imageView2.setVisibility(View.VISIBLE);
+			//imageView2.setVisibility(View.INVISIBLE);
+		}
+		
+		boolean isInAlliance = false;
+		// 少量异常 Attempt to read from field 'java.lang.String
+		// com.chatsdk.model.UserInfo.allianceId' on a null object
+		// reference
+		if (UserManager.getInstance().getCurrentUser() != null)
+		{
+			isInAlliance = UserManager.getInstance().getCurrentUser().allianceId.equals("") ? false : true;
+		}
 
-        boolean isInAlliance = false;
-        // 少量异常 Attempt to read from field 'java.lang.String
-        // com.chatsdk.model.UserInfo.allianceId' on a null object
-        // reference
-        if (UserManager.getInstance().getCurrentUser() != null) {
-            isInAlliance = UserManager.getInstance().getCurrentUser().allianceId.equals("") ? false : true;
-        }
+		getMemberSelectButton().setVisibility(View.GONE);
+		getRedPackageButton().setVisibility(View.GONE);
+		getGoLiveListButton().setVisibility(View.GONE);
+		getCreateChatRoomButton().setVisibility(View.GONE);
+		messagesListFrameLayout.setVisibility(View.VISIBLE);
+		bottomLayout.setVisibility(View.VISIBLE);
+		channelListFragmentLayout.setVisibility(View.GONE);
+		if (tab == TAB_ALLIANCE) {
+			getRedPackageButton().setVisibility(ConfigManager.isRedPackageEnabled && isInAlliance ? View.VISIBLE : View.GONE);
+		} else if (tab == TAB_COUNTRY){
+			getRedPackageButton().setVisibility(ConfigManager.isRedPackageEnabled ? View.VISIBLE : View.GONE);
+		}else if(tab == TAB_WARZONE){
+			getRedPackageButton().setVisibility(ConfigManager.isRedPackageEnabled ? View.VISIBLE : View.GONE);
+		}else if (tab == TAB_CHATROOM){
+			getCreateChatRoomButton().setVisibility(View.VISIBLE);
+			setRedPackageSensorVisibility(View.GONE);
+			messagesListFrameLayout.setVisibility(View.GONE);
+			bottomLayout.setVisibility(View.GONE);
+			channelListFragmentLayout.setVisibility(View.VISIBLE);
 
-        getMemberSelectButton().setVisibility(View.GONE);
-        getRedPackageButton().setVisibility(View.GONE);
-        getGoLiveListButton().setVisibility(View.GONE);
-        getCreateChatRoomButton().setVisibility(View.GONE);
-        messagesListFrameLayout.setVisibility(View.VISIBLE);
-        bottomLayout.setVisibility(View.VISIBLE);
-        anchor_info_layout.setVisibility(View.GONE);
-        channelListFragmentLayout.setVisibility(View.GONE);
-        if (tab == TAB_ALLIANCE) {
-            getRedPackageButton().setVisibility(ConfigManager.isRedPackageEnabled && isInAlliance ? View.VISIBLE : View.GONE);
-        } else if (tab == TAB_COUNTRY) {
-            getRedPackageButton().setVisibility(ConfigManager.isRedPackageEnabled ? View.VISIBLE : View.GONE);
-        } else if (tab == TAB_CHATROOM) {
-            getCreateChatRoomButton().setVisibility(View.VISIBLE);
-            setRedPackageSensorVisibility(View.GONE);
-            messagesListFrameLayout.setVisibility(View.GONE);
-            bottomLayout.setVisibility(View.GONE);
-            channelListFragmentLayout.setVisibility(View.VISIBLE);
+		}else if(ChatServiceController.isInChatRoom()){
+			getMemberSelectButton().setVisibility(View.VISIBLE);
+		}
+		if(ChatServiceController.isFromBd&&ChatServiceController.curLiveRoomId.contains("live_")){
+			getGoLiveListButton().setVisibility(View.VISIBLE);
+		}
 
-        } else if (ChatServiceController.isInChatRoom()) {
-            getMemberSelectButton().setVisibility(View.VISIBLE);
-            getGoLiveListButton().setVisibility(View.GONE);
-        }
-        if (ChatServiceController.isInLiveRoom()) {
-            buttonsLinearLayout.setVisibility(View.GONE);
-            anchor_info_layout.setVisibility(View.VISIBLE);
-            getGoLiveListButton().setVisibility(View.VISIBLE);
-            if (ChatServiceController.isAnchorHost && ChatServiceController.isInSelfLiveRoom()) {
-                getMemberSelectButton().setVisibility(View.VISIBLE);
-            } else {
-                getMemberSelectButton().setVisibility(View.GONE);
-            }
+		for (int i = 0; i < getChannelViewCount(); i++)
+		{
+			if (getChannelView(i).pullDownToLoadListView != null)
+			{
+				getChannelView(i).pullDownToLoadListView.setVisibility(tab == i ? View.VISIBLE : View.GONE);
+				if ((i == TAB_ALLIANCE && !isInAlliance) || (i == TAB_COUNTRY && ChatServiceController.isInDragonSencen()))
+				{
+					getChannelView(i).pullDownToLoadListView.setVisibility(View.GONE);
+				}
+			}
+		}
 
-            getRedPackageButton().setVisibility(View.GONE);
-            getCreateChatRoomButton().setVisibility(View.GONE);
-        }
+		horn_checkbox.setVisibility((tab == 0 && ConfigManager.enableChatHorn) ? View.VISIBLE : View.GONE);
 
-        for (int i = 0; i < getChannelViewCount(); i++) {
-            if (getChannelView(i).pullDownToLoadListView != null) {
-                getChannelView(i).pullDownToLoadListView.setVisibility(tab == i ? View.VISIBLE : View.GONE);
-                if ((i == TAB_ALLIANCE && !isInAlliance) || (i == TAB_COUNTRY && ChatServiceController.isInDragonSencen())) {
-                    getChannelView(i).pullDownToLoadListView.setVisibility(View.GONE);
-                }
-            }
-        }
+		noAllianceFrameLayout.setVisibility((tab == TAB_ALLIANCE && !isInAlliance) ? View.VISIBLE : View.GONE);
+		hs__dragon_chat_tip_layout.setVisibility((tab == TAB_COUNTRY && ChatServiceController.isInDragonSencen()) ? View.VISIBLE
+				: View.GONE);
+		relativeLayout1.setVisibility((tab == TAB_ALLIANCE && !isInAlliance) ? View.GONE : View.VISIBLE);
 
-        horn_checkbox.setVisibility((tab == 0 && ConfigManager.enableChatHorn) ? View.VISIBLE : View.GONE);
-
-        noAllianceFrameLayout.setVisibility((tab == TAB_ALLIANCE && !isInAlliance) ? View.VISIBLE : View.GONE);
-        hs__dragon_chat_tip_layout.setVisibility((tab == TAB_COUNTRY && ChatServiceController.isInDragonSencen()) ? View.VISIBLE
-                : View.GONE);
-        relativeLayout1.setVisibility((tab == TAB_ALLIANCE && !isInAlliance) ? View.GONE : View.VISIBLE);
-
-        if (tab == TAB_ALLIANCE && !isInAlliance && ConfigManager.getInstance().isFirstJoinAlliance && !isJoinAlliancePopupShowing) {
-            try {
-                ChatServiceController.doHostAction("joinAllianceBtnClick", "", "", "", true);
+		if (tab == TAB_ALLIANCE && !isInAlliance && ConfigManager.getInstance().isFirstJoinAlliance && !isJoinAlliancePopupShowing)
+		{
+			try
+			{
+				ChatServiceController.doHostAction("joinAllianceBtnClick", "", "", "", true);
 //				showJoinAlliancePopup();
-            } catch (Exception e) {
-                LogUtil.printException(e);
-            }
-        }
+			}
+			catch (Exception e)
+			{
+				LogUtil.printException(e);
+			}
+		}
 
-        if (tab == TAB_COUNTRY) {
-            ChatServiceController.setCurrentChannelType(DBDefinition.CHANNEL_TYPE_COUNTRY);
-            if (ChatServiceController.isHornItemUsed && ConfigManager.enableChatHorn) {
-                horn_checkbox.setChecked(true);
-                refreshBottomUI(true);
-                ConfigManager.isHornBtnEnable = true;
-            } else {
-                horn_checkbox.setChecked(ConfigManager.isHornBtnEnable);
-                refreshBottomUI(ConfigManager.isHornBtnEnable);
-            }
+		if (tab == TAB_COUNTRY)
+		{
+			ChatServiceController.setCurrentChannelType(DBDefinition.CHANNEL_TYPE_COUNTRY);
+			if (ChatServiceController.isHornItemUsed && ConfigManager.enableChatHorn)
+			{
+				horn_checkbox.setChecked(true);
+				refreshBottomUI(true);
+				ConfigManager.isHornBtnEnable = true;
+			}
+			else
+			{
+				horn_checkbox.setChecked(ConfigManager.isHornBtnEnable);
+				refreshBottomUI(ConfigManager.isHornBtnEnable);
+			}
 
 //			if (ChatServiceController.isChatRestrictForLevel())
 //			{
@@ -2552,428 +2743,424 @@ public class ChatFragment extends ActionBarFragment
 //				replyField.setHint(LanguageManager.getLangByKey(LanguageKeys.CHAT_RESTRICT_TIP,
 //						"" + ChatServiceController.getChatRestrictLevel()));
 //			}
-        } else {
-            replyField.setEnabled(true);
-            replyField.setHint("");
-            if (tab == TAB_ALLIANCE) {
-                ChatServiceController.setCurrentChannelType(DBDefinition.CHANNEL_TYPE_ALLIANCE);
-            } else if (tab == TAB_CHATROOM) {
-                ChatServiceController.isCreateChatRoom = false;
-                ChatServiceController.setCurrentChannelType(DBDefinition.CHANNEL_TYPE_CHATROOM);
-                notifyDataSetChanged();
-            }
+		}
+		else
+		{
+			replyField.setEnabled(true);
+			replyField.setHint("");
+			if (tab == TAB_ALLIANCE)
+			{
+				ChatServiceController.setCurrentChannelType(DBDefinition.CHANNEL_TYPE_ALLIANCE);
+			}
+			else if(tab == TAB_WARZONE){
+				ChatServiceController.setCurrentChannelType(DBDefinition.CHANNEL_TYPE_CHATROOM);
+			}
+			else if (tab == TAB_CHATROOM)
+			{
+				ChatServiceController.isCreateChatRoom = false;
+				ChatServiceController.setCurrentChannelType(DBDefinition.CHANNEL_TYPE_CHATROOM);
+				notifyDataSetChanged();
+			}
 
-            refreshBottomUI(false);
-        }
-        setChannelViewIndex(tab);
+			refreshBottomUI(false);
+		}
+		setChannelViewIndex(tab);
 
-        if (checkMessagesAdapter()) {
-            oldAdapterCount = getCurrentChannel().getMessagesAdapter().getCount();
-            refreshToolTip();
-            this.refreshHasMoreData();
+		if (checkMessagesAdapter())
+		{
+			oldAdapterCount = getCurrentChannel().getMessagesAdapter().getCount();
+			refreshToolTip();
+			this.refreshHasMoreData();
 
-            if (getCurrentChannel().chatChannel != null) {
-                getCurrentChannel().chatChannel.getTimeNeedShowMsgIndex();
-                getCurrentChannel().chatChannel.markAsRead();
-            }
-        }
-        if (tab != TAB_MAIL) {
-            refreshUnreadCount();
-        }
-        if (ConfigManager.isRedPackageShakeEnabled) {
-            // 刷新红包显示数量
-            if (ChatServiceController.getChatActivity() != null) {
-                ChatServiceController.getChatActivity().refreshRedPackageNum();
-            }
-        }
-    }
+			if (getCurrentChannel().chatChannel != null)
+			{
+				getCurrentChannel().chatChannel.getTimeNeedShowMsgIndex();
+				getCurrentChannel().chatChannel.markAsRead();
+			}
+		}
+		if(tab != TAB_MAIL){
+			refreshUnreadCount();
+		}
+		if(ConfigManager.isRedPackageShakeEnabled) {
+			// 刷新红包显示数量
+			if(ChatServiceController.getChatActivity() != null) {
+				ChatServiceController.getChatActivity().refreshRedPackageNum();
+			}
+		}
+	}
 
-    int mIndex = 0;
+	int	mIndex	= 0;
 
-    private void refreshWordCount() {
-        if (replyField == null || wordCount == null)
-            return;
+	private void refreshWordCount()
+	{
+		if (replyField == null || wordCount == null)
+			return;
 
-        if (replyField.getLineCount() > 2) {
-            wordCount.setVisibility(View.VISIBLE);
-        } else {
-            wordCount.setVisibility(View.GONE);
-        }
-        wordCount.setText(replyField.getText().length() + "/" + curMaxInputLength);
-    }
+		if (replyField.getLineCount() > 2)
+		{
+			wordCount.setVisibility(View.VISIBLE);
+		}
+		else
+		{
+			wordCount.setVisibility(View.GONE);
+		}
+		wordCount.setText(replyField.getText().length() + "/" + curMaxInputLength);
+	}
 
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
+	@Override
+	public void onStop()
+	{
+		super.onStop();
+	}
 
-    public void onBackClicked() {
-    }
+	public void onBackClicked()
+	{
+	}
 
-    private final static int sendButtonBaseWidth = 173;
-    private final static int sendButtonBaseHeight = 84;
-    private final static int hornCheckBoxWidth = 70;
+	private final static int	sendButtonBaseWidth		= 173;
+	private final static int	sendButtonBaseHeight	= 84;
+	private final static int	hornCheckBoxWidth		= 70;
 
-    public void adjustHeight() {
-        if (!ConfigManager.getInstance().scaleFontandUI) {
-            if (addReply.getWidth() != 0 && !adjustSizeCompleted) {
-                adjustSizeCompleted = true;
-            }
-            return;
-        }
+	public void adjustHeight()
+	{
+		try {
+			if (!ConfigManager.getInstance().scaleFontandUI) {
+				if (addReply.getWidth() != 0 && !adjustSizeCompleted) {
+					adjustSizeCompleted = true;
+				}
+				return;
+			}
 
-        if (addReply.getWidth() != 0 && !adjustSizeCompleted) {
-            // S3手机上的尺寸(目标效果是在S3手机上调的好，界面、文字都相对于它进行缩放)
-            // addReply宽度是宽度的1/4，让其高度保持长宽比，然后再计算出缩放的倍率（textRatio）
-            double sendButtonRatio = (double) sendButtonBaseHeight / (double) sendButtonBaseWidth;
-            float hornRatio = (float) (addReply.getWidth() * sendButtonRatio / hornCheckBoxWidth);
+			if (addReply != null && addReply.getWidth() != 0 && !adjustSizeCompleted) {
+				// S3手机上的尺寸(目标效果是在S3手机上调的好，界面、文字都相对于它进行缩放)
+				// addReply宽度是宽度的1/4，让其高度保持长宽比，然后再计算出缩放的倍率（textRatio）
+				double sendButtonRatio = (double) sendButtonBaseHeight / (double) sendButtonBaseWidth;
+				float hornRatio = (float) (addReply.getWidth() * sendButtonRatio / hornCheckBoxWidth);
 //			ViewHelper.setScaleX(horn_checkbox, hornRatio > 1 ? 1 : hornRatio);
 //			ViewHelper.setScaleY(horn_checkbox, hornRatio > 1 ? 1 : hornRatio);
 
 //			addReply.setLayoutParams(new LinearLayout.LayoutParams(addReply.getWidth(), (int) (addReply.getWidth() * sendButtonRatio)));
 
-            int buttomWidth = 79;
-            buttonChatRoom.setVisibility(View.GONE);
-            if (ChatServiceController.isChatRoomEnable) {
+				int buttomWidth = 79;
+				buttonChatRoom.setVisibility(View.GONE);
+				if (ChatServiceController.isChatRoomEnable) {
 
-                // 购买vip特权才能看到创建按钮，创建的数量达到上限也不能在创建
-                int count = ChannelManager.getInstance().gettingAllRoomCount();
-                boolean enbale = count > 0;
-                if (!enbale) {
-                    int vipPrivilege = JniController.getInstance().excuteJNIMethod("getCanCreateChatRoomNum", null);
-                    enbale = vipPrivilege > 0;
-                }
-                if (enbale) {
-                    buttomWidth = 53;
-                    LinearLayout.LayoutParams buttonChatRoomParams = (LinearLayout.LayoutParams) buttonChatRoom.getLayoutParams();
-                    buttonChatRoomParams.height = (int) (buttomWidth * ConfigManager.scaleRatioButton);
-                    buttonChatRoom.setLayoutParams(buttonChatRoomParams);
-                    buttonChatRoom.setVisibility(View.VISIBLE);
-                }
-            }
-            LinearLayout.LayoutParams buttonCountryParams = (LinearLayout.LayoutParams) buttonCountry.getLayoutParams();
-            buttonCountryParams.height = (int) (buttomWidth * ConfigManager.scaleRatioButton);
-            buttonCountry.setLayoutParams(buttonCountryParams);
+					// 购买vip特权才能看到创建按钮，创建的数量达到上限也不能在创建
+					int count = ChannelManager.getInstance().gettingAllRoomCount();
+					boolean enbale = count > 0;
+					if (!enbale) {
+						int vipPrivilege = JniController.getInstance().excuteJNIMethod("getCanCreateChatRoomNum", null);
+						enbale = vipPrivilege > 0;
+					}
+					if (enbale) {
+						buttomWidth = 53;
+						LinearLayout.LayoutParams buttonChatRoomParams = (LinearLayout.LayoutParams) buttonChatRoom.getLayoutParams();
+						buttonChatRoomParams.height = (int) (buttomWidth * ConfigManager.scaleRatioButton);
+						buttonChatRoom.setLayoutParams(buttonChatRoomParams);
+						buttonChatRoom.setVisibility(View.VISIBLE);
+					}
+				}
+				buttonWarZone.setVisibility(View.GONE);
+				if (ChatServiceController.isWarZoneRoomEnable && ChatServiceController.getCurrentChannelType() != DBDefinition.CHANNEL_TYPE_USER) {
+					boolean isAddWarZoneRoom = JniController.getInstance().excuteJNIMethod("isNeedAddWarZone", null);
 
-            LinearLayout.LayoutParams buttonAllianceParams = (LinearLayout.LayoutParams) buttonAlliance.getLayoutParams();
-            buttonAllianceParams.height = (int) (buttomWidth * ConfigManager.scaleRatioButton);
-            buttonAlliance.setLayoutParams(buttonAllianceParams);
+					//判断是否加入战区聊天室
+					if (isAddWarZoneRoom && !ChatServiceController.isAddWarZoneRoom) {
+						ChatServiceController.isAddWarZoneRoom = true;
+						WebSocketManager.getInstance().joinWarZoneRoom();
+					} else if (!isAddWarZoneRoom && ChatServiceController.isAddWarZoneRoom) {
+						WebSocketManager.getInstance().leaveWarZoneRoom();
+						ChannelManager.getInstance().deleteChannel(ChannelManager.getInstance().getWarZoneChannel());
+					}
 
-            LinearLayout.LayoutParams param3 = new LinearLayout.LayoutParams((int) (13 * ConfigManager.scaleRatio),
-                    (int) (17 * ConfigManager.scaleRatio), 1);
-            param3.gravity = Gravity.CENTER_VERTICAL;
-            tooltipArrow.setLayoutParams(param3);
+					if (isAddWarZoneRoom) {
+						buttomWidth = 53;
+						LinearLayout.LayoutParams buttonWarZoneParams = (LinearLayout.LayoutParams) buttonWarZone.getLayoutParams();
+						buttonWarZoneParams.height = (int) (buttomWidth * ConfigManager.scaleRatioButton);
+						buttonWarZone.setLayoutParams(buttonWarZoneParams);
+						buttonWarZone.setVisibility(View.VISIBLE);
+					}
+				}
+				LinearLayout.LayoutParams buttonCountryParams = (LinearLayout.LayoutParams) buttonCountry.getLayoutParams();
+				buttonCountryParams.height = (int) (buttomWidth * ConfigManager.scaleRatioButton);
+				buttonCountry.setLayoutParams(buttonCountryParams);
 
-            // TODO 删除不用的
-            // 9.png图片两端的宽度无法放大，只放大高度显得太狭长
-            // RelativeLayout.LayoutParams param2 = new
-            // RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT,
-            // LayoutParams.WRAP_CONTENT);
-            // param2.setMargins(dip2px(activity, -4), dip2px(activity, -2),
-            // dip2px(activity, -1), 0);
-            // param2.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-            // imageView2.setLayoutParams(param2);
-            // imageView2.setScaleType(ScaleType.FIT_XY);
-            // ViewHelper.setScaleY(imageView2, (float) scaleRatioButton);
+				LinearLayout.LayoutParams buttonAllianceParams = (LinearLayout.LayoutParams) buttonAlliance.getLayoutParams();
+				buttonAllianceParams.height = (int) (buttomWidth * ConfigManager.scaleRatioButton);
+				buttonAlliance.setLayoutParams(buttonAllianceParams);
 
-            ScaleUtil.adjustTextSize(addReply, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(replyField, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(wordCount, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(buttonCountry, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(buttonAlliance, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(buttonChatRoom, ConfigManager.scaleRatio);
+				LinearLayout.LayoutParams param3 = new LinearLayout.LayoutParams((int) (13 * ConfigManager.scaleRatio),
+						(int) (17 * ConfigManager.scaleRatio), 1);
+				param3.gravity = Gravity.CENTER_VERTICAL;
+				tooltipArrow.setLayoutParams(param3);
 
-            ScaleUtil.adjustTextSize(buttonJoinAlliance, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(noAllianceTipText, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(dragon_chat_tip_text, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(tooltipLabel, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(horn_scroll_text, ConfigManager.scaleRatio);
-            ScaleUtil.adjustTextSize(horn_name, ConfigManager.scaleRatio);
+				// TODO 删除不用的
+				// 9.png图片两端的宽度无法放大，只放大高度显得太狭长
+				// RelativeLayout.LayoutParams param2 = new
+				// RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT,
+				// LayoutParams.WRAP_CONTENT);
+				// param2.setMargins(dip2px(activity, -4), dip2px(activity, -2),
+				// dip2px(activity, -1), 0);
+				// param2.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+				// imageView2.setLayoutParams(param2);
+				// imageView2.setScaleType(ScaleType.FIT_XY);
+				// ViewHelper.setScaleY(imageView2, (float) scaleRatioButton);
 
-            adjustSizeCompleted = true;
+				ScaleUtil.adjustTextSize(addReply, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(replyField, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(wordCount, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(buttonCountry, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(buttonAlliance, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(buttonChatRoom, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(buttonWarZone, ConfigManager.scaleRatio);
 
-            if (lazyLoading) {
-                activity.showProgressBar();
-                onBecomeVisible();
-            }
-        }
-    }
+				ScaleUtil.adjustTextSize(buttonJoinAlliance, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(noAllianceTipText, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(dragon_chat_tip_text, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(tooltipLabel, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(horn_scroll_text, ConfigManager.scaleRatio);
+				ScaleUtil.adjustTextSize(horn_name, ConfigManager.scaleRatio);
 
-    public void showRedPackageConfirm(final MsgItem msgItem) {
-        if (activity == null)
-            return;
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    activity.showRedPackagePopup(msgItem);
-                } catch (Exception e) {
-                    LogUtil.printException(e);
-                }
-            }
-        });
-    }
+				adjustSizeCompleted = true;
 
-    public void hideRedPackageConfirm() {
-        if (activity == null)
-            return;
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    activity.hideRedPackagePopup();
-                } catch (Exception e) {
-                    LogUtil.printException(e);
-                }
-            }
-        });
+				if (lazyLoading) {
+					activity.showProgressBar();
+					onBecomeVisible();
+				}
+			}
+		}catch (Exception e){
+			LogUtil.printException(e);
+		}
+	}
 
-    }
+	public void showRedPackageConfirm(final MsgItem msgItem)
+	{
+		if (activity == null)
+			return;
+		activity.runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					activity.showRedPackagePopup(msgItem);
+				}
+				catch (Exception e)
+				{
+					LogUtil.printException(e);
+				}
+			}
+		});
+	}
 
-    public MsgItem getCurrentRedPackageItem() {
-        if (activity != null) {
-            return activity.getRedPackagePopItem();
-        }
-        return null;
-    }
+	public void hideRedPackageConfirm()
+	{
+		if (activity == null)
+			return;
+		activity.runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					activity.hideRedPackagePopup();
+				}
+				catch (Exception e)
+				{
+					LogUtil.printException(e);
+				}
+			}
+		});
 
-    protected void onContentAreaTouched() {
-        hideSoftKeyBoard();
-    }
+	}
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public void onDestroy() {
-        stopTimerTask();
-        stopLiveMemberTask();
-        ConfigManager.activityType = -1;
-        ChatServiceController.isContactMod = false;
-        ChatServiceController.needShowAllianceDialog = false;
+	public MsgItem getCurrentRedPackageItem()
+	{
+		if (activity != null)
+		{
+			return activity.getRedPackagePopItem();
+		}
+		return null;
+	}
 
-        if (tooltipLayout != null)
-            tooltipLayout.setOnClickListener(null);
-        if (buttonJoinAlliance != null)
-            buttonJoinAlliance.setOnClickListener(null);
-        if (channelButton != null) {
-            for (int i = 0; i < channelButton.size(); i++) {
-                channelButton.get(i).setTag(null);
-                channelButton.get(i).setOnClickListener(null);
-            }
-            channelButton.clear();
-            channelButton = null;
-        }
+	protected void onContentAreaTouched()
+	{
+		hideSoftKeyBoard();
+	}
 
-        try {
-            getMemberSelectButton().setOnClickListener(null);
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	public void onDestroy()
+	{
+		stopTimerTask();
+		ConfigManager.activityType = -1;
+		ChatServiceController.isContactMod = false;
+		ChatServiceController.needShowAllianceDialog = false;
+
+		//将监听释放放在最前面
+		if (messagesListFrameLayout != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+			if (messagesListFrameLayout.getViewTreeObserver() != null) {
+				messagesListFrameLayout.getViewTreeObserver().removeOnGlobalLayoutListener(onGlobalLayoutListener);
+			}
+			messagesListFrameLayout.removeAllViews();
+			messagesListFrameLayout = null;
+		}
+
+		if (tooltipLayout != null)
+			tooltipLayout.setOnClickListener(null);
+		if (buttonJoinAlliance != null)
+			buttonJoinAlliance.setOnClickListener(null);
+		if (channelButton != null)
+		{
+			for (int i = 0; i < channelButton.size(); i++)
+			{
+				channelButton.get(i).setTag(null);
+				channelButton.get(i).setOnClickListener(null);
+			}
+			channelButton.clear();
+			channelButton = null;
+		}
+
+		try
+		{
+			getMemberSelectButton().setOnClickListener(null);
+			getReturnGameUIButton().setOnClickListener(null);
 //			if (getShowFriendButton() != null)
 //			{
 //				getShowFriendButton().setOnClickListener(null);
 //			}
-        } catch (Exception e) {
-            LogUtil.printException(e);
-        }
+		}
+		catch (Exception e)
+		{
+			LogUtil.printException(e);
+		}
 
-        if (addReply != null) {
-            addReply.setOnClickListener(null);
-            addReply = null;
-        }
+		if (addReply != null)
+		{
+			addReply.setOnClickListener(null);
+			addReply = null;
+		}
 		if(ConfigManager.isSpeechRecognition && voice_btn != null) {
 			voice_btn.setOnClickListener(null);
 			voice_btn = null;
 		}
-        if (replyField != null) {
-            replyField.setOnEditorActionListener(null);
-            replyField.removeTextChangedListener(textChangedListener);
-            replyField = null;
-        }
-        textChangedListener = null;
 
-        if (horn_checkbox != null) {
-            horn_checkbox.setOnCheckedChangeListener(null);
-            horn_checkbox = null;
-        }
+		if (replyField != null)
+		{
+			replyField.setOnEditorActionListener(null);
+			replyField.removeTextChangedListener(textChangedListener);
+			replyField = null;
+		}
+		textChangedListener = null;
 
-        if (messagesListFrameLayout != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            if (messagesListFrameLayout.getViewTreeObserver() != null) {
-                messagesListFrameLayout.getViewTreeObserver().removeOnGlobalLayoutListener(onGlobalLayoutListener);
-            }
-            messagesListFrameLayout.removeAllViews();
-            messagesListFrameLayout = null;
-        }
-        if (unread_layout != null)
-            unread_layout = null;
-        onGlobalLayoutListener = null;
+		if (horn_checkbox != null)
+		{
+			horn_checkbox.setOnCheckedChangeListener(null);
+			horn_checkbox = null;
+		}
 
-        mOnScrollListener = null;
-        mListViewLoadListener = null;
+		if(unread_layout != null)
+			unread_layout = null;
+		onGlobalLayoutListener = null;
 
-        noAllianceFrameLayout = null;
-        relativeLayout1 = null;
-        buttonsLinearLayout = null;
-        bottomLayout = null;
-        attachScreenshotMenu = null;
-        //imageView1 = null;
-        //imageView2 = null;
-        horn_tip_layout = null;
-        horn_text_tip = null;
-        wordCount = null;
-        messageBox = null;
+		mOnScrollListener = null;
+		mListViewLoadListener = null;
+
+		noAllianceFrameLayout = null;
+		relativeLayout1 = null;
+		buttonsLinearLayout = null;
+		bottomLayout = null;
+		attachScreenshotMenu = null;
+		//imageView1 = null;
+		//imageView2 = null;
+		horn_tip_layout = null;
+		horn_text_tip = null;
+		wordCount = null;
+		messageBox = null;
 //		header = null;
-        buttonCountry = null;
-        buttonAlliance = null;
-        buttonChatRoom = null;
-        tooltipLayout = null;
-        tooltipLabel = null;
-        tooltipArrow = null;
-        horn_close_btn = null;
-        buttonJoinAlliance = null;
-        noAllianceTipText = null;
-        hs__dragon_chat_tip_layout = null;
-        dragon_chat_tip_text = null;
-        tip_no_mail_textView = null;
-        horn_scroll_layout = null;
-        mTimerTask = null;
-        horn_name = null;
-        horn_scroll_text = null;
-        sendRedPackage = null;
+		buttonCountry = null;
+		buttonAlliance = null;
+		buttonChatRoom = null;
+		buttonWarZone = null;
+		tooltipLayout = null;
+		tooltipLabel = null;
+		tooltipArrow = null;
+		horn_close_btn = null;
+		buttonJoinAlliance = null;
+		noAllianceTipText = null;
+		hs__dragon_chat_tip_layout = null;
+		dragon_chat_tip_text = null;
+		tip_no_mail_textView = null;
+		horn_scroll_layout = null;
+		mTimerTask = null;
+		horn_name = null;
+		horn_scroll_text = null;
+		sendRedPackage = null;
 
-		stopLanternTimerTask();
-        if (icon_net_btn != null)
-            icon_net_btn.setOnClickListener(null);
-        icon_net_btn = null;
-        anchor_info_layout = null; //所有直播信息界面
-        if (anchor_pic_icon != null) {
-            anchor_pic_icon.setOnClickListener(null);
-        }
-        anchor_pic_icon = null;
-        anchor_room_name = null;
-        anchor_state_text = null;
-        anchor_tip_text = null;
-        if (voice_player_btn != null) {
-            voice_player_btn.setOnClickListener(null);
-            voice_player_btn = null;
-        }
 
-        liveMemberTimerTask = null;
-        if (chatRoomAdapter != null) {
-            chatRoomAdapter.destroy();
-            chatRoomAdapter = null;
-        }
+		anchor_info_layout = null; //所有直播信息界面
+		anchor_room_name = null;
+		anchor_state_text = null;
+		anchor_tip_text = null;
+		ChatServiceController.isFromBd = false;
+		if(voice_player_btn != null){
+			voice_player_btn.setOnClickListener(null);
+			voice_player_btn = null;
+		}
+		if (chatRoomAdapter != null)
+		{
+			chatRoomAdapter.destroy();
+			chatRoomAdapter = null;
+		}
 
-        if (mListView != null) {
-            mListView.clearAdapter();
-            mListView.setMenuCreator(null);
-            mListView.setOnItemClickListener(null);
-            mListView.setOnMenuItemClickListener(null);
-            mListView = null;
-        }
+		if (mListView != null)
+		{
+			mListView.clearAdapter();
+			mListView.setMenuCreator(null);
+			mListView.setOnItemClickListener(null);
+			mListView.setOnMenuItemClickListener(null);
+			mListView = null;
+		}
 
-        if (channelListPullView != null) {
-            channelListPullView.setOnRefreshListener(null);
-            channelListPullView = null;
-        }
+		if (channelListPullView != null)
+		{
+			channelListPullView.setOnRefreshListener(null);
+			channelListPullView = null;
+		}
 
-        channelListFragmentLayout = null;
-        ((ChatActivity) getActivity()).fragment = null;
+		channelListFragmentLayout = null;
+		((ChatActivity) getActivity()).fragment = null;
 
-        super.onDestroy();
-    }
+		super.onDestroy();
+	}
 
-    protected ViewTreeObserver.OnGlobalLayoutListener onGlobalLayoutListener;
-    private TextWatcher textChangedListener;
+	protected ViewTreeObserver.OnGlobalLayoutListener	onGlobalLayoutListener;
+	private TextWatcher									textChangedListener;
 
-    private Timer liveMemberTimer;
-    private TimerTask liveMemberTimerTask;
-
-    public void refreshMemberCount() {
-        if (liveMemberTimer == null && ChatServiceController.isFromBd)
-            liveMemberTimer = new Timer();
-        if (liveMemberTimerTask == null && ChatServiceController.isFromBd) {
-            liveMemberTimerTask = new TimerTask() {
-                @Override
-                public void run() {
-                    if (ChatServiceController.isNeedJoinLive && !ChatServiceController.isInSelfLiveRoom()) {
-                        WebSocketManager.getInstance().chatRoomInvite(ChatServiceController.curLiveRoomId, UserManager.getInstance().getCurrentUserId());
-                    }
-                    WebSocketManager.getInstance().getRoomMembersCount(ChatServiceController.curLiveRoomId);
-                    JniController.getInstance().excuteJNIVoidMethod("postToCppRefreshLiveRoomInfo", new Object[]{});
-                }
-            };
-            liveMemberTimer.schedule(liveMemberTimerTask, 1000, 30000);
-        }
-
-    }
-
-    public void stopLiveMemberTask() {
-        if (liveMemberTimer != null) {
-            liveMemberTimer.cancel();
-            liveMemberTimer.purge();
-            liveMemberTimer = null;
-        }
-    }
-
-    public void refreshLiveView() {
-        //改名之后重新刷新界面
-//		UserInfo userInfo= UserManager.getInstance().getUser(ChatServiceController.liveUid);
-        UserInfo userInfo = new UserInfo();
-        userInfo.headPic = "g026";
-        userInfo.uid = ChatServiceController.liveUid;
-        userInfo.headPicVer = ChatServiceController.livePicVer;
-        ImageUtil.setHeadImage(activity, userInfo.headPic, anchor_pic_icon, userInfo);
-        getTitleLabel().setText(ChatServiceController.liveRoomName);
-        anchor_room_name.setText(ChatServiceController.liveUserName);
-        if (listenNumText != null)
-            listenNumText.setText(ChatServiceController.listenRoomNumber + "");
-        if (ChatServiceController.livePushStatus) {
-            anchor_state_text.setText(LanguageManager.getLangByKey("80000842"));
-            anchor_state_text.setTextColor(Color.GREEN);
-        } else {
-            anchor_state_text.setText(LanguageManager.getLangByKey("80000843"));
-            anchor_state_text.setTextColor(Color.RED);
-        }
-        anchor_tip_text.setText(ChatServiceController.liveTipContent);
-        if ((ChatServiceController.isAnchorHost && ChatServiceController.isInSelfLiveRoom()) || (!ChatServiceController.isAnchorHost && !ChatServiceController.livePushStatus)) {
-            voice_player_btn.setVisibility(View.INVISIBLE);
-            anchor_state_text.setVisibility(View.VISIBLE);
-        } else {
-            voice_player_btn.setVisibility(View.VISIBLE);
-            anchor_state_text.setVisibility(View.INVISIBLE);
-        }
-        if (!ChatServiceController.canPull) {
-            voice_player_btn.setVisibility(View.INVISIBLE);
-            anchor_state_text.setVisibility(View.VISIBLE);
-        }
-        if (ChatServiceController.livePullStatus) {
-//			voice_player_btn.setBackgroundDrawable(activity.getResources().getDrawable(ResUtil.getId(activity, "drawable", "voice_play")));
-            voice_player_btn.setText(LanguageManager.getLangByKey(LanguageKeys.STOP_PLAY_TITLE));
-            voice_player_btn.setTextColor(ResUtil.getColor(this.getContext(), "stop_title"));
-        } else {
-//			voice_player_btn.setBackgroundDrawable(activity.getResources().getDrawable(ResUtil.getId(activity, "drawable", "voice_pause")));
-            voice_player_btn.setText(LanguageManager.getLangByKey(LanguageKeys.PLAY_TITLE));
-            voice_player_btn.setTextColor(ResUtil.getColor(this.getContext(), "start_title"));
-        }
-        refreshMemberCount();
-        changeAnchorComplete = false;
-    }
-
-    public void refreshNetState(int tab, boolean show) {
-        if (!ChatServiceController.chat_line_tips) {
-            return;
-        }
-        if (icon_net_btn != null) {
-            if (tab != DBDefinition.CHANNEL_TYPE_COUNTRY && tab != DBDefinition.CHANNEL_TYPE_ALLIANCE) {
-                icon_net_btn.setVisibility(View.GONE);
-            } else {
-                isNeedShowWifi = show;
-                if (show) {
-                    icon_net_btn.setVisibility(View.VISIBLE);
-                } else {
-                    icon_net_btn.setVisibility(View.GONE);
-                }
-            }
-
-        }
-
-    }
+	public void refreshLiveView(){
+		//改名之后重新刷新界面
+		anchor_room_name.setText(ChatServiceController.liveRoomName);
+		if(ChatServiceController.livePushStatus){
+			anchor_state_text.setText(LanguageManager.getLangByKey("80000842"));
+			anchor_state_text.setTextColor(Color.GREEN);
+		}else{
+			anchor_state_text.setText(LanguageManager.getLangByKey("80000843"));
+			anchor_state_text.setTextColor(Color.RED);
+		}
+		anchor_tip_text.setText(ChatServiceController.liveTipContent);
+		if(ChatServiceController.isAnchorHost()||(!ChatServiceController.isAnchorHost()&&!ChatServiceController.livePushStatus)){
+			voice_player_btn.setVisibility(View.GONE);
+		}else{
+			voice_player_btn.setVisibility(View.VISIBLE);
+		}
+		if (ChatServiceController.livePullStatus) {
+			voice_player_btn.setBackgroundDrawable(activity.getResources().getDrawable(ResUtil.getId(activity, "drawable", "voice_play")));
+		} else {
+			voice_player_btn.setBackgroundDrawable(activity.getResources().getDrawable(ResUtil.getId(activity, "drawable", "voice_pause")));
+		}
+		changeAnchorComplete = false;
+	}
 
 	/**
 
@@ -2996,7 +3183,7 @@ public class ChatFragment extends ActionBarFragment
 
 	 */
 
-@Override
+	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
 		if (requestCode == VOICE_RECOGNITION_REQUEST_CODE && resultCode == RESULT_OK) {
@@ -3007,81 +3194,5 @@ public class ChatFragment extends ActionBarFragment
 		}
 		super.onActivityResult(requestCode, resultCode, data);
 
-	}
-
-
-	public void beginAnimation(){
-
-		if(mLanterTimer == null) {
-			mLanterTimer = new Timer();
-		}
-		if(mLanterTimerTask != null)
-			return;
-		mLanterTimerTask = new TimerTask() {
-			public void run() {
-				if (ChatServiceController.animateTime!=0 && (ChatServiceController.animateAllTime % ChatServiceController.animateTime) == 0) {
-					if(UserManager.getInstance().userAnimateList.size() > 0) {
-						String uid = UserManager.getInstance().userAnimateList.get(0);
-						UserInfo user = UserManager.getInstance().getUser(uid);
-						user.lastAnimateTime = TimeManager.getInstance().getCurrentTime();
-						UserManager.getInstance().updateUser(user);
-						DBManager.getInstance().updateUser(user);
-						if(ChatServiceController.animateAllTime % ChatServiceController.animateTime == 0){
-							ChatServiceController.animateState =1; //开启动画
-						}
-					}
-
-					if (ChatServiceController.animateTime != 0 && (ChatServiceController.animateAllTime % ChatServiceController.animateTime) == 0
-							) {
-						if(ChatServiceController.animateAllTime > 0 && UserManager.getInstance().userAnimateList.size() == 0) {
-							ChatServiceController.animateState = 2;
-						}
-
-						if (UserManager.getInstance().userAnimateList.size() > 0) {
-							UserManager.getInstance().userAnimateList.remove(0);
-							if(UserManager.getInstance().userAnimateList.size() > 0){
-								ChatServiceController.animateState =0;
-							}
-
-						}
-					}
-					if (ChatServiceController.animateState > 0) {
-						mHandler.sendEmptyMessage(ChatServiceController.animateState);
-
-					}
-				}
-				ChatServiceController.animateAllTime++;
-
-			}
-		};
-
-		mLanterTimer.schedule(mLanterTimerTask,0,1000);
-
-	}
-
-	public void endAnimation(){
-		synchronized(UserManager.getInstance()) {
-			if( UserManager.getInstance().userAnimateList != null && UserManager.getInstance().userAnimateList.size() > 0)
-				UserManager.getInstance().userAnimateList.clear();
-		}
-
-		ChatServiceController.animateState = 0;
-		ChatServiceController.animateAllTime = 0;
-		ChatServiceController.isInLantern = false;
-//		stopLanternTimerTask();
-
-	}
-
-	private void stopLanternTimerTask() {
-		if (mLanterTimer != null) {
-			if (mLanterTimerTask != null)
-			{
-				mLanterTimerTask.cancel();
-				mLanterTimerTask = null;
-			}
-			mLanterTimer.cancel();
-			mLanterTimer.purge();
-			mLanterTimer = null;
-		}
 	}
 }

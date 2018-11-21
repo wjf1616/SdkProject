@@ -18,6 +18,24 @@ public class ResourceParams
 	private long	food_plunder;
 	private long	stone_plunder;
 
+	public boolean isResourceShieldState() {
+		return isResourceShieldState;
+	}
+
+	public void setResourceShieldState(boolean resourceShieldState) {
+		isResourceShieldState = resourceShieldState;
+	}
+
+	public long getMoney() {
+		return money;
+	}
+
+	public void setMoney(long money) {
+		this.money = money;
+	}
+
+	private long	money;
+
 	public long getWood()
 	{
 		return wood;

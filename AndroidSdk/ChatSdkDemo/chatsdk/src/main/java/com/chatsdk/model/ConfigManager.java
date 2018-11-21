@@ -1,24 +1,5 @@
 package com.chatsdk.model;
 
-import android.content.Context;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.WindowManager;
-
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
-import com.chatsdk.controller.ChatServiceController;
-import com.chatsdk.image.AsyncImageLoader;
-import com.chatsdk.model.db.DBDefinition;
-import com.chatsdk.model.db.DBHelper;
-import com.chatsdk.util.ImageUtil;
-import com.chatsdk.util.LogUtil;
-import com.chatsdk.util.ScaleUtil;
-
-import org.apache.commons.lang.StringUtils;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -30,6 +11,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
+
+import android.content.Context;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.WindowManager;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
+import com.chatsdk.controller.ChatServiceController;
+import com.chatsdk.image.AsyncImageLoader;
+import com.chatsdk.model.db.DBDefinition;
+import com.chatsdk.model.db.DBHelper;
+import com.chatsdk.util.ImageUtil;
+import com.chatsdk.util.LogUtil;
+import com.chatsdk.util.ScaleUtil;
+import com.xiaomi.channel.common.audio.AsyncMusicPlayer;
 
 /**
  * 全局配置
@@ -488,72 +488,5 @@ public class ConfigManager
 				}
 			});
 		}
-	}
-
-	public static class LocalController{
-		public static final int DBXml=0;//默认的database
-		public static final int TransXml=1;//兵种
-		public static final int EventXml=2;//事件
-		public static final int DiscoveryXml=3;//
-		public static final int NpcBuildingXml=4;//
-		public static final int MissileXml=5;//
-		public static final int SoldierIntroXml=6;//士兵介绍
-		public static final int PlayerGuideXml=7;//新手引导部分介绍
-		public static final int MergeShopXml=8;//合服
-		public static final int OneYearXml=9;//一周年
-		public static final int SevenDayXml=10;//七日礼包
-		public static final int DeBuffXml=11;//军官debuff
-		public static final int ScoreFixXml=12;//要塞杀敌积分衰减xml
-		public static final int FlexDownXml=13;//资源更新xml
-		public static final int ExplainXml=14;//描述多语言
-		public static final int GreatLaunchCenterXml=15;//大王座特权 xml
-		public static final int HeroInfomationXml=16;//heroinfo
-		public static final int SiegeFunctionXml=17 ;//
-		public static final int SkinInfomationXml=18;
-		public static final int HeroExpXml=19;
-		public static final int HeroSkillLvUpXml=20;
-		public static final int ArenaMapInfoXml = 21;//竞技场地图信息
-		public static final int ArenaRankXml = 22;//竞技场rank信息 name pic等
-		public static final int HeFuTalentXml=23;
-		public static final int HeFuTalentShowXml=24;
-		public static final int ExchangePageXml = 25;
-		public static final int AllianceEventXml = 26;
-		public static final int EquipInfoXml = 27;
-		public static final int HeroActivityNextShowInfo = 29;
-		public static final int DesertSkillXml = 30;//新天赋技能
-		public static final int WorldMineXml = 31;//地雷
-		public static final int RankShowOrederXml = 32;//排行榜显示
-		public static final int QuickClearCdXml = 33;//
-		public static final int PackFiltrateXml = 35;//
-		public static final int GoldmineWarXml = 34;//淘金者营地
-		public static final int Mail_ChannelIDXml = 36;//报告类邮件是排列顺序
-		public static final int President_PolicyXml = 37;//总统特权
-		public static final int Battle_AnimationXml = 38;//战斗动画
-		public static final int Task_ChapterXml = 39;//章节任务表
-		public static final int SiegeCrest_Xml = 40;//战争游戏 军官军徽属性
-		public static final int ResourcePointXml = 41;//世界资源田
-		public static final int World_Event_Xml = 42;//世界事件
-		public static final int Recharge_Xml = 43;//福利中心
-		public static final int QueuePush_Xml = 44;
-		public static final int Officer_BaSkill_Xml = 45 ;//军官技能表 -栏位表
-		public static final int Status_Battle_Xml = 46;//军官军团战技能效果
-		public static final int MobilizationCenterXml = 47 ;// 最强要塞 动员中心
-		public static final int TotalWarXml = 48 ;//无敌的全面战争的前台表（180个城市名字的基本信息）
-		public static final int GiftPosXml = 49 ;// 人物信息界面的礼物和粒子位置
-		public static final int MobilizationShopXml = 50 ;// 最强要塞 战备商店
-		public static final int QuestionBanXml = 51 ;//答题活动
-		public static final int FateXml = 52 ;//军官缘分
-		public static final int NewsCenterXml = 53 ;//新闻中心
-		public static final int Monster_Model_Xml = 56 ;//3d怪物动作配置表
-		public static final int Resolve_Xml = 57 ;//分解道具配置表
-		public static final int Second_City_Xml = 59 ;//分城
-		public static final int Master_Factory_Xml = 60 ;//万能工厂
-		public static final int AllianceBossXml = 61 ;//联盟BOSS
-		public static final int TimeQuestXml = 62 ;//限时任务活动 byanning
-		public static final int Active_Quest_reward = 63 ;//任务奖励活动 anning
-		public static final int AllianceApprenticeXml = 64 ;//联盟学徒
-		public static final int WorldCup_ActivityXml = 65;//世界杯活动竞猜总表
-		public static final int WorldCup_ActivityOptionXml = 66;//竞猜项
-		public static final int LanguageChatRoomXml = 67   ;//多语言聊天室配置表
 	}
 }

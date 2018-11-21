@@ -2,7 +2,6 @@ package com.chatsdk.model;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import com.chatsdk.controller.ChatServiceController;
-import com.chatsdk.controller.JniController;
 import com.chatsdk.util.FilterWordsManager;
 
 import org.apache.commons.lang.StringUtils;
@@ -17,6 +16,7 @@ public class LatestChatInfo
 	private String	msg;
 	private int		vip;
 	private int		svip;
+	private int		vipframe;
 	private int		isVersionValid;
 	private int		sequenceId;
 	private int		createTime;
@@ -29,10 +29,6 @@ public class LatestChatInfo
 	public String			headPic;
 	/** 自定义头像 */
 	public int				headPicVer;
-
-	/** 多媒体 */
-	public String 	media;
-
 	public String getName()
 	{
 		return name;
@@ -174,6 +170,7 @@ public class LatestChatInfo
 		this.msg = StringUtils.isNotEmpty(msgItem.translateMsg) ? msgItem.translateMsg : msgItem.msg;
 		this.vip = msgItem.getVipLevel();
 		this.svip = msgItem.getSVipLevel();
+        this.vipframe = msgItem.getVipframe();
 		this.isVersionValid = msgItem.isVersionInvalid() ? 0 : 1;
 		this.sequenceId = msgItem.sequenceId;
 		this.createTime = msgItem.createTime;
@@ -182,8 +179,6 @@ public class LatestChatInfo
 		this.headPic = msgItem.getHeadPic();
 		this.headPicVer = msgItem.getHeadPicVer();
 		this.attachment = msgItem.attachmentId;
-		this.media = msgItem.media;
-
 		if(this.post==MsgItem.MSG_TYPE_CREATE_EQUIP_SHARE || this.post == MsgItem.MSG_TYPE_RED_PACKAGE){
 			this.msg = delHTMLTag(this.msg);
 		}else if(msgItem.isSystemMessageByKey()){
@@ -198,17 +193,7 @@ public class LatestChatInfo
 				}
 				this.msg = StringUtils.isNotEmpty(msgItem.translateMsg) ? msgItem.translateMsg : content;
 			}
-			if (msgItem.isNewsCenterShare()) {
-				String newsIdStr = "";
-				String titleParams = "";
-				String[] attachmentIDArray = msgItem.attachmentId.split("_", 3); //只分割两次,防止将名字分割了
-				if (attachmentIDArray.length == 3) {
-					newsIdStr = attachmentIDArray[1];
-					titleParams = attachmentIDArray[2];
-				}
-				msgItem.msg = JniController.getInstance().excuteJNIMethod("getNewsCenterShowMsg", new Object[]{newsIdStr, titleParams});
-				this.msg = msgItem.msg;
-			}
+
 		}
 		if (ChatServiceController.isNeedReplaceBadWords()) {
 			this.msg = FilterWordsManager.replaceSensitiveWord(this.msg, 1, "*");

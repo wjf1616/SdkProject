@@ -12,12 +12,6 @@ public class HelpReportParams
 	private String              heroLv;
 	private List<String>		skills;
 	private List<String>		warEffect;
-	private String alliance;
-	private String picVer;
-	private String serverId;
-	private String uid;
-	private String allianceName;
-	private List<ArmyAlterLevelParams>		troopTranList;
 
 	private List<WorldFortressParams> worldFortress;
 
@@ -104,53 +98,5 @@ public class HelpReportParams
 
 	public void setWorldFortress(List<WorldFortressParams> worldFortress) {
 		this.worldFortress = worldFortress;
-	}
-
-	public String getAlliance() {
-		return alliance;
-	}
-
-	public void setAlliance(String alliance) {
-		this.alliance = alliance;
-	}
-
-	public String getAllianceName() {
-		return allianceName;
-	}
-
-	public void setAllianceName(String allianceName) {
-		this.allianceName = allianceName;
-	}
-
-	public String getPicVer() {
-		return picVer;
-	}
-
-	public void setPicVer(String picVer) {
-		this.picVer = picVer;
-	}
-
-	public String getServerId() {
-		return serverId;
-	}
-
-	public void setServerId(String serverId) {
-		this.serverId = serverId;
-	}
-
-	public List<ArmyAlterLevelParams> getTroopTranList() {
-		return troopTranList;
-	}
-
-	public void setTroopTranList(List<ArmyAlterLevelParams> troopTranList) {
-		this.troopTranList = troopTranList;
-	}
-
-	public String getUid() {
-		return uid;
-	}
-
-	public void setUid(String uid) {
-		this.uid = uid;
 	}
 }

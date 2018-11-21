@@ -13,6 +13,7 @@ public class ResourceMailContents
 	private List<DropParams>	drop;
 	private int					pointId;
 	private List<ExtraRewardParams> extraReward;
+    private List<RewardParams> lostRes;
 	private int  rewardResult;
 	private int  collectRewardNum;
 	private String				createTime;
@@ -46,6 +47,7 @@ public class ResourceMailContents
 
 	public void setReward(List<RewardParams> reward)
 	{
+
 		this.reward = reward;
 	}
 	
@@ -56,7 +58,18 @@ public class ResourceMailContents
 
 	public void setExtraReward(List<ExtraRewardParams> extraReward)
 	{
+
 		this.extraReward = extraReward;
+	}
+
+	public List<RewardParams> getLostRes()
+	{
+		return lostRes;
+	}
+
+	public void setLostRes(List<RewardParams> lostRes)
+	{
+		this.lostRes = lostRes;
 	}
 
 	public List<DropParams> getDrop()

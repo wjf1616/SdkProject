@@ -86,11 +86,6 @@ public class DetectReportMailData extends MailData
 							nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_DETECT_BANNER_SUCESS);
 							break;
 						}
-						case MailManager.SecondCityPoint:
-						{
-							nameText = LanguageManager.getLangByKey("99000313"); //侦查第二基地成功
-							break;
-						}
 						default:
 						{
 							nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_DETECT_SUCESS);

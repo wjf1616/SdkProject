@@ -203,6 +203,7 @@
             android:layout_gravity="center_vertical|center_horizontal"
             android:layout_weight="16"
             android:scaleType="fitCenter"
+            android:visibility="gone"
             android:src="@drawable/mail_list_arrow" />
 
         <View

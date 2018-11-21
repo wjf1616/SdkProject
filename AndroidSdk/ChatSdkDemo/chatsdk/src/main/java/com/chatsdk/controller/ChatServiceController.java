@@ -34,7 +34,6 @@ import com.chatsdk.view.ChannelListActivity;
 import com.chatsdk.view.ChannelListFragment;
 import com.chatsdk.view.ChatActivity;
 import com.chatsdk.view.ChatFragment;
-import com.chatsdk.view.ChatLiveSettingActivity;
 import com.chatsdk.view.ChatRoomSettingActivity;
 import com.chatsdk.view.MainListFragment;
 import com.chatsdk.view.MemberSelectorFragment;
@@ -56,13 +55,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
-//import com.chatsdk.view.ChatRoomSettingActivity;
-//import com.chatsdk.view.allianceshare.AllianceShareCommentListActivity;
-//import com.chatsdk.view.allianceshare.AllianceShareDetailActivity;
-//import com.chatsdk.view.allianceshare.AllianceShareListActivity;
-//import com.chatsdk.view.allianceshare.ImageDetailFragment;
-//import com.chatsdk.view.allianceshare.ImagePagerActivity;
 
 
 public class ChatServiceController
@@ -90,7 +82,6 @@ public class ChatServiceController
 	public static int						sortType						= -1;
 	public static boolean					isDefaultTranslateEnable		= true;										// 默认翻译开关
 	public static boolean					isFriendEnable					= false;										// 好友功能开关
-	public static boolean					isNeedReName					= false;										// 改名提示
 	public static boolean					isShowFrameEffNativeView		= false;										// 是否显示原生战斗红屏闪动动画
 	// public static boolean					isDetectInfoEnable				= false;										// 侦察战报更新开关
 	public static boolean					isShowProgressBar				= false;										// 是否显示loading动画
@@ -101,7 +92,6 @@ public class ChatServiceController
 	public static int						system_red_package_Limit_time	= 4;											// 新加入群的玩家红包限制领取时间
 	public static String					kingUid							= "";											// 国王的UID
 	public static String					banTime							= "24|72|168|-1";									// 国王的UID
-	public static String					liveBanTime						= "30|60|1440|0";									// 国王的UID
 	public static boolean					isListViewFling					= false;
 	public static int						serverType						= -1;
 	public static boolean					needShowAllianceDialog			= false;										// 需要在联盟聊天输入框显示特定的dialog
@@ -113,8 +103,22 @@ public class ChatServiceController
     public static boolean 					isSVIPStyleMsg					= false;										// svip气泡开关
 	public static boolean 					isFestivalRedPackageEnable		= false;										// 节日红包开关
 	public static boolean					isChatRoomEnable				= false;										// 聊天室开关
+	public static boolean					isWarZoneRoomEnable				= false;										// 战区聊天室开关
 	public static String					topChatRoomUid					= "";											// 置顶的聊天室id
 	public static String					curAreaRoomId					= "";											// 当前竞技场聊天室id
+	public static String					warZoneRoomId					= "";											// 当前战区聊天室id
+	public static String					m_roomGroupKey					= "";											// 当前战区聊天室组
+	public static int						warzone_al_lv					= 0;											// 联盟等级限制
+	public static int						warzone_city_lv					= 0;											// 基地城市等级限制
+	public static boolean					isAddWarZoneRoom				= false;										// 是否加入战区聊天室
+
+	public static boolean 					chat_v2_on						= false; 										//是否使用v2聊天版
+	public static boolean 					chat_v2_stickers_on				= false; 										//是否使用Stickers大表情图
+	public static boolean 					chat_pictures_on				= false; 										//是否使用自定义图
+	public static boolean 					chat_pictures_emoticons_on		= false; 										//多媒体图片大小限制
+	public static boolean 					chat_language_on				= false; 										//语言聊天室
+	public static boolean 					chat_v2_personal				= false;  										//个人聊天
+
 	private ScheduledExecutorService		service							= null;
 	private Timer							audioTimer						= null;
 	private TimerTask						audioTimerTask					= null;
@@ -125,95 +129,46 @@ public class ChatServiceController
 	public static boolean					chat_room_remote_invite			= false;
 	public static boolean					mail_all_delete					= false;
 	public static boolean					convenient_contact				= false;
-	public static boolean					mail_button_hide				= false;										//一键已读控制开关
+	public static boolean					new_battlemail				= false;
+	public static boolean					new_resourcebattlemail				= false;
+
+	public static boolean					scoutmail				= false;
+	public static boolean					mass_boss						= false;
+	public static boolean					monster_mail				    = false;
 	public static boolean					chat_msg_independent			= false;
+	public static boolean					career_chat						= false; //职业显示与否
 	public static String	                lastSecondChannelId		= "";
 	public static boolean	                rememberSecondChannelId;
 	public static boolean                   isCurrentSecondList            	= false;
 	public static boolean                   isInTempAlliance	            = false;
 	public static boolean                   isTabRoom	            		= false;
-	public static boolean                   chat_line_tips	            	= false;
-
-	public static boolean					deleteAllPersonCmd				= false;
-
-	public static boolean					deleteMailByType				= false;  //按类型刷出邮件
-
-	public static boolean					deleteMailByAllSelect			= false;  //全选删除 删除所有邮件
 
 	public static String					curLiveRoomId				   	= "";
 	public static boolean					isFromBd				   		= false;
-	public static boolean					isFromLiveExist				   	= false;
 	public static boolean					isInLiveRoom				   	= false;
 	public static String 					liveUid 						= "";
 	public static String 					liveRoomName					= "";
-	public static int						listenRoomNumber				= 0;
-	public static String					liveUserName					= "";
 	public static String 					liveTipContent					= "";
-	public static int 	 					livePicVer						= 100000;
 	public static boolean  					livePushStatus 					= false;
 	public static boolean  					livePullStatus 					= false;
-	public static boolean 					isAnchorHost					= false;//当前用户是否是主播
-	public static boolean 					canPull							= false;
-	public static boolean 					isNeedJoinLive					= false;
-
-	public static boolean 					gm_closed_avatar				= false;//GM封禁玩家头像开关值
-	public static boolean 					new_system_message				= false;//系统语言显示优化开关值
-	public static boolean 					new_system_message1				= false;//系统语言显示优化开关值
-	public static boolean 					new_system_message2				= false;//系统语言显示优化开关值
-	public static boolean 					new_system_message3				= false;//系统语言显示优化开关值
-	public static boolean 					isNewMsg						= false;//系统语言显示优化开关值
-	public static boolean 					share_optimization				= false;//分享评论开关值
-	public static boolean 					chat_send_cn					= false;//CN是否走独立聊天
-	public static boolean 					chat_effect_switch				= false;//春节活动开关值
-	public static boolean 					chat_v2_on						= false; //是否使用v2聊天版
-	public static boolean 					chat_v2_stickers_on				= false; //是否使用Stickers大表情图
-	public static boolean 					chat_pictures_on				= false; //是否使用自定义图
-	public static boolean 					chat_pictures_emoticons_on		= false; //多媒体图片大小限制
-	public static boolean 					chat_language_on				= false; //语言聊天室
-	public static boolean 					chat_v2_personal				= false;  //个人聊天
-	public static boolean 					mail_seach_old_sql_close				= false;  //邮件查询老SQ语句关闭
 
 	public static boolean 					front_end_badwords				= false;//前台屏蔽badwords(汉语)开关值
 	public static boolean 					korean_shielding				= false;//前台屏蔽badwords(韩语)开关值
 	public static boolean 					special_symbol_check			= false;//前台屏蔽特殊字符开关值
 	public static boolean 					mail_all_read					= false;//所有邮件一键已读开关
-	public static boolean					chat_mqtt						= false;//启用mqtt协议聊天
+	public static boolean 					mail_button_hide				= false;//所有邮件一键已读开关
 	public static long                      openMailTime = 0;
+	public static boolean 					new_system_message				= false;//系统语言显示优化开关值
 
-	public static int						intervalTime 					= 30;
-	public static String					dialog 							= "";
-	public static int						animateTime 					= 5;
-	public static int						animateAllTime 					= 0;
-	public static int						animateState 					= 0;
-	public static boolean					isInLantern 					= false;
-	public static boolean					reward_show 					= false;
-	public static boolean					isInitTipMail 					= false;
-	public static boolean					isUserNewParser 				= false;
-	public static ArrayList<String>        	redPackgeMsgGotArray            = new ArrayList<String>(); //自己抢到过的红包
+	public static ArrayList<String>        redPackgeMsgGotArray             = new ArrayList<String>(); //自己抢到过的红包
+
 	private static JSONObject 				languageJsonObject 				= null; 	//多语言聊天配置
 	public static boolean 					isReturnFromScreenLock 			= false; 	//聊天-锁屏
 	public static boolean 					isxternaletworkebug 			= false; 	//外网调试
 
-
-	//语言聊天室-限制
-	public static boolean 					chat_language_emoticons				= false; //语言频道表情开关
-
-	public static int maxCharacter = 200;  //默认200个字符
-	public static int sendInterval = 1000;    //默认频率1秒
-
-
-	//聊天设置 - 开关
-	public static boolean 					chat_entry_settings				= false;
-
-	//系统设置 - 聊天设置状态
-	public static boolean 					cahe_chat_settings				= false;
-
-	//自动加入语言频道 - 开关
-	public static boolean 					language_channel_autojoin		= false;
-
-	//系统设置 - 自动加入语言聊天状态
-	public static boolean 					cahe_language_autojoin			= false;
-
+	public static boolean 					defence_select_switch 			= false; 	//破城杀敌
+	public static boolean 					chat_tab			 			= false; 	//新版聊天切换标签夜
+	public static int 						maxCharacter 					= 500;  //默认500个字符
 
 	private static ChatServiceController	instance;
 
@@ -261,7 +216,6 @@ public class ChatServiceController
 		TranslateManager.getInstance().reset();
 		ChannelManager.getInstance().reset();
 		MailManager.getInstance().clearData();
-
 		ChatServiceController.redPackgeMsgGotArray.clear();
 		topChatRoomUid = "";
 	}
@@ -327,17 +281,11 @@ public class ChatServiceController
 
 	private static long	oldSendTime	= 0;	// 上一次发送时间
 
-	private static boolean isSendIntervalValid(String roomId)
+	private static boolean isSendIntervalValid()
 	{
 		boolean isValid = true;
 		long sendTime = System.currentTimeMillis();
-
-		int nInterval = ConfigManager.sendInterval;
-		if (ChannelManager.getInstance().isLanguageChatRoom(roomId)){
-			nInterval = sendInterval;
-		}
-
-		if ((sendTime - oldSendTime) < nInterval) {
+		if ((sendTime - oldSendTime) < ConfigManager.sendInterval) {
 			//聊天v2
 			Activity activity = null;
 			if(ChatServiceController.chat_v2_on) {
@@ -349,8 +297,9 @@ public class ChatServiceController
 			}
 
 			//发送信息频繁提醒
-			ServiceInterface.safeMakeText(activity, LanguageManager.getLangByKey(LanguageKeys.TIP_SENDMSG_WARN), Toast.LENGTH_SHORT);
-
+			if (activity != null) {
+				ServiceInterface.safeMakeText(activity, LanguageManager.getLangByKey(LanguageKeys.TIP_SENDMSG_WARN), Toast.LENGTH_SHORT);
+			}
 			isValid = false;
 		}
 
@@ -387,23 +336,17 @@ public class ChatServiceController
 
 	public static void sendDummyAudioMsg(long length,int sendLocalTime)
 	{
-		ChatChannel channel = ChannelManager.getInstance().getAllianceChannel();
-		if (channel == null) {
+		if (ChatServiceController.getCurrentChannelType() < 0 || !isSendIntervalValid() || getChatFragment() == null)
 			return;
-		}
-
-		if (ChatServiceController.getCurrentChannelType() < 0 || !isSendIntervalValid(channel.channelID) || getChatFragment() == null) {
-			return;
-		}
-
 		if (isChatRestrict())
 		{
 			MenuController.showChatRestrictConfirm(LanguageManager.getLangByKey(LanguageKeys.TIP_CHAT_RESTRICT));
 			return;
 		}
-
 		getChatFragment().clearInput();
-
+		ChatChannel channel = ChannelManager.getInstance().getAllianceChannel();
+		if (channel == null)
+			return;
 		int post = MsgItem.MSG_TYPE_AUDIO;
 		MsgItem msgItem = new MsgItem(UserManager.getInstance().getCurrentUser().uid, true, true, DBDefinition.CHANNEL_TYPE_ALLIANCE, post,
 				"" + length, sendLocalTime);
@@ -459,10 +402,6 @@ public class ChatServiceController
 				}
 				else
 				{
-					if(isChatSendCN()){
-						sendMsg2Server(channel, sendingItem.msg, false, false, sendingItem.sendLocalTime, MsgItem.MSG_TYPE_AUDIO, media);
-						return;
-					}
 					sendMsg2WSServer(channel, sendingItem.msg, false, false, sendingItem.sendLocalTime, MsgItem.MSG_TYPE_AUDIO, media);
 				}
 			}
@@ -484,7 +423,7 @@ public class ChatServiceController
 
 	public static void sendMsg(final String messageText, final boolean isHornMsg, boolean usePoint, String audioUrl, final ChatChannel channel) {
 		int currentChannelType = ChatServiceController.getCurrentChannelType();
-		if (currentChannelType < 0 || channel == null || !isSendIntervalValid(channel.channelID)){
+		if (currentChannelType < 0 || !isSendIntervalValid() || channel == null){
 			return;
 		}
 
@@ -492,7 +431,37 @@ public class ChatServiceController
 			getChatFragment().clearInput();
 		}
 
+		Activity activity = null;
+		if (ChatServiceController.chat_v2_on){
+			activity = ChatServiceController.getCurrentV2Activity();
+		}
+		else
+		{
+			activity = ChatServiceController.getCurrentActivity();
+		}
+
 		int sendLocalTime = TimeManager.getInstance().getCurrentTime();
+		int gapTime = getChatSendGapTime(channel,sendLocalTime);
+		boolean isChatLimmit = JniController.getInstance().excuteJNIMethod("isChatLimmit", new Object[]{currentChannelType,gapTime}); //从C++获得是否聊天限制
+		if(isChatLimmit){
+			String tipStr = LanguageManager.getLangByKey("170759");  //170759 = 您的聊天速度过快，请稍后再试
+			if (activity != null && !activity.isFinishing()){
+				ServiceInterface.safeMakeText(activity,tipStr,Toast.LENGTH_LONG);
+			}
+			return;
+		}
+
+		//战区聊天限制
+		if(channel.channelID.contains("warzone_")){
+			String warZoneTipStr = JniController.getInstance().excuteJNIMethod("getWarZoneFilterStr",null);
+			if(StringUtils.isNotEmpty(warZoneTipStr)){
+				if (activity != null && !activity.isFinishing()){
+					ServiceInterface.safeMakeText(activity,warZoneTipStr,Toast.LENGTH_LONG);
+				}
+				return;
+			}
+		}
+
 		int post = isHornMsg ? 6 : MsgItem.MSGITEM_TYPE_MESSAGE;
 		if (!ChatServiceController.chat_v2_on && StringUtils.isNotEmpty(audioUrl)) {
 			post = MsgItem.MSG_TYPE_AUDIO;
@@ -500,6 +469,7 @@ public class ChatServiceController
 
 		final int channelType = (post == MsgItem.MSG_TYPE_AUDIO ? DBDefinition.CHANNEL_TYPE_ALLIANCE : ChatServiceController
 				.getCurrentChannelType());
+
 
 		// 创建消息对象，加入正在发送列表
 		MsgItem msgItem = new MsgItem(UserManager.getInstance().getCurrentUser().uid, true, true, channelType, post, messageText,
@@ -529,18 +499,21 @@ public class ChatServiceController
 						msgItem.isAudioMessage());
 			}
 
-			// 实际发给后台
+			String strMsg;
+			if (ChatServiceController.isNeedReplaceBadWords()) {
+				strMsg = FilterWordsManager.replaceSensitiveWord(messageText, 1, "*");
+			}
+			else {
+				strMsg = messageText;
+			}
+				// 实际发给后台
 			if (WebSocketManager.isSendFromWebSocket(channel.channelType) && !isHornMsg)
 			{
-				if(isChatSendCN()){
-					sendMsg2Server(channel, messageText, isHornMsg, usePoint, sendLocalTime, msgItem.post, msgItem.media);
-					return;
-				}
-				sendMsg2WSServer(channel, messageText, isHornMsg, usePoint, sendLocalTime, msgItem.post, msgItem.media);
+				sendMsg2WSServer(channel, strMsg, isHornMsg, usePoint, sendLocalTime, msgItem.post, msgItem.media);
 			}
 			else
 			{
-				sendMsg2Server(channel, messageText, isHornMsg, usePoint, sendLocalTime, msgItem.post, msgItem.media);
+				sendMsg2Server(channel, strMsg, isHornMsg, usePoint, sendLocalTime, msgItem.post, msgItem.media);
 			}
 			oldSendTime = System.currentTimeMillis();
 
@@ -576,16 +549,28 @@ public class ChatServiceController
 	private static void sendMsg2WSServer(ChatChannel channel, String messageText, boolean isHornMessage, boolean usePoint,
 			int sendLocalTime, int post, String media)
 	{
+		Activity activity = null;
+		if (ChatServiceController.chat_v2_on){
+			activity = ChatServiceController.getCurrentV2Activity();
+		}
+		else
+		{
+			activity = ChatServiceController.getCurrentActivity();
+		}
+
 		boolean isForbiddenWord = FilterWordsManager.containsForbiddenWords(messageText);
 		if (isForbiddenWord) {
 			if(!ConfigManager.isNewShieldingEnabled){
 				String tipStr = LanguageManager.getLangByKey("170769");
-				ServiceInterface.flyHint("", "", tipStr, 2, 0, false);
+				if (activity != null && !activity.isFinishing()){
+					ServiceInterface.safeMakeText(activity,tipStr,Toast.LENGTH_LONG);
+				}
 			}
 			return;
 		}
 
-		if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY) {
+		if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_COUNTRY)
+		{
 			//聊天v2
 			if(ChatServiceController.chat_v2_on) {
 				WebSocketManager.getInstance().sendRoomMsg(messageText, sendLocalTime, channel, post, media);
@@ -597,13 +582,9 @@ public class ChatServiceController
 		else if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_ALLIANCE)
 		{
 			WebSocketManager.getInstance().sendRoomMsg(messageText, sendLocalTime, channel, post, media);
-		}
-		else if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_CHATROOM) {
-			int isLiveChat = 0;
-			if(ChatServiceController.isInLiveRoom()){
-				isLiveChat = 1;
-			}
-			WebSocketManager.getInstance().sendChatRoomMsg(messageText, sendLocalTime, channel, post, media , isLiveChat);
+		}else if (ChatServiceController.getCurrentChannelType() == DBDefinition.CHANNEL_TYPE_CHATROOM)
+		{
+			WebSocketManager.getInstance().sendChatRoomMsg(messageText, sendLocalTime, channel, post, media);
 		}
 	}
 
@@ -618,11 +599,7 @@ public class ChatServiceController
 			// standalone_chat_room独立聊天服务器聊天室, chat_send_target消息发送目标：1服务器，0独立聊天
 			if(ChatServiceController.getInstance().standalone_chat_room
 					&& !ChatServiceController.getInstance().chat_send_target){
-				int isLiveChat = 0;
-				if(ChatServiceController.isInLiveRoom()){
-					isLiveChat = 1;
-				}
-				WebSocketManager.getInstance().sendChatRoomMsg(messageText, sendLocalTime, channel, post, media , isLiveChat);
+				WebSocketManager.getInstance().sendChatRoomMsg(messageText, sendLocalTime, channel, post, media);
 			}else{
 				JniController.getInstance().excuteJNIVoidMethod("sendChatRoomMsg",
 						new Object[]{UserManager.getInstance().getCurrentMail().opponentUid, messageText, Integer.toString(sendLocalTime)});
@@ -709,100 +686,21 @@ public class ChatServiceController
 		}
 	}
 
-	public static void sendMsgInCpp(ChatChannel channel, String messageText, boolean isHornMessage, boolean usePoint, int sendLocalTime,
-									int post, String media){
-		if (WebSocketManager.isSendFromWebSocket(channel.channelType) && !isHornMessage) {
-			boolean isForbiddenWord = FilterWordsManager.containsForbiddenWords(messageText);
-			if (isForbiddenWord) {
-				if (!ConfigManager.isNewShieldingEnabled) {
-					String tipStr = LanguageManager.getLangByKey("170769");
-					ServiceInterface.flyHint("", "", tipStr, 2, 0, false);
-				}
-				return;
-			}
-
-			if (channel.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY) {
-				if (isHornMessage) {
-				}
-				WebSocketManager.getInstance().sendRoomMsg(messageText, sendLocalTime, channel);
-			} else if (channel.channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE) {
-				WebSocketManager.getInstance().sendRoomMsg(messageText, sendLocalTime, channel, post, media);
-			} else if (channel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM) {
-				int isLiveChat = 0;
-				if (ChatServiceController.isInLiveRoom()) {
-					isLiveChat = 1;
-				}
-				WebSocketManager.getInstance().sendChatRoomMsg(messageText, sendLocalTime, channel, post, media, isLiveChat);
-			}
-		}else {
-
-
-			if (channel.channelType == DBDefinition.CHANNEL_TYPE_CHATROOM) {
-				// standalone_chat_room独立聊天服务器聊天室, chat_send_target消息发送目标：1服务器，0独立聊天
-				if (ChatServiceController.getInstance().standalone_chat_room
-						&& !ChatServiceController.getInstance().chat_send_target) {
-					int isLiveChat = 0;
-					if (ChatServiceController.isInLiveRoom()) {
-						isLiveChat = 1;
-					}
-					WebSocketManager.getInstance().sendChatRoomMsg(messageText, sendLocalTime, channel, post, media, isLiveChat);
-				} else {
-					JniController.getInstance().excuteJNIVoidMethod("sendChatRoomMsg",
-							new Object[]{UserManager.getInstance().getCurrentMail().opponentUid, messageText, Integer.toString(sendLocalTime)});
-				}
-			} else if (channel.channelType == DBDefinition.CHANNEL_TYPE_COUNTRY) {
-				if (!isHornMessage) {
-					JniController.getInstance().excuteJNIVoidMethod(
-							"sendChatMessage",
-							new Object[]{
-									messageText,
-									Integer.valueOf(DBDefinition.CHANNEL_TYPE_COUNTRY),
-									Integer.toString(sendLocalTime),
-									Integer.valueOf(post),
-									media});
-				} else {
-					JniController.getInstance().excuteJNIVoidMethod("sendHornMessage",
-							new Object[]{messageText, Boolean.valueOf(usePoint), Integer.toString(sendLocalTime)});
-
-					if (!usePoint) {
-						ConfigManager.isFirstUserHorn = false;
-					} else {
-						ConfigManager.isFirstUserCornForHorn = false;
-					}
-				}
-			} else if (channel.channelType == DBDefinition.CHANNEL_TYPE_ALLIANCE) {
-				JniController.getInstance().excuteJNIVoidMethod(
-						"sendChatMessage",
-						new Object[]{
-								messageText,
-								Integer.valueOf(DBDefinition.CHANNEL_TYPE_ALLIANCE),
-								Integer.toString(sendLocalTime),
-								Integer.valueOf(post),
-								media});
-			}
-		}
-		oldSendTime = System.currentTimeMillis();
-	}
 	public synchronized void setSendRedPackage()
 	{
 		ChatServiceController.doHostAction("sendRedPackage", "","", "", true);
+//		try
+//		{
+//			ChatServiceController.showGameActivity(ChatServiceController.getCurrentActivity(), true);
+//		}
+//		catch (Exception e)
+//		{
+//			LogUtil.printException(e);
+//		}
 	}
-	public synchronized void showLiveListView(){
-		ChatServiceController.doHostAction("showBroadCastListView", "","", "", true);
-	}
-
-	//显示直播间设置界面
-	public synchronized void showLiveRoomSetting(){
-		ChatServiceController.doHostAction("showLiveRoomSettingView", "", "", "", true);
-	}
-	//查看主播相册
-	public synchronized void showAnchorInfoView(){
-		String name = "false";
-		if(ChatServiceController.isAnchorHost && ChatServiceController.isInSelfLiveRoom())
-			name = "true";
-		ChatServiceController.doHostAction("showAnchorInfoView", liveUid,name, "", true);
-	}
-
+	 public synchronized void showLiveListView(){
+		 ChatServiceController.doHostAction("showBroadCastListView", "","", "", true);
+	 }
 	public void refreshVoiceReadState()
 	{
 		if (getChatFragment() != null)
@@ -811,49 +709,33 @@ public class ChatServiceController
 	// 重发消息
 	public static void resendAudioMsg(MsgItem msgItem)
 	{
-		ChatChannel channel = ChannelManager.getInstance().getAllianceChannel();
-		if (channel == null){
+		if (!isSendIntervalValid())
 			return;
-		}
-
-		if (!isSendIntervalValid(channel.channelID)) {
-			return;
-		}
-
 		if (isChatRestrict())
 		{
 			MenuController.showChatRestrictConfirm(LanguageManager.getLangByKey(LanguageKeys.TIP_CHAT_RESTRICT));
 			return;
 		}
-
 		msgItem.sendState = MsgItem.SENDING;
-		if (getChatFragment() != null) {
+		if (getChatFragment() != null)
 			getChatFragment().notifyDataSetChanged(DBDefinition.CHANNEL_TYPE_ALLIANCE, false);
-		}
-
-		if (!WebSocketManager.isSendFromWebSocket(DBDefinition.CHANNEL_TYPE_ALLIANCE))
+		ChatChannel channel = ChannelManager.getInstance().getAllianceChannel();
+		if (channel != null)
 		{
-			sendMsg2Server(channel, msgItem.msg, false, false, msgItem.sendLocalTime, MsgItem.MSG_TYPE_AUDIO, msgItem.media);
-		}
-		else
-		{
-			if(isChatSendCN()){
+			if (!WebSocketManager.isSendFromWebSocket(DBDefinition.CHANNEL_TYPE_ALLIANCE))
+			{
 				sendMsg2Server(channel, msgItem.msg, false, false, msgItem.sendLocalTime, MsgItem.MSG_TYPE_AUDIO, msgItem.media);
-				return;
 			}
-			sendMsg2WSServer(channel, msgItem.msg, false, false, msgItem.sendLocalTime, MsgItem.MSG_TYPE_AUDIO, msgItem.media);
+			else
+			{
+				sendMsg2WSServer(channel, msgItem.msg, false, false, msgItem.sendLocalTime, MsgItem.MSG_TYPE_AUDIO, msgItem.media);
+			}
 		}
 	}
 	public static void resendMsg(MsgItem msgItem, boolean isHornMsg, boolean usePoint)
 	{
-		ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
-		if (channel == null){
+		if (!isSendIntervalValid())
 			return;
-		}
-
-		if (!isSendIntervalValid(channel.channelID)) {
-			return;
-		}
 
 		// 显示转圈
 		msgItem.sendState = MsgItem.SENDING;
@@ -863,19 +745,19 @@ public class ChatServiceController
 			getChatFragment().notifyDataSetChanged(item.channelType, false);
 		}
 
-		trackSendAction(channel.channelType, isHornMsg, WebSocketManager.isSendFromWebSocket(channel.channelType), true,
-				msgItem.isAudioMessage());
-		if (!WebSocketManager.isSendFromWebSocket(channel.channelType))
+		ChatChannel channel = ChannelManager.getInstance().getChannel(ChatServiceController.getCurrentChannelType());
+		if (channel != null)
 		{
-			sendMsg2Server(channel, msgItem.msg, isHornMsg, usePoint, msgItem.sendLocalTime, msgItem.post, msgItem.media);
-		}
-		else
-		{
-			if(isChatSendCN()){
-				sendMsg2Server(channel, msgItem.msg, false, false, msgItem.sendLocalTime, MsgItem.MSG_TYPE_AUDIO, msgItem.media);
-				return;
+			trackSendAction(channel.channelType, isHornMsg, WebSocketManager.isSendFromWebSocket(channel.channelType), true,
+					msgItem.isAudioMessage());
+			if (!WebSocketManager.isSendFromWebSocket(channel.channelType))
+			{
+				sendMsg2Server(channel, msgItem.msg, isHornMsg, usePoint, msgItem.sendLocalTime, msgItem.post, msgItem.media);
 			}
-			sendMsg2WSServer(channel, msgItem.msg, isHornMsg, usePoint, msgItem.sendLocalTime, msgItem.post, msgItem.media);
+			else
+			{
+				sendMsg2WSServer(channel, msgItem.msg, isHornMsg, usePoint, msgItem.sendLocalTime, msgItem.post, msgItem.media);
+			}
 		}
 	}
 
@@ -950,7 +832,6 @@ public class ChatServiceController
 			{
 				ChatServiceController.showGameActivity(ChatServiceController.getCurrentActivity(), reverseAnimation);
 			}
-
 		}
 		catch (Exception e)
 		{
@@ -994,10 +875,8 @@ public class ChatServiceController
 	}
 
 	// 重发消息
-	public void notifyCurrentDataSetChanged(){
-
-		ChatServiceController.refreshBanListData();
-
+	public void notifyCurrentDataSetChanged()
+	{
 		if (getChatFragment() == null)
 			return;
 
@@ -1067,7 +946,6 @@ public class ChatServiceController
 	public static boolean isInLiveRoom() {
 		return ChatServiceController.isFromBd && ChatServiceController.curLiveRoomId.contains("live_");
 	}
-
 	public static boolean isInUserMail()
 	{
 		return (currentChatType == DBDefinition.CHANNEL_TYPE_USER);
@@ -1075,8 +953,14 @@ public class ChatServiceController
 
 	public static boolean isInMailDialog()
 	{
-		return (currentChatType == DBDefinition.CHANNEL_TYPE_USER || (currentChatType == DBDefinition.CHANNEL_TYPE_CHATROOM && !ChatServiceController.isFromBd));
+		return (currentChatType == DBDefinition.CHANNEL_TYPE_USER || currentChatType == DBDefinition.CHANNEL_TYPE_CHATROOM || ChatServiceController.isFromBd);
 	}
+
+	public static boolean isInWarZoneRoom()
+	{
+		return (currentChatType == DBDefinition.CHANNEL_TYPE_CHATROOM);
+	}
+
 
 	public static MemberSelectorFragment getMemberSelectorFragment()
 	{
@@ -1193,11 +1077,10 @@ public class ChatServiceController
 
 	public static MainListFragment getMainListFragment()
 	{
-		MyActionBarActivity activity = ChatServiceController.getCurrentActivity();
-		if (activity != null && activity.fragment != null
-				&& activity.fragment instanceof MainListFragment)
+		if (ChatServiceController.getCurrentActivity() != null && ChatServiceController.getCurrentActivity().fragment != null
+				&& ChatServiceController.getCurrentActivity().fragment instanceof MainListFragment)
 		{
-			return (MainListFragment) activity.fragment;
+			return (MainListFragment) ChatServiceController.getCurrentActivity().fragment;
 		}
 		return null;
 	}
@@ -1240,23 +1123,22 @@ public class ChatServiceController
 
 	public static boolean isCafebazaar()
 	{
-		return ChatServiceController.hostActivity.getPackageName().equals("com.longtech.lastwars.cafebazaar");
+		return ChatServiceController.hostActivity.getPackageName().equals("com.more.dayzsurvival.cafebazaar");
 	}
 
 	public static boolean isBazinama()
 	{
-		return ChatServiceController.hostActivity.getPackageName().equals("com.longtech.lastwars.bazinama");
+		return ChatServiceController.hostActivity.getPackageName().equals("com.more.dayzsurvival.bazinama");
 	}
 
 	public static boolean isInnerVersion()
 	{
-		return true;
-//		return ChatServiceController.hostActivity.getPackageName().equals("com.longtech.lastwars.debug");
+		return ChatServiceController.hostActivity.getPackageName().equals("com.more.dayzsurvival.debug");
 	}
 
 	public static boolean isBetaVersion()
 	{
-		return ChatServiceController.hostActivity.getPackageName().equals("com.longtech.lastwars.beta");
+		return ChatServiceController.hostActivity.getPackageName().equals("com.more.dayzsurvival.beta");
 	}
 
 	public static boolean isPersonVersion(){
@@ -1264,7 +1146,7 @@ public class ChatServiceController
 		int len = items.length;
 		if(items != null && len > 0){
 			for(int i = 0; i<len;i++){
-				String personPackage = "com.longtech.lastwars." + items[i];
+				String personPackage = "com.more.dayzsurvival." + items[i];
 				if(ChatServiceController.hostActivity.getPackageName().equals(personPackage)){
 					return true;
 				}
@@ -1430,13 +1312,13 @@ public class ChatServiceController
 //	}
 
 	public static boolean isTopChatRoom(){
-		if(topChatRoomUid.equals("")){
+		if(topChatRoomUid==""){
 			List<ChatChannel> messageChannelArr = ChannelManager.getInstance().getAllChatRoomChannel();
 			Iterator<ChatChannel> it = messageChannelArr.iterator();
 			while(it.hasNext()) {
 				ChatChannel channel = it.next();
 				// 没有置顶选第一个聊天室
-				if(topChatRoomUid.equals("")){
+				if(topChatRoomUid==""){
 					topChatRoomUid = channel.channelID;
 				}
 				// 找到置顶聊天室
@@ -1456,7 +1338,7 @@ public class ChatServiceController
 
 			}
 
-			if(topChatRoomUid.equals(""))
+			if(topChatRoomUid=="")
 				return false;
 		}
 		return true;
@@ -1518,62 +1400,20 @@ public class ChatServiceController
     }
 
 	public static boolean getIsInTempAlliance(){
-		boolean isTempAlliance = JniController.getInstance().excuteJNIMethod("getIsInTempAlliance",new Object[]{});
-		return isTempAlliance;
+		Boolean isTempAlliance = JniController.getInstance().excuteJNIMethod("getIsInTempAlliance",new Object[]{});
+		if(isTempAlliance != null)
+			return isTempAlliance.booleanValue();
+		return false;
     }
-
-	public static void postAndRefreshLiveNumber(){
-		if(ChatServiceController.listenRoomNumber > 0)
-			JniController.getInstance().excuteJNIVoidMethod("postToCppRefreshRoomNumber", new Object[]{ChatServiceController.liveUid, ChatServiceController.listenRoomNumber});
-		if(ChatServiceController.getCurrentActivity() != null){
-			ChatServiceController.getCurrentActivity().runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					if(ChatServiceController.getChatFragment() instanceof ChatFragment)
-						ChatServiceController.getChatFragment().refreshLiveView();
-				}
-			});
-
-		}
-	}
-
-	public static synchronized void refreshBanListData(){
-		if(ChatServiceController.getCurrentActivity() != null &&(ChatServiceController.getCurrentActivity() instanceof ChatLiveSettingActivity)){
-			ChatServiceController.getCurrentActivity().runOnUiThread(new Runnable()
-			{
-				@Override
-				public void run() {
-					((ChatLiveSettingActivity)ChatServiceController.getCurrentActivity()).refreshListView();
-				}
-			});
-		}
-	}
-
-	public static boolean isInSelfLiveRoom(){
-		return ChatServiceController.liveUid.equals(UserManager.getInstance().getCurrentUserId());
-	}
-
-	public static void resetLiveInfo(){
-//		ChatServiceController.liveUid = "";
-//		ChatServiceController.liveTipContent = "";
-//		ChatServiceController.liveRoomName = "";
-//		ChatServiceController.liveUserName = "";
-//		ChatServiceController.listenRoomNumber = 0;
-		ChatServiceController.isAnchorHost = false;
-//		ChatServiceController.livePushStatus = false;
-//		ChatServiceController.livePullStatus = false;
-//		ChatServiceController.livePicVer = 100000;
-//		ChatServiceController.canPull = false;
-		ChatServiceController.curLiveRoomId = "";
-	}
-
+    
 	public static boolean isChatSendCN(){
 		String flag = JniController.getInstance().excuteJNIMethod("getFlag",new Object[]{});
 		boolean isCn = false;
-		if (flag != null && (flag.equals("CN") || flag.equals("CountryFlag"))) {
+		if (flag.equals("CN") || flag.equals("CountryFlag")) {
 		 isCn = true;
 		}
-		if(isCn && !ChatServiceController.chat_send_cn) {
+		if(isCn )//&& !ChatServiceController.chat_send_cn) {
+		{
 			return true;
 		}
 		return false;
@@ -1582,24 +1422,12 @@ public class ChatServiceController
 	public static boolean isChinaCountry(){
 		String flag = JniController.getInstance().excuteJNIMethod("getFlag",new Object[]{});
 		boolean isCn = false;
-		if ( flag != null && (flag.equals("CN") || flag.equals("CountryFlag"))) {
+		if (flag.equals("CN") || flag.equals("CountryFlag")) {
 			isCn = true;
 		}
 		return isCn;
 	}
 
-	public static boolean isContainFestivalWords(String msg){
-		String [] dialogKeys = ChatServiceController.dialog.split(",");
-		boolean isHave = false;
-		for(String dialogKey:dialogKeys){
-			if(msg.contains(LanguageManager.getLangByKey(dialogKey))){
-				isHave = true;
-				break;
-			}
-		}
-		return isHave;
-
-	}
 
 	public static boolean isNeedReplaceBadWords(){
 		String langName = ConfigManager.getInstance().gameLang;
@@ -1629,6 +1457,17 @@ public class ChatServiceController
 		}
 		return text;
 	}
+	public static boolean isAnchorHost(){
+		if(StringUtils.isEmpty(UserManager.getInstance().getCurrentUserId()))
+			return false;
+		return UserManager.getInstance().getCurrentUserId().equals(ChatServiceController.liveUid);
+	}
+
+	public static boolean isActivityOpen(MsgItem item){
+		boolean isOpen = JniController.getInstance().excuteJNIMethod("isActivityOpen",new Object[]{item.post});
+		return isOpen;
+	}
+ 
 
 	//获取游戏语言
 	public static String getGameLanguage(){
@@ -1649,18 +1488,6 @@ public class ChatServiceController
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
-
-		//语言聊天限制 - 条件配置
-		String k1 = JniController.getInstance().excuteJNIMethod("getPropById", new Object[] { "language_channel_para", "k1" });
-		if (k1 != null && !k1.isEmpty()) {
-			maxCharacter = Integer.parseInt(k1);
-		}
-
-		String k2 = JniController.getInstance().excuteJNIMethod("getPropById", new Object[] { "language_channel_para", "k2" });
-		if (k2 != null && !k2.isEmpty()) {
-			sendInterval = Integer.parseInt(k2) * 1000;
-		}
-
 	}
 
 	//正确获取到语言聊天室配置
@@ -1763,6 +1590,28 @@ public class ChatServiceController
 		}
 
 		return types;
+	}
+
+	//添加战区聊天室
+	public void addWarZoneRoom(){
+		boolean isAddWarZoneRoom = JniController.getInstance().excuteJNIMethod("isNeedAddWarZone",null);
+		//判断是否加入战区聊天室
+		if(isAddWarZoneRoom && !ChatServiceController.isAddWarZoneRoom){
+			ChatServiceController.isAddWarZoneRoom = true;
+			WebSocketManager.getInstance().joinWarZoneRoom();
+		}else if(!isAddWarZoneRoom && ChatServiceController.isAddWarZoneRoom){
+			WebSocketManager.getInstance().leaveWarZoneRoom();
+			ChannelManager.getInstance().deleteChannel(ChannelManager.getInstance().getWarZoneChannel());
+		}
+	}
+
+	//离开战区聊天室
+	public void levelWarZoneRoom(){
+		boolean isAddWarZoneRoom = JniController.getInstance().excuteJNIMethod("isNeedAddWarZone",null);
+		if (!isAddWarZoneRoom && ChatServiceController.isAddWarZoneRoom) {
+			WebSocketManager.getInstance().leaveWarZoneRoom();
+			ChannelManager.getInstance().deleteChannel(ChannelManager.getInstance().getWarZoneChannel());
+		}
 	}
 
 }

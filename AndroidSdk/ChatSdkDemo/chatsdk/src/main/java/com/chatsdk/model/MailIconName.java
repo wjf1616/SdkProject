@@ -17,19 +17,14 @@ public class MailIconName
 	public static final String	CHANNEL_ICON_EVENT						= "CHANNEL_ICON_EVENT";
 	public static final String	CHANNEL_ICON_GIFT						= "CHANNEL_ICON_GIFT";
 
-	public static final String	CHANNEL_ICON_EVENT_P					= "CHANNEL_ICON_EVENT_P";
-	public static final String	CHANNEL_ICON_EVENT_A					= "CHANNEL_ICON_EVENT_A";
-	public static final String	CHANNEL_ICON_EVENT_G					= "CHANNEL_ICON_EVENT_G";
-	public static final String	CHANNEL_ICON_EVENT_D					= "CHANNEL_ICON_EVENT_D";
-	public static final String	CHANNEL_ICON_EVENT_N					= "CHANNEL_ICON_EVENT_N";
-
+	public static final String	CHANNEL_ICON_MONSTER_FAIL				= "CHANNEL_ICON_MONSTER_FAIL";
+	public static final String	CHANNEL_ICON_MONSTER_VICTOR				= "CHANNEL_ICON_MONSTER_VICTOR";
 
 
 	public static final String	CHANNEL_ICON_BATTLEGAME					= "CHANNEL_ICON_BATTLEGAME";
 	public static final String	CHANNEL_ICON_ARENAGAME					= "CHANNEL_ICON_ARENAGAME";
 	public static final String	CHANNEL_ICON_SHAMOGAME					= "CHANNEL_ICON_SHAMOGAME";
 
-	public static final String	CHANNEL_ICON_MOBILIZATION				= "CHANNEL_ICON_MOBILIZATION";
 	public static final String	MAIL_ICON_ANNOUNCEMENT					= "MAIL_ICON_ANNOUNCEMENT";
 	public static final String	MAIL_ICON_BATTLE_EXPLORE				= "MAIL_ICON_BATTLE_EXPLORE";
 	public static final String	MAIL_ICON_BATTLE_CAMP					= "MAIL_ICON_BATTLE_CAMP";
@@ -63,6 +58,4 @@ public class MailIconName
 	public static final String	MAIL_ICON_SYSTEM						= "MAIL_ICON_SYSTEM";
 	public static final String	MAIL_ICON_SYSTEM_VIP					= "MAIL_ICON_SYSTEM_VIP";
 	public static final String	MAIL_ICON_CHAT_ROOM						= "MAIL_ICON_CHAT_ROOM";
-
-	public static final String	MAIL_ICON_WORLDCUP						= "MAIL_ICON_WORLDCUP";
 }

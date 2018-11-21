@@ -9,7 +9,7 @@
   <dimen name="cs__textSmall">13sp</dimen>
   
   <dimen name="cs__rewardIconSize">25dp</dimen>
-  
+
   <dimen name="cs__mailButtonBarIconSize">35dp</dimen>
   <dimen name="cs__mailButtonBarMaxWidth">100dp</dimen>
 </resources>

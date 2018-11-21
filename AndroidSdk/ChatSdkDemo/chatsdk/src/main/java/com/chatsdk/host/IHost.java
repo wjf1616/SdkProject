@@ -70,11 +70,6 @@ public interface IHost
 	public void postCurChannel(int channel);
 
 	/**
-	 * 通知cocos2d-x已经关闭邮件展示界面（x号关闭）
-	 */
-	public void closeMailPopUpViewByX();
-
-	/**
 	 * 点击google翻译行云打点
 	 */
 	public void callXCApi();
@@ -154,9 +149,6 @@ public interface IHost
 
 	public void selectChatRoomMember(String roomName, String memberNameStr, String memberUidStr);
 
-	public void deleteAllPersonMail();
-
-
 	/**
 	 * 获取消息记录（聊天和聊天室）
 	 */
@@ -164,11 +156,9 @@ public interface IHost
 
 	public void searchPlayer(String key,int curPage);
 
-	public void transportMailInfo(long mailInfo, boolean isShowDetectMai,boolean isForViewChange);
+	public void transportMailInfo(long mailInfo, boolean isShowDetectMail);
 
 	public void deleteSingleMail(int tabType, int type, String mailUid, String fromUid);
-
-	public void deleteMailsByTypes(String types);
 
 	public void deleteMutiMail(String mailUids, String types);
 
@@ -192,7 +182,7 @@ public interface IHost
 
 	public void getUpdateMail(String time);
 
-	public void postUnreadMailNum(int unReadCount,int unSysReadCount,int allSysCount);
+	public void postUnreadMailNum(int unReadCount,int unSysReadCount,int allSysCount,int fightNum);
 
 	public void getNewMailFromServer(String latestMailUid,String createTime,int count);
 
@@ -204,13 +194,11 @@ public interface IHost
 
 	public String getNameById(String xmlId);
 
-	public String getNPCNameById(String npcId);
-
-	public String getAllianceBossName(String npcId);
-
 	public String getPropById(String xmlId, String proName);
 
 	public String getPropByIdGroup(String xmlId, String proName,String groupId);
+
+	public String getPropByNoGroup(String xmlId, String proName,int type);
 
 	public String getPropByIdType(String xmlId, String proName,String groutId,int type);
 
@@ -246,8 +234,6 @@ public interface IHost
 
 	public void reportCustomHeadImg(String uid);
 
-	public void banPlayerPic(String uid);
-
 	public void translateOptimize(String method, String originalLang, String userLang, String msg, String translationMsg);
 
 	public void postDetectMailInfo(String jsonStr);
@@ -277,7 +263,7 @@ public interface IHost
 	public boolean getNativeGetIsShowStatusBar();
 	
 	public void getLatestChatMessage();
-	public void showGoBackGameDialog();
+
 	public int getCanCreateChatRoomNum();
 
 	public int getFrameState();
@@ -294,19 +280,18 @@ public interface IHost
 
 	public void postToCppSwithOn(boolean isAnchorHost, boolean status);
 	public void postToCppBCState(boolean isAnchorHost, int status);
-	public void postToCppRefreshRoomNumber(String roomId, int roomNumber);
-	public void postToCppRefreshLiveRoomInfo();
 
-	public int getServerPingValue(String server, String port, String protocol);
-	public void queryServerPing();
-	public void sendServerStatus(String server, String port, String protocol, int status);
-	public void recordChat();
-	public boolean isChina();
-	public void updatePopLayout(float rate);
+	public void updateBattleBallsState(boolean isShow ,int num);
+
+	public boolean isActivityOpen(int post);
+
+	public String getNPCNameById(String npcId);
+
+	public boolean isNeedAddWarZone();
+
+	public String getWarZoneFilterStr();
+
 	public String getFlag();
-	public String getNewsCenterShowMsg(String newsId, String titleParams);
-	public String getScienceSharedMsg(String scienceType);
-
 	/**
 	 * 语言聊天室-配置
 	 */

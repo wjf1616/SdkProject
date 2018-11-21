@@ -108,6 +108,7 @@
             android:layout_weight="16"
             android:scaleType="fitCenter"
             android:scaleX="-1"
+            android:visibility="gone"
             android:src="@drawable/mail_list_arrow" />
 
         <View

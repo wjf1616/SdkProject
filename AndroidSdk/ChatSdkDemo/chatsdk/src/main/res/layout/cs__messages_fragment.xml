@@ -79,6 +79,20 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="@color/cs__white"
             android:textSize="@dimen/cs__textButtonTitle" />
+        <Button
+            android:id="@+id/buttonWarZone"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="1dp"
+            android:layout_marginLeft="0dp"
+            android:layout_marginRight="1dp"
+            android:layout_marginTop="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_qieye_01"
+            android:text="最强大区"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@color/cs__white"
+            android:textSize="@dimen/cs__textButtonTitle" />
 
     </LinearLayout>
     <RelativeLayout
@@ -488,27 +502,34 @@
     <RelativeLayout
         android:id="@+id/anchor_info_layout"
         android:layout_width="match_parent"
-        android:background="@drawable/anchor_bg"
-        android:layout_height="100dp"
+        android:background="@drawable/cell_bg"
+        android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true">
-
         <ImageView
             android:id="@+id/imageView4"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:scaleType="fitXY"
             android:src="@drawable/anchor_bg_under" />
-
+        <ImageView
+            android:id="@+id/anchor_info_bg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView4"
+            android:layout_above="@+id/anchor_tip_text"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginBottom="-10dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/bj_beijing2"/>
         <LinearLayout
             android:id="@+id/anchor_top_bg"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/imageView4"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true">
+            android:layout_below="@+id/imageView4">
 
             <ImageView
                 android:layout_width="0dp"
@@ -519,7 +540,14 @@
                 android:scaleX="-1"
                 android:scaleType="fitXY"
                 android:id="@+id/imageView6" />
-            />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="20dp"
+                android:src="@drawable/title_bar"
+                android:scaleType="fitXY"
+                />
             <ImageView
                 android:layout_width="0dp"
                 android:layout_weight="1"
@@ -530,131 +558,76 @@
                 />
         </LinearLayout>
         <LinearLayout
-            android:id="@+id/anchor_control_layout"
+            android:id="@+id/state_control_layout"
             android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:layout_below="@+id/anchor_top_bg"
-            android:layout_centerInParent="true">
-            <com.elex.chatservice.util.FixedAspectRatioFrameLayout
-                android:id="@+id/anchor_pic_layout"
-                android:layout_width="60dp"
-                android:layout_marginLeft="10dp"
-                android:layout_height="60dp"
-                android:background="@drawable/head_img_bg"
-                 >
-                <com.elex.chatservice.util.RoundImageView
-                    android:id="@+id/anchor_icon"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/head_bg"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/mail_list_head_battle_city_failure">
-                </com.elex.chatservice.util.RoundImageView>
-            </com.elex.chatservice.util.FixedAspectRatioFrameLayout>
+            android:layout_centerInParent="true"
+            android:background="@drawable/tips">
 
-            <LinearLayout
-                android:id="@+id/anchor_tip_layout"
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/anchor_room_name"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_weight="200"
+                android:gravity="left|center_vertical"
+                android:text="Anchor:Small funny temp2"
                 android:layout_marginLeft="10dp"
-                android:layout_marginBottom="10dp"
-                android:orientation="vertical">
+                android:maxWidth="200dp"
+                android:singleLine="true"
+                android:textSize="@dimen/cs__textMessage"
+                android:textColor="#eee68f"
+                />
 
-                <TextView
-                    android:id="@+id/anchor_room_name"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:gravity="left|center_vertical"
-                    android:text="Anchor:Small funny temp2"
-                    android:singleLine="true"
-                    android:textSize="@dimen/cs__textTranslateButton"
-                    android:textColor="@color/cs__white"
-                    />
-
-                <TextView
-                    android:id="@+id/anchor_tip_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_weight="2"
-                    android:text="hello.."
-                    android:textColor="@color/live_tip_content"
-                    android:textSize="@dimen/cs__textMessage"
-                    />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="10dp"
+            <TextView
+                android:id="@+id/anchor_state_text"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_weight="100"
-                android:orientation="vertical">
+                android:gravity="center"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="5dp"
+                android:text="live telecast..."
+                android:maxWidth="80dp"
+                android:singleLine="true"
+                android:textSize="@dimen/cs__textMessage"
+                android:textColor="#00ff00"
+                />
 
-                <RelativeLayout
-                    android:id="@+id/listenNum_layout"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:layout_marginLeft="5dp"
-                    android:layout_width="wrap_content"
-                    >
-                    <ImageView
-                        android:id="@+id/listen_Img"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitCenter"
-                        android:scaleX="1.2"
-                        android:scaleY="1.2"
-                        android:src="@drawable/live_listen"
-                        android:layout_alignParentLeft="true"/>
-                    <TextView
-                        android:id="@+id/listenNumText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_toRightOf="@+id/listen_Img"
-                        android:layout_marginLeft="10dp"
-                        android:gravity="center_vertical"
-                        android:text="1200"
-                        android:textColor="#FFFFFF"
-                        android:textSize="@dimen/cs__textMessage"
-                        />
-                </RelativeLayout>
-                <RelativeLayout
-                    android:id="@+id/anchor_state_layout"
-                    android:layout_height="0dp"
-                    android:layout_weight="3"
-                    android:layout_marginTop="10dp"
-                    android:layout_width="wrap_content"
-                    >
-                    <TextView
-                        android:id="@+id/anchor_state_text"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="live telecast..."
-                        android:maxWidth="80dp"
-                        android:singleLine="true"
-                        android:textSize="@dimen/cs__textMessage"
-                        android:textColor="#00ff00"
-                        />
-
-                    <Button
-                        android:id="@+id/voice_play_btn"
-                        android:layout_width="80dp"
-                        android:layout_height="30dp"
-                        android:layout_weight="2"
-                        android:background="@drawable/voice_btn"
-                        android:textColor="@color/stop_title"
-                        android:text="收听"
-                        />
-                </RelativeLayout>
-            </LinearLayout>
-
+            <Button
+                android:id="@+id/voice_play_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp"
+                android:minWidth="30dp"
+                android:minHeight="30dp"
+                android:background="@drawable/voice_pause"
+                />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/anchor_tip_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-10dp"
+            android:layout_below="@+id/state_control_layout"
+            android:minHeight="100dp"
+            android:text="nihiajohosadasasas"
+            android:textColor="#DFBEA5"
+            android:textSize="@dimen/cs__textMessage"
+            android:gravity="center"
+            />
+        <ImageView
+            android:id="@+id/imageView5"
+            android:layout_below= "@+id/anchor_tip_text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="0dp"
+            android:layout_marginRight="0dp"
+            android:layout_marginTop="0dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/anchor_bg_under" />
+
     </RelativeLayout>
 
     <RelativeLayout android:id="@+id/channelListFragmentLayout"
@@ -666,12 +639,12 @@
         <FrameLayout android:layout_width="fill_parent"
             android:layout_height="fill_parent">
 
-            <com.lee.pullrefresh.ui.PullToRefreshSwipeListView
+            <com.pullrefresh.PullToRefreshSwipeListView
                 android:id="@+id/channelListPullView"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:cacheColorHint="#00000000" >
-            </com.lee.pullrefresh.ui.PullToRefreshSwipeListView>
+            </com.pullrefresh.PullToRefreshSwipeListView>
 
             <TextView android:id="@+id/tip_no_mail"
                 android:layout_width="wrap_content"
@@ -687,24 +660,5 @@
 
         </FrameLayout>
     </RelativeLayout>
-
-    <com.elex.chatservice.model.FallingView
-        android:id="@+id/fall_lantern_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/bottom_layout"
-        android:layout_below="@+id/buttonsLinearLayout"
-        />
-
-    <ImageView
-        android:id="@+id/icon_net_btn"
-        android:layout_width="38dp"
-        android:layout_height="38dp"
-        android:src="@drawable/icon_net_btn"
-        android:layout_alignParentRight="true"
-        android:layout_marginRight="10dp"
-        android:layout_marginBottom="5dp"
-        android:layout_above="@id/bottom_layout"
-        android:visibility="gone"/>
 
 </RelativeLayout>

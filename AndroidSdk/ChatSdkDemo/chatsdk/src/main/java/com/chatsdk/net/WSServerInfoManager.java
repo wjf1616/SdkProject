@@ -111,12 +111,7 @@ public class WSServerInfoManager
 		
 		try
 		{
-			if(serverInfoMap.containsKey(key))
-			{
-				updateMap(key, infos);
-			}
-			else
-			{
+			if ( infos.size() > 0 ) {
 				serverInfoMap.put(key, infos);
 			}
 			saveObject(serialize(serverInfoMap));

@@ -1,8 +1,7 @@
 package com.chatsdk.model.mail.battle;
 
-import com.chatsdk.model.mail.monster.RateRewardParams;
-
 import java.util.List;
+import  com.chatsdk.model.mail.monster.RateRewardParams;
 
 public class BattleMailContents
 {
@@ -18,26 +17,6 @@ public class BattleMailContents
 	private int						warServerType;
 	private String					warPoint;
 	private int                     warServerId;
-
-	private int                     protectSide;
-
-	public boolean getBigLose() {
-		return bigLose;
-	}
-
-	public void setBigLose(boolean bigLose) {
-		this.bigLose = bigLose;
-	}
-
-	public boolean isResourceShieldState() {
-		return isResourceShieldState;
-	}
-
-	public void setResourceShieldState(boolean resourceShieldState) {
-		isResourceShieldState = resourceShieldState;
-	}
-
-	private boolean                     bigLose;
 
 	private ArmyTotalParams			atkArmyTotal;
 	private ArmyTotalParams			defArmyTotal;
@@ -90,7 +69,6 @@ public class BattleMailContents
 	private int						roundNum;
 	private int						isDemoFight;
 	private int						isFreeAll;
-	private boolean					issamplereport;
 	private int						heroState;
 	private int                     captureHeroId;
 	private int                     captureHeroLevel;
@@ -110,49 +88,11 @@ public class BattleMailContents
 
 
 	private String					worldFortressDefenceLoss; //副堡被打掉的城防值
-	private String					atkNoFightNum; //表示［护城风沙］导致的未参战数量
+
 
 	private String					userDesertReward;
-
-
-	private String					showWordReport;//战报文字版
-
-	private String					showWordReportGM;//战报文字版
-
-	private String					showAnimationReport;//战报文字版
-
-	private String					showAnimationReportGM;//战报文字版
-
-	public String getShowWordReportGM() {
-		return showWordReportGM;
-	}
-
-	public void setShowWordReportGM(String showWordReportGM) {
-		this.showWordReportGM = showWordReportGM;
-	}
-
-	public String getShowAnimationReport() {
-		return showAnimationReport;
-	}
-
-	public void setShowAnimationReport(String showAnimationReport) {
-		this.showAnimationReport = showAnimationReport;
-	}
-
-	public String getShowAnimationReportGM() {
-		return showAnimationReportGM;
-	}
-
-	public void setShowAnimationReportGM(String showAnimationReportGM) {
-		this.showAnimationReportGM = showAnimationReportGM;
-	}
-
-
-
-
-	private String					reportAbstractAnalysis;
-
-	private String					reportAbstracttips;
+    
+    private String					newBigLose;
 
 	public String getUid()
 	{
@@ -164,16 +104,6 @@ public class BattleMailContents
 		this.uid = uid;
 	}
 
-	public String getShowWordReport()
-	{
-		return showWordReport;
-	}
-
-	public void setShowWordReport(String showWordReport)
-	{
-		this.showWordReport = showWordReport;
-	}
-
 	public String getWorldFortressDefenceLoss()
 	{
 		return worldFortressDefenceLoss;
@@ -182,14 +112,6 @@ public class BattleMailContents
 	public void setWorldFortressDefenceLoss(String worldFortressDefenceLoss)
 	{
 		this.worldFortressDefenceLoss = worldFortressDefenceLoss;
-	}
-
-	public String getAtkNoFightNum() {
-		return atkNoFightNum;
-	}
-
-	public void setAtkNoFightNum(String atkNoFightNum) {
-		this.atkNoFightNum = atkNoFightNum;
 	}
 
 	public int getType()
@@ -260,16 +182,6 @@ public class BattleMailContents
 	public void setBattleType(int battleType)
 	{
 		this.battleType = battleType;
-	}
-
-	public int getProtectSide()
-	{
-		return protectSide;
-	}
-
-	public void setProtectSide(int protectSide)
-	{
-		this.protectSide = protectSide;
 	}
 
 	public int getBattleMailType() {
@@ -790,14 +702,6 @@ public class BattleMailContents
 		this.isFreeAll = isFreeAll;
 	}
 
-	public boolean getIssamplereport() {
-		return issamplereport;
-	}
-
-	public void setIssamplereport(boolean issamplereport) {
-		this.issamplereport = issamplereport;
-	}
-
 	public int getHeroState() {
 		return heroState;
 	}
@@ -862,21 +766,13 @@ public class BattleMailContents
 	public void setWarServerType(int warServerType) {
 		this.warServerType = warServerType;
 	}
-
-	public String getReportAbstractAnalysis() {
-		return reportAbstractAnalysis;
-	}
-
-	public void setReportAbstractAnalysis(String reportAbstractAnalysis) {
-		this.reportAbstractAnalysis = reportAbstractAnalysis;
-	}
-
-	public String getReportAbstracttips() {
-		return reportAbstracttips;
-	}
-
-	public void setReportAbstracttips(String reportAbstracttips) {
-		this.reportAbstracttips = reportAbstracttips;
-	}
+    
+    public void setNewBigLose(String newBigLose){
+        this.newBigLose = newBigLose;
+    }
+    
+    public String getNewBigLose(){
+        return newBigLose;
+    }
 
 }

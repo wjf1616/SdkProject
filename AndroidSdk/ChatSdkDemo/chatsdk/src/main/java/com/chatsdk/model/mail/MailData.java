@@ -45,6 +45,8 @@ public class MailData extends ChannelListItem
 	public int                      flag                         = 0;
 	public String			       channelId					= "";
 	public long				       failTime                   = 0;
+	private String					replyText					= "";
+
 
 	private transient String		version						= "";
 	public transient String			pic							= "";
@@ -55,7 +57,6 @@ public class MailData extends ChannelListItem
 	public transient int			catchLeader						= -1;
 	public transient int			captureHeroId				= 0;
 	public transient int			captureHeroLevel			= 0;
-	public transient boolean		issamplereport				= false;
 //	public int getIsFreeAll() {
 //		return isFreeAll;
 //	}
@@ -147,7 +148,8 @@ public class MailData extends ChannelListItem
 		isKnightActivityFinishMail = mailData.isKnightActivityFinishMail;
 		hasParseForKnight = mailData.hasParseForKnight;
 		failTime = mailData.failTime;
-		issamplereport = mailData.issamplereport;
+		replyText = mailData.replyText;
+
 	}
 
 	public void setMailDealStatus()
@@ -184,6 +186,8 @@ public class MailData extends ChannelListItem
 			mbLevel = c.getInt(c.getColumnIndex(DBDefinition.MAIL_REWARD_LEVEL));
 			flag = c.getInt(c.getColumnIndex(DBDefinition.MAIL_FLAG));
 			failTime = c.getLong(c.getColumnIndex(DBDefinition.MAIL_FAIL_TIME));
+			replyText = c.getString(c.getColumnIndex(DBDefinition.MAIL_REPLY_TEXT));
+
 		}
 		catch (Exception e)
 		{
@@ -258,19 +262,10 @@ public class MailData extends ChannelListItem
 	{
 		if (type >= 0 && type < MailManager.MAIL_TYPE_COUNT)
 		{
-			if (type == MailManager.MAIL_BATTLE_REPORT || type == MailManager.MAIL_DETECT || type == MailManager.MAIL_DETECT_REPORT|| type == MailManager.Mail_DETECT_ARENA|| type == MailManager.Mail_DETECT_REPORT_ARENA
-					|| type == MailManager.MAIL_ENCAMP || type == MailManager.MAIL_WORLD_BOSS|| type == MailManager.Mail_BORDERFIGHT
-					|| type == MailManager.Mail_BATTLEGAMEFIGHT|| type == MailManager.Mail_SHAMOGAMEFIGHT|| type == MailManager.Mail_CASTLEGAMEFIGHT
-					|| type == MailManager.Mail_ARENAGAMEFIGHT|| type == MailManager.Mail_KNIGHTGAMEFIGHT|| type == MailManager.Mail_SHAMOKNIGHTGAMEFIGHT
-					|| type == MailManager.Mail_GAMEFIGHTACTIVITY|| type == MailManager.MAIL_SHAMOGOLDDIGEGER|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_PLAYER_RESOURCE
-					|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_PLAYERCITY || type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_THRONE || type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_ALLIANCETOWER|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_EXPEDITION
-					|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_PYRAMID|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_MOBILIZATION|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_DESERTGRAVE
-					|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_CASTLE
-					|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_NOTCOVERDOMAIN
-					|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_FIGHTDOMAINMARL
-					|| type == MailManager.MAIL_NEWVERSION_ARENA_THRONE || type == MailManager.MAIL_NEWVERSION_ARENA_TREBUCHET
-					|| type == MailManager.MAIL_WORLD_MONSTER_ELITE || type == MailManager.MAIL_SC_FINGHT_RUINS || type == MailManager.MAIL_SC_FINGHT_CITY
-					|| type == MailManager.MAIL_TYPE_ALLIANCE_BOSS || type == MailManager.MAIL_TYPE_ALLIANCE_BOSS_TREASURE
+			if (type == MailManager.MAIL_BATTLE_REPORT || type == MailManager.MAIL_DETECT || type == MailManager.MAIL_DETECT_REPORT
+					|| type == MailManager.MAIL_ENCAMP || type == MailManager.MAIL_WORLD_BOSS|| type == MailManager.Mail_BORDERFIGHT|| type == MailManager.Mail_CITY_FIGHT_FB
+					|| type == MailManager.Mail_MONSTER_FIGHT_FB|| type == MailManager.Mail_RESOURCE_FIGHT_FB|| type == MailManager.Mail_SPACE_FIGHT_FB|| type == MailManager.Mail_MANOR_FIGHT_FB
+					|| type == MailManager.Mail_USER_WORLD_BUILDING_FIGHT_FB|| type == MailManager.Mail_NEW_SCOUT_REPORT_FB|| type == MailManager.MAIL_HEROBATTLE_FB
 					)
 			{
 				tabType = MailManager.MAILTAB_FIGHT;
@@ -310,38 +305,17 @@ public class MailData extends ChannelListItem
 		switch (type)
 		{
 			case MailManager.MAIL_SYSTEM:
-			case MailManager.Mail_ACTIVITY_NEW:
-			case MailManager.MAIL_NEWACTIVITY_PERSONALARM:
-			case MailManager.MAIL_NEWACTIVITY_ALLIANCERAM:
-			case MailManager.MAIL_NEWACTIVITY_GREATKING:
-			case MailManager.MAIL_NEWACTIVITY_DESERT:
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_SYSTEM);
 				break;
 			case MailManager.MAIL_BATTLE_REPORT:
 			case MailManager.Mail_BORDERFIGHT:
-			case MailManager.Mail_BATTLEGAMEFIGHT:
-			case MailManager.Mail_SHAMOGAMEFIGHT:
-			case MailManager.Mail_CASTLEGAMEFIGHT:
-			case MailManager.Mail_ARENAGAMEFIGHT:
-			case MailManager.Mail_KNIGHTGAMEFIGHT:
-			case MailManager.Mail_SHAMOKNIGHTGAMEFIGHT:
-			case MailManager.Mail_GAMEFIGHTACTIVITY:
-			case MailManager.MAIL_SHAMOGOLDDIGEGER:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_PLAYERCITY:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_PLAYER_RESOURCE:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_THRONE:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_ALLIANCETOWER:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_EXPEDITION:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_PYRAMID:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_MOBILIZATION:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_DESERTGRAVE:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_CASTLE:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_NOTCOVERDOMAIN:
-			case MailManager.MAIL_NEWVERSION_BATTLEREPORT_FIGHTDOMAINMARL:
-			case MailManager.MAIL_NEWVERSION_ARENA_THRONE:
-			case MailManager.MAIL_NEWVERSION_ARENA_TREBUCHET:
-			case MailManager.MAIL_SC_FINGHT_RUINS:
-			case MailManager.MAIL_SC_FINGHT_CITY:
+			case MailManager.Mail_CITY_FIGHT_FB:
+			case MailManager.Mail_MONSTER_FIGHT_FB:
+			case MailManager.Mail_RESOURCE_FIGHT_FB:
+			case MailManager.Mail_SPACE_FIGHT_FB:
+			case MailManager.Mail_MANOR_FIGHT_FB:
+			case MailManager.Mail_USER_WORLD_BUILDING_FIGHT_FB:
+			case MailManager.MAIL_HEROBATTLE_FB:
 			{
 				if (isAtk)
 				{
@@ -357,11 +331,10 @@ public class MailData extends ChannelListItem
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_RESOURCE);
 				break;
 			case MailManager.MAIL_DETECT:
-			case MailManager.Mail_DETECT_ARENA:
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_BATTLE_DETECT);
 				break;
 			case MailManager.MAIL_DETECT_REPORT:
-			case MailManager.Mail_DETECT_REPORT_ARENA:
+			case MailManager.Mail_NEW_SCOUT_REPORT_FB:
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_BATTLE_DETECT);
 				break;
 			case MailManager.MAIL_ENCAMP:
@@ -369,6 +342,10 @@ public class MailData extends ChannelListItem
 				break;
 			case MailManager.MAIL_FRESHER:
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_SYSTEM);
+				break;
+			case MailManager.Mail_ATTACKMONSTER_FIGHT_FB:
+			case MailManager.Mail_CONTRAST_WORLD_BOSS:
+				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_MONSTER);
 				break;
 			case MailManager.MAIL_WOUNDED:
 				mailIcon = pic;
@@ -394,6 +371,7 @@ public class MailData extends ChannelListItem
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_ANNOUNCEMENT);
 				break;
 			case MailManager.MAIL_ALLIANCEINVITE:
+			case MailManager.MAIL_ALLIANCE_RECOMMEND:
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_INVITE_JOIN_ALLIANCE);
 				break;
 			case MailManager.MAIL_ATTACKMONSTER:
@@ -420,9 +398,6 @@ public class MailData extends ChannelListItem
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_INVITE_KICKEDOUT);
 				break;
 			case MailManager.MAIL_WORLD_BOSS:
-			case MailManager.MAIL_WORLD_MONSTER_ELITE:
-			case MailManager.MAIL_TYPE_ALLIANCE_BOSS:
-			case MailManager.MAIL_TYPE_ALLIANCE_BOSS_TREASURE:
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_BATTLE_REPORT);
 				break;
 			case MailManager.CHAT_ROOM:
@@ -431,16 +406,7 @@ public class MailData extends ChannelListItem
 			case MailManager.MAIL_REFUSE_ALL_APPLY:
 				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_INVITE_REJECTED);
 				break;
-			case MailManager.MAIL_MOBILIZATION_CENTER:
-				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.CHANNEL_ICON_MOBILIZATION);//待更换图片资源
-				break;
-			case MailManager.MAIL_COMBOTFACTORY_FIRE:
-//				mailIcon = "mail_list_head_bg_battle";//战备工厂使用
-				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_SYSTEM);
-				break;
-			case MailManager.MAIL_NEWACTIVITY_WORLDCUP:
-				mailIcon = MailManager.getInstance().getMailIconByName(MailIconName.MAIL_ICON_WORLDCUP);
-				break;
+
 			default:
 				break;
 		}
@@ -468,6 +434,10 @@ public class MailData extends ChannelListItem
 		{
 			nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TABNAME_INVITE);
 		}
+		else if (type == MailManager.MAIL_ALLIANCE_RECOMMEND)
+		{
+			nameText = LanguageManager.getLangByKey("3000002");
+		}
 		else if(type == MailManager.MAIL_PERSIDENT_SEND){
 			nameText = fromName;
 		}
@@ -486,8 +456,7 @@ public class MailData extends ChannelListItem
 				nameText = fromName;
 			}
 		}
-		else if (type == MailManager.MAIL_WORLD_BOSS || type == MailManager.MAIL_WORLD_MONSTER_ELITE || isWorldBossKillRewardMail()
-				|| type == MailManager.MAIL_TYPE_ALLIANCE_BOSS)
+		else if (type == MailManager.MAIL_WORLD_BOSS || isWorldBossKillRewardMail())
 		{
 			String bossName = "";
 			String bossId = "";
@@ -505,18 +474,16 @@ public class MailData extends ChannelListItem
 				String[] vector = contents.split("\\|");
 				bossId = vector[vector.length-1];
 			}
-			if(type == MailManager.MAIL_TYPE_ALLIANCE_BOSS){
-				bossName = JniController.getInstance().excuteJNIMethod("getAllianceBossName",new Object[]{bossId});
+			bossName = JniController.getInstance().excuteJNIMethod("getPropByIdType", new Object[] { bossId,"name","field_monster",273 });
+			bossName = LanguageManager.getLangByKey(bossName);
+			if (title.equals("133272")) {
+				nameText = LanguageManager.getLangByKey("133278");
+			} else if(title.equals("137460")){
+				nameText = LanguageManager.getLangByKey("137451");
+
 			}else {
-				bossName = JniController.getInstance().excuteJNIMethod("getNameById", new Object[]{bossId});
+				nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_WORLDBOSS,bossName);
 			}
-			nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_WORLDBOSS,bossName);
-		}else if(type == MailManager.MAIL_TYPE_ALLIANCE_BOSS_TREASURE){
-			String bossName = LanguageManager.getLangByKey(LanguageKeys.ALLIANCE_BOSS_TREASURE);
-			nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_ALLIANCE_TREASURE,bossName);
-		}
-		else if(type == MailManager.Mail_ACTIVITY_NEW && title.equals("79000027")){
-			nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_EVENT);
 		}
 		else if (type == MailManager.MAIL_RESOURCE)
 		{
@@ -548,10 +515,7 @@ public class MailData extends ChannelListItem
 		{
 			nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_109516);
 		}
-		else if (type == MailManager.MAIL_MOBILIZATION_CENTER){
-			nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_MOBILIZATION);
-		}
-		else if (type == MailManager.MAIL_DETECT||type == MailManager.Mail_DETECT_ARENA)
+		else if (type == MailManager.MAIL_DETECT)
 		{
 			nameText = LanguageManager.getLangByKey(LanguageKeys.MENU_DETECTREPORT);
 			if (itemIdFlag == 0 && StringUtils.isNotEmpty(title))
@@ -587,9 +551,6 @@ public class MailData extends ChannelListItem
 				}else if(title.equals("26")) {
 					catapulStr = LanguageManager.getLangByKey("115480");// 115480 = 联盟资源站
 				}
-				else if(title.equals("58")) {
-					catapulStr = LanguageManager.getLangByKey("99000002");// 第二基地
-				}
 				nameText = LanguageManager.getLangByKey("105615", catapulStr); // 105615 = 您的{0}被侦查了
 			}
 		}
@@ -601,15 +562,8 @@ public class MailData extends ChannelListItem
 		{
 			nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TABNAME_NOTICE);
 		}
-		else if (type == MailManager.MAIL_COMBOTFACTORY_FIRE){//战备工厂<二级cell的titleName>
-			nameText = LanguageManager.getLangByKey(LanguageKeys.TIP_SYSTEM);
-		}
-		else if(type == MailManager.MAIL_ALLIANCE_COMMON){
-			nameText = LanguageManager.getLangByKey("115000");
-		}
-
-
-		if(StringUtils.isNotEmpty(fromName) && StringUtils.isNumeric(fromName) && !fromName.contains("."))
+		
+		if(StringUtils.isNotEmpty(fromName) && StringUtils.isNumeric(fromName) && !fromName.contains(".") && StringUtils.isEmpty(nameText))
 		{
 			nameText = LanguageManager.getLangByKey(fromName);
 		}
@@ -619,8 +573,6 @@ public class MailData extends ChannelListItem
 			if (tabType == MailManager.MAILTAB_FIGHT)
 			{
 				nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TABNAME_FIGHT);
-			}else if(this.isChannelEventMail(channelId)){
-				nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_EVENT);
 			}
 			else if (tabType == MailManager.MAILTAB_MOD)
 			{
@@ -637,26 +589,14 @@ public class MailData extends ChannelListItem
 			else if (tabType == MailManager.MAILTAB_NOTICE)
 			{
 				nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TABNAME_NOTICE);
-			}else if(channelId != null && channelId.equals(MailManager.CHANNELID_ALLIANCE)) {
-				nameText = LanguageManager.getLangByKey("115000"); //联盟
 			}
 		}
-
-		if ((type != MailManager.MAIL_DETECT||type != MailManager.Mail_DETECT_ARENA)&&(fromName.equals("3000001") || fromName.equals("3000002")))
+		
+		if (type != MailManager.MAIL_DETECT&& StringUtils.isEmpty(nameText) && (fromName.equals("3000001") || fromName.equals("3000002")))
 			nameText = LanguageManager.getLangByKey(LanguageKeys.NPC_NAME);
 
 	}
 
-	public boolean isChannelEventMail(String channelId){
-		if(channelId != null && (channelId.equals(MailManager.CHANNELID_EVENT_NORMAL) ||
-				channelId.equals(MailManager.CHANNELID_EVENT_ALLIANCERAM) ||
-				channelId.equals(MailManager.CHANNELID_EVENT_GREATKING) ||
-				channelId.equals(MailManager.CHANNELID_EVENT_DESERT) ||
-				channelId.equals(MailManager.CHANNELID_EVENT_PERSONALARM))){
-			return true;
-		}
-		return false;
-	}
 	public void parseContentText()
 	{
 		if (StringUtils.isNotEmpty(title))
@@ -711,7 +651,7 @@ public class MailData extends ChannelListItem
 					}
 					contentText = LanguageManager.getLangByKey(contentArr[4], name);
 				}
-				break;
+					break;
 				default:
 					break;
 			}
@@ -738,7 +678,7 @@ public class MailData extends ChannelListItem
 		{
 			contentText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_WOUNDED);
 		}
-		else if (type == MailManager.MAIL_DETECT||type == MailManager.Mail_DETECT_ARENA)
+		else if (type == MailManager.MAIL_DETECT)
 		{
 			if (itemIdFlag == 1)
 			{
@@ -759,7 +699,7 @@ public class MailData extends ChannelListItem
 						}else if(content[0].equals("200633")){
 							String tempStr = LanguageManager.getLangByKey(content[1]);
 							contentText = LanguageManager.getLangByKey("200633", tempStr);
-						}else if((content[0].equals("82000335")||content[0].equals("82000336")) && num >= 3){
+						}else if(content[0].equals("82000335")||content[0].equals("82000336")){
 							contentText = LanguageManager.getLangByKey(content[0],content[1],content[2]);
 						}else if(content[0].equals("82000344")||content[0].equals("82000345")){
 							contentText = LanguageManager.getLangByKey(content[0],content[1]);
@@ -827,10 +767,6 @@ public class MailData extends ChannelListItem
 							nameText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_140181,
 									LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_110172));
 						}
-						else if (type.equals("58"))
-						{
-							contentText = LanguageManager.getLangByKey("99000312", name); //{0}侦查了您的第二基地
-						}
 						else
 						{
 							contentText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_105524, name);
@@ -849,10 +785,7 @@ public class MailData extends ChannelListItem
 		}else if (type == MailManager.MAIL_GIVE_SOLDIER){
 			contentText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_101040);;
 		}
-		else if (type == MailManager.MAIL_COMBOTFACTORY_FIRE) {//二级cell的内容显示为射击报告
-			contentText = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_COMBATFACTORY_FIRE);
-		}
-		else if (type == MailManager.MAIL_GIFT_RECEIVE){
+        else if (type == MailManager.MAIL_GIFT_RECEIVE){
 			try
 			{
 				JSONObject jsonObject = JSON.parseObject(this.contents);
@@ -875,13 +808,13 @@ public class MailData extends ChannelListItem
 			String bossId = "";
 			String[] vector = contents.split("\\|");
 			bossId = vector[vector.length-1];
-			bossName = JniController.getInstance().excuteJNIMethod("getNameById",new Object[]{bossId});
-			contentText = LanguageManager.getLangByKey(LanguageKeys.MAIL_CONTENT_BOSSREWARD,bossName);  //  137460 = {0}消灭奖励
-		}else if(type == MailManager.MAIL_TYPE_ALLIANCE_BOSS_TREASURE){
-			String bossName = LanguageManager.getLangByKey(LanguageKeys.ALLIANCE_BOSS_TREASURE);
-			String content = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_ALLIANCE_TREASURE,bossName);
-			String myTeam = LanguageManager.getLangByKey(LanguageKeys.MAIL_TITLE_MYARMY);
-			contentText = myTeam.concat(content);
+			bossName = JniController.getInstance().excuteJNIMethod("getPropByIdType", new Object[] { bossId,"name","field_monster",273 });
+			bossName = LanguageManager.getLangByKey(bossName);
+			if (title.equals("133272") || title.equals("137460")) {
+				contentText = LanguageManager.getLangByKey(title);
+			} else {
+				contentText = LanguageManager.getLangByKey(LanguageKeys.MAIL_CONTENT_BOSSREWARD,bossName);  //  137460 = {0}消灭奖励
+			}
 		}
 		if (StringUtils.isNotEmpty(contentText) && contentText.length() > 50)
 		{
@@ -894,23 +827,15 @@ public class MailData extends ChannelListItem
 	@JSONField(serialize = false)
 	public boolean isComplexMail()
 	{
-		if (type == MailManager.MAIL_BATTLE_REPORT || type == MailManager.MAIL_RESOURCE || type == MailManager.MAIL_DETECT_REPORT|| type == MailManager.Mail_DETECT_REPORT_ARENA
-				|| type == MailManager.MAIL_ENCAMP || type == MailManager.WORLD_NEW_EXPLORE || type == MailManager.MAIL_ALLIANCEINVITE
+		if (type == MailManager.MAIL_BATTLE_REPORT || type == MailManager.MAIL_RESOURCE || type == MailManager.MAIL_DETECT_REPORT
+				|| type == MailManager.MAIL_ENCAMP || type == MailManager.WORLD_NEW_EXPLORE || type == MailManager.MAIL_ALLIANCEINVITE|| type == MailManager.MAIL_ALLIANCE_RECOMMEND
 				|| type == MailManager.MAIL_ALLIANCEAPPLY || type == MailManager.MAIL_ATTACKMONSTER|| type == MailManager.MAIL_GIFT_BUY_EXCHANGE
-				|| type == MailManager.MAIL_MISSILE || type == MailManager.MAIL_RESOURCE_HELP
+		        || type == MailManager.MAIL_MISSILE || type == MailManager.MAIL_RESOURCE_HELP
 				|| type == MailManager.MAIL_INVITE_TELEPORT || type == MailManager.MAIL_ALLIANCE_KICKOUT
-				|| type == MailManager.MAIL_WORLD_BOSS || type == MailManager.MAIL_REFUSE_ALL_APPLY||type == MailManager.Mail_BORDERFIGHT
-				|| type == MailManager.Mail_BATTLEGAMEFIGHT||type == MailManager.Mail_SHAMOGAMEFIGHT||type == MailManager.Mail_CASTLEGAMEFIGHT||type == MailManager.Mail_ARENAGAMEFIGHT
-				|| type == MailManager.Mail_KNIGHTGAMEFIGHT||type == MailManager.Mail_SHAMOKNIGHTGAMEFIGHT||type == MailManager.Mail_GAMEFIGHTACTIVITY||type == MailManager.MAIL_SHAMOGOLDDIGEGER||type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_PLAYER_RESOURCE
-				|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_PLAYERCITY || type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_THRONE || type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_ALLIANCETOWER || type == MailManager.MAIL_MOBILIZATION_CENTER
-				|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_EXPEDITION
-				|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_PYRAMID||type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_MOBILIZATION||type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_CASTLE
-				|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_DESERTGRAVE
-				|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_NOTCOVERDOMAIN
-				|| type == MailManager.MAIL_NEWVERSION_BATTLEREPORT_FIGHTDOMAINMARL
-				|| type == MailManager.MAIL_NEWVERSION_ARENA_THRONE || type == MailManager.MAIL_NEWVERSION_ARENA_TREBUCHET
-				|| type == MailManager.MAIL_WORLD_MONSTER_ELITE || type == MailManager.MAIL_SC_FINGHT_RUINS || type == MailManager.MAIL_SC_FINGHT_CITY
-				|| type == MailManager.MAIL_TYPE_ALLIANCE_BOSS || type == MailManager.MAIL_TYPE_ALLIANCE_BOSS_TREASURE
+				|| type == MailManager.MAIL_WORLD_BOSS || type == MailManager.MAIL_REFUSE_ALL_APPLY||type == MailManager.Mail_BORDERFIGHT||type == MailManager.Mail_CITY_FIGHT_FB
+				||type == MailManager.Mail_MONSTER_FIGHT_FB||type == MailManager.Mail_RESOURCE_FIGHT_FB||type == MailManager.Mail_SPACE_FIGHT_FB||type == MailManager.Mail_ATTACKMONSTER_FIGHT_FB
+				||type == MailManager.Mail_MANOR_FIGHT_FB||type == MailManager.Mail_USER_WORLD_BUILDING_FIGHT_FB||type == MailManager.Mail_NEW_SCOUT_REPORT_FB || type == MailManager.Mail_CONTRAST_WORLD_BOSS
+				|| type == MailManager.MAIL_HEROBATTLE_FB || type == MailManager.MAIL_SEASONWARZONE_FB
 				)
 		{
 			return true;
@@ -932,15 +857,15 @@ public class MailData extends ChannelListItem
 	//@JSONField(serialize = true)
 	public String getChannelId()
 	{
-		return getNewChannelId();
+        return getNewChannelId();
 	}
-
+	
 	public void setChannelId(String channelId)
 	{
 		this.channelId = channelId;
 	}
 
-	//	@JSONField(serialize = false)
+//	@JSONField(serialize = false)
 	public String getOldChannelId()
 	{
 		String channelId = "";
@@ -969,7 +894,7 @@ public class MailData extends ChannelListItem
 
 		if (type == MailManager.MAIL_RESOURCE)
 			channelId = MailManager.CHANNELID_RESOURCE;
-		else if (type == MailManager.MAIL_ATTACKMONSTER)
+		else if (type == MailManager.MAIL_ATTACKMONSTER||type == MailManager.Mail_ATTACKMONSTER_FIGHT_FB || type == MailManager.Mail_CONTRAST_WORLD_BOSS)
 			channelId = MailManager.CHANNELID_MONSTER;
 		else if (type == MailManager.MAIL_GIFT_BUY_EXCHANGE)
 			channelId = MailManager.CHANNELID_GIFT;
@@ -977,11 +902,6 @@ public class MailData extends ChannelListItem
 			channelId = MailManager.CHANNELID_MISSILE;
 		else if (type == MailManager.MAIL_RESOURCE_HELP)
 			channelId = MailManager.CHANNELID_RESOURCE_HELP;
-		else if (type == MailManager.MAIL_MOBILIZATION_CENTER){
-			channelId = MailManager.CHANNELID_MOBILIZATION_CENTER;
-		}else  if (type == MailManager.MAIL_COMBOTFACTORY_FIRE){
-			channelId = MailManager.CHANNELID_COMBOTFACTORY_FIRE;
-		}
 		return channelId;
 	}
 
@@ -1025,21 +945,25 @@ public class MailData extends ChannelListItem
 
 
 
-	//@JSONField(serialize = false)
+	//@JSONField(serialize = false) "90500285","77000157","77000158"
 	public String getNewChannelId()
 	{
+		if(StringUtils.isNotEmpty(this.channelId)){
+			return this.channelId;
+		}else{
+			setMailData(MailManager.getInstance().parseMailDataContent(this));
+		}
 		String channelId = "";
 		if (type == MailManager.MAIL_SYSTEM)
 		{
 			if (title.equals("114111") || title.equals("105726") || title.equals("105727") || title.equals("105728")
-					|| title.equals("105729") || title.equals("105730") || title.equals("115429")|| title.equals("87003105")
-					|| title.equals("90100190"))
+					|| title.equals("105729") || title.equals("105730") || title.equals("115429")|| title.equals("87003105")|| title.equals("90500285")|| title.equals("77000157")|| title.equals("77000158"))
 			{
 				channelId = MailManager.CHANNELID_ALLIANCE;
 			}
 			else if (isWorldBossKillRewardMail() || isKnightActivityStartMail() || title.equals("150335"))
 			{
-				channelId = MailManager.CHANNELID_EVENT_NORMAL;
+				channelId = MailManager.CHANNELID_EVENT;
 			}
 			else
 			{
@@ -1078,9 +1002,9 @@ public class MailData extends ChannelListItem
 				channelId = MailManager.CHANNELID_FIGHT;
 			}
 		}
-		else if(type == MailManager.MAIL_DETECT||type == MailManager.MAIL_DETECT_REPORT || type == MailManager.Mail_DETECT_REPORT_ARENA || type == MailManager.Mail_DETECT_ARENA)
+		else if(type == MailManager.MAIL_DETECT||type == MailManager.MAIL_DETECT_REPORT)
 		{
-			if (isArenagameMail() || type == MailManager.Mail_DETECT_REPORT_ARENA || type == MailManager.Mail_DETECT_ARENA)
+			if (isArenagameMail())
 			{
 				channelId = MailManager.CHANNELID_ARENAGAME;
 			}
@@ -1097,15 +1021,13 @@ public class MailData extends ChannelListItem
 				case MailManager.WORLD_NEW_EXPLORE:
 				case MailManager.WORLD_MONSTER_SPECIAL:
 				case MailManager.Mail_CASTLE_ACCOUNT:
-				case MailManager.Mail_CASTLEGAMEFIGHT:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_PLAYERCITY:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_PLAYER_RESOURCE:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_THRONE:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_ALLIANCETOWER:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_DESERTGRAVE:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_CASTLE:
-				case MailManager.MAIL_SC_FINGHT_RUINS:
-				case MailManager.MAIL_SC_FINGHT_CITY:
+				case MailManager.Mail_CITY_FIGHT_FB:
+				case MailManager.Mail_MONSTER_FIGHT_FB:
+				case MailManager.Mail_RESOURCE_FIGHT_FB:
+				case MailManager.Mail_SPACE_FIGHT_FB:
+				case MailManager.Mail_USER_WORLD_BUILDING_FIGHT_FB:
+				case MailManager.Mail_NEW_SCOUT_REPORT_FB:
+				case MailManager.MAIL_HEROBATTLE_FB:
 					channelId = MailManager.CHANNELID_FIGHT;
 					break;
 				case MailManager.MAIL_ALLIANCEINVITE:
@@ -1117,12 +1039,10 @@ public class MailData extends ChannelListItem
 				case MailManager.MAIL_RESOURCE_HELP:
 				case MailManager.MAIL_DONATE:
 				case MailManager.MAIL_ALLIANCE_UNSIGN:
-				case MailManager.MAIL_ALLIANCE_COMMON:
 				case MailManager.MAIL_ALLIANCEOFFICEAPPLY:
 				case MailManager.MAIL_ALLIANCE_PACKAGE:
 				case MailManager.MAIL_ALLIANCE_DONATE:
-				case MailManager.MAIL_TYPE_ALLIANCE_BOSS:
-				case MailManager.MAIL_TYPE_ALLIANCE_BOSS_TREASURE:
+				case MailManager.MAIL_ALLIANCE_RECOMMEND:
 					channelId = MailManager.CHANNELID_ALLIANCE;
 					break;
 				case MailManager.ALL_SERVICE:
@@ -1140,9 +1060,15 @@ public class MailData extends ChannelListItem
 				case MailManager.MAIL_PERSIDENT_SEND:
 				case MailManager.MAIL_GIVE_SOLDIER:
 				case MailManager.MAIL_GIFT_RECEIVE:
+				case MailManager.MAIL_WARZONE_FB:
+				case MailManager.MAIL_SEASONWARZONE_FB:
+                case MailManager.MAIL_CITYLV_UP:
+                case MailManager.MAIL_CLONE_SOLDIERS:
 					channelId = MailManager.CHANNELID_SYSTEM;
 					break;
+				case MailManager.Mail_ATTACKMONSTER_FIGHT_FB:
 				case MailManager.MAIL_ATTACKMONSTER:
+				case MailManager.Mail_CONTRAST_WORLD_BOSS:
 					channelId = MailManager.CHANNELID_MONSTER;
 					break;
 				case MailManager.MAIL_GIFT_BUY_EXCHANGE:
@@ -1155,58 +1081,16 @@ public class MailData extends ChannelListItem
 					channelId = MailManager.CHANNELID_RESOURCE;
 					break;
 				case MailManager.MAIL_WORLD_BOSS:
-				case MailManager.Mail_GAMEFIGHTACTIVITY:
-				case MailManager.Mail_ACTIVITY_NEW:
-				case MailManager.MAIL_WORLD_MONSTER_ELITE:
-				case MailManager.MAIL_NEWACTIVITY_WORLDCUP:
-					channelId = MailManager.CHANNELID_EVENT_NORMAL;
-					break;
-				case MailManager.MAIL_NEWACTIVITY_PERSONALARM:
-					channelId = MailManager.CHANNELID_EVENT_PERSONALARM;
-					break;
-				case MailManager.MAIL_NEWACTIVITY_ALLIANCERAM:
-					channelId = MailManager.CHANNELID_EVENT_ALLIANCERAM;
-					break;
-				case MailManager.MAIL_NEWACTIVITY_GREATKING:
-					channelId = MailManager.CHANNELID_EVENT_GREATKING;
-					break;
-				case MailManager.MAIL_NEWACTIVITY_DESERT:
-					channelId = MailManager.CHANNELID_EVENT_DESERT;
+					channelId = MailManager.CHANNELID_EVENT;
 					break;
 				case MailManager.MAIL_ShaMoExplore:
 					channelId = MailManager.CHANNELID_SHAMOEXPLORE;
 					break;
 				case MailManager.Mail_BORDERFIGHT:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_EXPEDITION:
 					channelId = MailManager.CHANNELID_BORDERFIGHT;
 					break;
-				case MailManager.Mail_BATTLEGAMEFIGHT:
-					channelId = MailManager.CHANNELID_BATTLEGAME;
-					break;
-				case MailManager.Mail_SHAMOGAMEFIGHT:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_PYRAMID:
-					channelId = MailManager.CHANNELID_SHAMOGAME;
-					break;
-				case MailManager.Mail_ARENAGAMEFIGHT:
-				case MailManager.MAIL_NEWVERSION_ARENA_THRONE:
-				case MailManager.MAIL_NEWVERSION_ARENA_TREBUCHET:
-					channelId = MailManager.CHANNELID_ARENAGAME;
-					break;
-				case MailManager.Mail_KNIGHTGAMEFIGHT:
-				case MailManager.Mail_SHAMOKNIGHTGAMEFIGHT:
-					channelId = MailManager.CHANNELID_KNIGHT;
-					break;
-				case MailManager.MAIL_SHAMOGOLDDIGEGER:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_NOTCOVERDOMAIN:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_FIGHTDOMAINMARL:
-					channelId = MailManager.CHANNELID_SHAMOGOLDDIGGER;
-					break;
-				case MailManager.MAIL_MOBILIZATION_CENTER:
-					channelId = MailManager.CHANNELID_MOBILIZATION_CENTER;
-					break;
-				case MailManager.MAIL_COMBOTFACTORY_FIRE:
-				case MailManager.MAIL_NEWVERSION_BATTLEREPORT_MOBILIZATION:
-					channelId = MailManager.CHANNELID_COMBOTFACTORY_FIRE;
+				case MailManager.Mail_MANOR_FIGHT_FB:
+					channelId = MailManager.CHANNELID_MANORFIGHT;
 					break;
 			}
 		}
@@ -1253,13 +1137,13 @@ public class MailData extends ChannelListItem
 	@JSONField(serialize = false)
 	public boolean isUnread()
 	{
-		boolean b = false;
+        boolean b = false;
 		if(failTime>0){
 			//long time = ChatServiceController.getInstance().host.getCurrentServerTime();
 			long time = TimeManager.getInstance().getCurrentTimeMS();
-			b = ((failTime-time) > 0 || issamplereport)?true:false;
+            b = (failTime-time) > 0?true:false;
 		}else if(failTime == 0){
-			b = true;
+            b = true;
 		}
 
 		return status == 0 && b==true;
@@ -1397,7 +1281,7 @@ public class MailData extends ChannelListItem
 	@JSONField(serialize = false)
 	public boolean isWorldBossKillRewardMail()
 	{
-		if (itemIdFlag == 1 && StringUtils.isNotEmpty(title) && title.equals("137460"))
+		if (itemIdFlag == 1 && StringUtils.isNotEmpty(title) && (title.equals("137460") || title.equals("133272") || title.equals("90601006")))
 			return true;
 		return false;
 	}
@@ -1424,10 +1308,8 @@ public class MailData extends ChannelListItem
 	{
 		String channelId = getChannelId();
 		if (StringUtils.isNotEmpty(channelId)
-				&& (channelId.equals(MailManager.CHANNELID_KNIGHT) || channelId.equals(MailManager.CHANNELID_RESOURCE) || channelId
-				.equals(MailManager.CHANNELID_MONSTER) || channelId.equals(MailManager.CHANNELID_GIFT)|| channelId
-				.equals(MailManager.CHANNELID_MISSILE) || channelId.equals(MailManager.CHANNELID_COMBOTFACTORY_FIRE)
-				|| channelId.equals(MailManager.CHANNELID_MOBILIZATION_CENTER)))
+				&& (channelId.equals(MailManager.CHANNELID_KNIGHT) || channelId.equals(MailManager.CHANNELID_RESOURCE)  || channelId.equals(MailManager.CHANNELID_GIFT)|| channelId
+				.equals(MailManager.CHANNELID_MISSILE)))
 			return true;
 		return false;
 	}
@@ -1436,7 +1318,7 @@ public class MailData extends ChannelListItem
 	public boolean isFailMail()
 	{
 		long time = TimeManager.getInstance().getCurrentTimeMS();
-		if (time > failTime && failTime !=0 && issamplereport){
+		if (time > failTime && failTime !=0 ){
 			return true;
 		}else{
 			return false;

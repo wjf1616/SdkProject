@@ -186,9 +186,6 @@ public class ChannelAdapter extends AbstractMailListAdapter
 
 	private synchronized void onCustomImageLoaded(ChatChannel channel, String uid, final Bitmap bitmap, ImageView imageView)
 	{
-		if(chatroomHeadImages == null){
-			chatroomHeadImages = new ConcurrentHashMap<String, Bitmap>();
-		}
 		if (bitmap != null)
 		{
 			chatroomHeadImages.put(uid, bitmap);
@@ -205,9 +202,6 @@ public class ChannelAdapter extends AbstractMailListAdapter
 		chatroomHeadImagesLoading = false;
 
 		ArrayList<Bitmap> bitmaps = new ArrayList<Bitmap>();
-		if(chatroomHeadImages == null){
-			return;
-		}
 		Set<String> keySet = chatroomHeadImages.keySet();
 		for (String key : keySet)
 		{

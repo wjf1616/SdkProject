@@ -15,9 +15,11 @@ public class UserInfo implements Cloneable
 	public int		tableVer;
 	public String	uid						= "";
 	public String	userName				= "";
+	public String	careerName				= "";
 	public String	allianceId				= "";
 	public String	asn						= "";
 	public int		allianceRank			= -1;
+	public int		createServer			= -1;
 	/** 加入联盟的时间 */
 	public int		joinAllianceTime		= 0;
 	/** 国家号，只有本玩家有 */
@@ -34,6 +36,7 @@ public class UserInfo implements Cloneable
 	/** vip等级，至少为1，由vip points决定，只升不降 */
 	public int		vipLevel				= -1;
 	public int		svipLevel				= -1;
+    public int      vipframe                = -1;
 	/** vip时间，单位为s，有时区，过期则vip暂时失效（等级保留 */
 	public int		vipEndTime				= 0;
 	/** 上次更新时间 */
@@ -43,8 +46,6 @@ public class UserInfo implements Cloneable
 	public String	lang					= "";
 	/** 月卡 */
 	public int      monthCard               = 0;
-	/** 月卡 */
-	public int      lastAnimateTime         = 0;
 
 	// 运行时
 	public boolean	isSelected				= false;
@@ -70,6 +71,7 @@ public class UserInfo implements Cloneable
 			tableVer = c.getInt(c.getColumnIndex(DBDefinition.COLUMN_TABLE_VER));
 			uid = c.getString(c.getColumnIndex(DBDefinition.USER_COLUMN_USER_ID));
 			userName = c.getString(c.getColumnIndex(DBDefinition.USER_COLUMN_NICK_NAME));
+			careerName = c.getString(c.getColumnIndex(DBDefinition.USER_COLUMN_CAREER_NAME));
 			allianceId = c.getString(c.getColumnIndex(DBDefinition.USER_COLUMN_ALLIANCE_ID));
 			asn = c.getString(c.getColumnIndex(DBDefinition.USER_COLUMN_ALLIANCE_NAME));
 			allianceRank = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_ALLIANCE_RANK));
@@ -81,9 +83,9 @@ public class UserInfo implements Cloneable
 			mGmod = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_PRIVILEGE));
 			vipLevel = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_VIP_LEVEL));
 			svipLevel = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_SVIP_LEVEL));
+            vipframe = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_VIP_FRAME));
 			vipEndTime = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_VIP_END_TIME));
 			lastUpdateTime = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_LAST_UPDATE_TIME));
-			lastAnimateTime = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_LAST_ANIMATE_TIME));
 			lastChatTime = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_LAST_CHAT_TIME));
 			lang = c.getString(c.getColumnIndex(DBDefinition.USER_COLUMN_LANG));
 			monthCard = c.getInt(c.getColumnIndex(DBDefinition.USER_COLUMN_MONTHCARD));
@@ -101,6 +103,7 @@ public class UserInfo implements Cloneable
 		cv.put(DBDefinition.COLUMN_TABLE_VER, 9);
 		cv.put(DBDefinition.USER_COLUMN_USER_ID, uid);
 		cv.put(DBDefinition.USER_COLUMN_NICK_NAME, userName);
+		cv.put(DBDefinition.USER_COLUMN_CAREER_NAME, careerName);
 		cv.put(DBDefinition.USER_COLUMN_ALLIANCE_ID, allianceId);
 		cv.put(DBDefinition.USER_COLUMN_ALLIANCE_NAME, asn);
 		cv.put(DBDefinition.USER_COLUMN_ALLIANCE_RANK, allianceRank);
@@ -112,9 +115,9 @@ public class UserInfo implements Cloneable
 		cv.put(DBDefinition.USER_COLUMN_PRIVILEGE, mGmod);
 		cv.put(DBDefinition.USER_COLUMN_VIP_LEVEL, vipLevel);
 		cv.put(DBDefinition.USER_COLUMN_SVIP_LEVEL, svipLevel);
+        cv.put(DBDefinition.USER_COLUMN_VIP_FRAME, vipframe);
 		cv.put(DBDefinition.USER_COLUMN_VIP_END_TIME, vipEndTime);
 		cv.put(DBDefinition.USER_COLUMN_LAST_UPDATE_TIME, lastUpdateTime);
-		cv.put(DBDefinition.USER_COLUMN_LAST_ANIMATE_TIME, lastAnimateTime);
 		cv.put(DBDefinition.USER_COLUMN_LAST_CHAT_TIME, lastChatTime);
 		cv.put(DBDefinition.USER_COLUMN_LANG, lang);
 		cv.put(DBDefinition.USER_COLUMN_MONTHCARD, monthCard);
@@ -166,7 +169,7 @@ public class UserInfo implements Cloneable
 		result = uid.equals(user.uid) && userName.equals(user.userName) && allianceId.equals(user.allianceId) && asn.equals(user.asn)
 				&& allianceRank == user.allianceRank && serverId == user.serverId && crossFightSrcServerId == user.crossFightSrcServerId
 				&& type == user.type && headPic.equals(user.headPic) && headPicVer == user.headPicVer && mGmod == user.mGmod
-				&& vipLevel == user.vipLevel && svipLevel == user.svipLevel && vipEndTime == user.vipEndTime
+				&& vipLevel == user.vipLevel && svipLevel == user.svipLevel && vipframe == user.vipframe && vipEndTime == user.vipEndTime
 				&& lastUpdateTime == user.lastUpdateTime && lastChatTime == user.lastChatTime
 				&& (lang != null && user.lang != null && lang.equals(user.lang) && monthCard == user.monthCard );
 
@@ -192,20 +195,20 @@ public class UserInfo implements Cloneable
 	{
 		int dtime = vipEndTime - TimeManager.getInstance().getCurrentTime();
 		String vipInfo = "";
-		if (dtime > 0)
+		//if (dtime > 0)
 		{
 			if (svipLevel > 0)
 				vipInfo = LanguageManager.getLangByKey(LanguageKeys.SVIP_INFO, String.valueOf(svipLevel));
-			else if (vipLevel > 0)
-				vipInfo = LanguageManager.getLangByKey(LanguageKeys.VIP_INFO, String.valueOf(vipLevel));
+			//else if (vipLevel > 0)
+			///	vipInfo = LanguageManager.getLangByKey(LanguageKeys.VIP_INFO, String.valueOf(vipLevel));
 		}
 		return vipInfo;
 	}
 	
 	public boolean isSVIP()
 	{
-		int dtime = vipEndTime - TimeManager.getInstance().getCurrentTime();
-		if (dtime > 0 && svipLevel > 0)
+		//int dtime = vipEndTime - TimeManager.getInstance().getCurrentTime();
+		if (  svipLevel > 0)
 			return true;
 		return false;
 	}
@@ -231,11 +234,18 @@ public class UserInfo implements Cloneable
 	
 	public int getSVipLevel()
 	{
-		int dtime = vipEndTime - TimeManager.getInstance().getCurrentTime();
-		int vipInfo = (svipLevel > 0 && dtime > 0) ? svipLevel : 0;
+		//int dtime = vipEndTime - TimeManager.getInstance().getCurrentTime();
+		int vipInfo = (svipLevel > 0  ) ? svipLevel : 0;
 		return vipInfo;
 	}
 
+    public int getVipframe()
+    {
+        //int dtime = vipEndTime - TimeManager.getInstance().getCurrentTime();
+        int vipInfo = (vipframe > 0  ) ? vipframe : 0;
+        return vipInfo;
+    }
+    
 	public boolean isCustomHeadImage()
 	{
 		if (isDummy)
