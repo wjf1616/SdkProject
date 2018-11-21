@@ -971,8 +971,7 @@ public class WebSocketManager {
     }
 
     public static boolean isWebSocketEnabled() {
-        // || ChatServiceController.isBetaVersion()
-        return ConfigManager.useWebSocketServer;// && (ChatServiceController.isInnerVersion() || ChatServiceController.getInstance().isUsingDummyHost());
+        return ConfigManager.useWebSocketServer;
     }
 
     public static boolean isRecieveFromWebSocket(int channelType) {
@@ -981,8 +980,7 @@ public class WebSocketManager {
     }
 
     public static boolean isSendFromWebSocket(int channelType) {
-        return isWebSocketEnabled() && (ConfigManager.isSendFromWebSocket || ChatServiceController.getInstance().isUsingDummyHost())
-                && isSupportedType(channelType);
+        return isWebSocketEnabled() && ConfigManager.isSendFromWebSocket && isSupportedType(channelType);
     }
 
     public static boolean isSupportedType(int channelType) {

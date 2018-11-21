@@ -13,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -78,12 +77,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static android.R.attr.data;
-import static com.alibaba.fastjson.JSON.toJSONString;
-import static com.chatsdk.controller.ChatServiceController.getChatFragment;
-import static com.chatsdk.controller.ChatServiceController.getChatSendGapTime;
-import static com.chatsdk.controller.ChatServiceController.mail_all_read;
-import static com.chatsdk.model.MailManager.MAIL_SYSTEM;
 
 public class ServiceInterface
 {
@@ -1306,10 +1299,7 @@ public class ServiceInterface
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_WS_STATUS);
 		if (WebSocketManager.isWebSocketEnabled())
 		{
-			if (!ChatServiceController.getInstance().isActuallyUsingDummyHost())
-			{
-				WebSocketManager.getInstance().setStatusListener(WebSocketStatusHandler.getInstance());
-			}
+			WebSocketManager.getInstance().setStatusListener(WebSocketStatusHandler.getInstance());
 			if( LogUtil.nativeIsFLOG()) {
 				LogUtil.nativeFLOG("CS Java Connect WS");
 			}

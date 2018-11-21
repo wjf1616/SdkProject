@@ -1727,14 +1727,7 @@ public class ChannelListFragment extends ActionBarFragment
 			return;
 		}
 
-		if (ChatServiceController.getInstance().isInDummyHost())
-		{
-            openItem((ChannelListItem) adapterView.getItemAtPosition(arg2));
-		}
-		else
-		{
-			openItem(item);
-		}
+		openItem(item);
 	}
 
 	protected void openItem(ChannelListItem item)

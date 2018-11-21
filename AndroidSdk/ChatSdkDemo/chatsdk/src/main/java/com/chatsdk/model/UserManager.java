@@ -570,17 +570,6 @@ public class UserManager
 		// user只有本函数创建，如果是dummy的，说明已经获取过了，不需要再次获取
 		if (user == null || (isOld && !user.uid.equals(UserManager.getInstance().getCurrentUserId())) || user.lang == null)
 		{
-			if (user != null && !ChatServiceController.getInstance().isUsingDummyHost())
-			{
-				LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_MSG, "uid", uid, "user", user, "updateTime", updateTime,
-						"user.lastUpdateTime", user.lastUpdateTime, "isOld", isOld);
-			}
-			else if(!ChatServiceController.getInstance().isUsingDummyHost())
-			{
-				LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_MSG, "uid", uid, "user", user, "updateTime", updateTime,
-						"isOld", isOld);
-			}
-
 			if (user == null)
 			{
 				user = new UserInfo(uid);
@@ -624,11 +613,6 @@ public class UserManager
 
 	private synchronized void getMultiUserInfo(ArrayList<String> uids)
 	{
-		if (ChatServiceController.getInstance().isUsingDummyHost())
-		{
-			return;
-		}
-		
 		synchronized (this)
 		{
 			boolean hasNewUid = false;

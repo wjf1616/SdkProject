@@ -93,17 +93,8 @@ public class SysMailListFragment extends ChannelListFragment
 
 	protected void createList()
 	{
-		if (ChatServiceController.getInstance().isInDummyHost())
-		{
-			ChatChannel parentChannel = ChannelManager.getInstance().getChannel(DBDefinition.CHANNEL_TYPE_OFFICIAL, channelId);
-			adapter = new AppAdapter(channelListActivity, this, parentChannel);
-			LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_MSG, "createList1:",adapter.list.size());
-		}
-		else
-		{
-			adapter = new SysMailAdapter(channelListActivity, this);
-			LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_MSG, "createList2:",adapter.list.size());
-		}
+		adapter = new SysMailAdapter(channelListActivity, this);
+		LogUtil.printVariablesWithFuctionName(Log.VERBOSE, LogUtil.TAG_MSG, "createList2:",adapter.list.size());
 		super.createList();
 	}
 
@@ -120,27 +111,13 @@ public class SysMailListFragment extends ChannelListFragment
 
 	protected void onDeleteMenuClick(int position)
 	{
-		if (ChatServiceController.getInstance().isInDummyHost())
-		{
-			deleteDummyItem(position);
-		}
-		else
-		{
-			deleteSysMail(position);
-		}
+		deleteSysMail(position);
 	}
 
 	@Override
 	protected void onReadMenuClick(int channel)
 	{
-		if (ChatServiceController.getInstance().isInDummyHost())
-		{
-			readDummyItem(channel);
-		}
-		else
-		{
-			readSysMail(channel);
-		}
+		readSysMail(channel);
 	}
 
 	protected void openItem(ChannelListItem item)

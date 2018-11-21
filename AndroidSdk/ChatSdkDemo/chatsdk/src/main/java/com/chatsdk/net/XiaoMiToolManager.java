@@ -6,23 +6,10 @@ import java.util.Random;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.TextUtils;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.chatsdk.controller.ChatServiceController;
-import com.chatsdk.host.DummyHost;
-import com.chatsdk.host.GameHost;
-import com.chatsdk.model.UserManager;
-import com.chatsdk.util.LogUtil;
 import com.mi.milink.sdk.client.ClientLog;
 import com.mi.mimsgsdk.AudioRecordListener;
 import com.mi.mimsgsdk.MsgSdkManager;

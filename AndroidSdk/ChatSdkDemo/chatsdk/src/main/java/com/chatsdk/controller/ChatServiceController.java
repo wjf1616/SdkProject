@@ -8,10 +8,9 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
+import com.chatsdk.IHost;
 import com.chatsdk.R;
-import com.chatsdk.host.DummyHost;
-import com.chatsdk.host.GameHost;
-import com.chatsdk.host.IHost;
+
 import com.chatsdk.model.ChannelManager;
 import com.chatsdk.model.ChatChannel;
 import com.chatsdk.model.ConfigManager;
@@ -64,7 +63,7 @@ public class ChatServiceController
 	private static Class<?>					hostClass;
 	private static MyActionBarActivity		currentActivity;
 	private static Activity					currentV2Activity;
-	public IHost							host;
+	public IHost                            host;
 
 	public static boolean					isNativeShowing					= false;										// 仅在IF.onResume中重置为false，主要被IF使用
 	public static boolean					isNativeStarting				= false;										// 主要被原生activity使用
@@ -194,20 +193,13 @@ public class ChatServiceController
 		return serverType == 2;
 	}
 
-	public static void init(Activity a, boolean isDummyHost)
+	public static void init(Activity a, IHost host)
 	{
 		hostActivity = a;
 		hostClass = a.getClass();
 		LogUtil.printVariablesWithFuctionName(Log.INFO, LogUtil.TAG_CORE, "hostClass", hostClass.getName());
 
-		if (!isDummyHost)
-		{
-			getInstance().host = new GameHost();
-		}
-		else
-		{
-			getInstance().host = new DummyHost();
-		}
+		getInstance().host = host;
 	}
 
 	public void reset()
@@ -251,22 +243,6 @@ public class ChatServiceController
 			return isRunning;
 		}
 		return false;
-	}
-
-	// TODO 删除此函数
-	public boolean isInDummyHost()
-	{
-		return false;// host instanceof DummyHost;
-	}
-
-	public boolean isUsingDummyHost()
-	{
-		return host instanceof DummyHost && ((DummyHost) host).treatAsDummyHost;
-	}
-
-	public boolean isActuallyUsingDummyHost()
-	{
-		return host instanceof DummyHost;
 	}
 
 	public static void setCurrentChannelType(int type)

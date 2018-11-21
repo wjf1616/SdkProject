@@ -9,7 +9,6 @@ import android.os.Bundle;
 import com.chatsdk.R;
 import com.chatsdk.controller.ChatServiceController;
 import com.chatsdk.controller.ServiceInterface;
-import com.chatsdk.host.DummyHost;
 import com.chatsdk.model.ChannelManager;
 import com.chatsdk.model.ConfigManager;
 import com.chatsdk.model.LanguageManager;
@@ -118,13 +117,6 @@ public final class ChatActivity extends MyActionBarActivity
 	@Override
 	public void exitActivity()
 	{
-		if (ChatServiceController.getInstance().isInDummyHost()
-				&& ((DummyHost) (ChatServiceController.getInstance().host)).actionAfterResume != null)
-		{
-			((DummyHost) (ChatServiceController.getInstance().host)).actionAfterResume = null;
-			return;
-		}
-
 		super.exitActivity();
 	}
 

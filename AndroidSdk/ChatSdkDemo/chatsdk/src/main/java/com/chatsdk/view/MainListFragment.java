@@ -163,32 +163,18 @@ public class MainListFragment extends ChannelListFragment
 
 	protected void onDeleteMenuClick(int position)
 	{
-		if (ChatServiceController.getInstance().isInDummyHost())
-		{
-			deleteDummyItem(position);
-		}
-		else
-		{
-			deleteChannel(position);
-		}
+		deleteChannel(position);
 	}
 
 	protected void onReadMenuClick(int channel)
 	{
-		if (ChatServiceController.getInstance().isInDummyHost())
+		if (adapter instanceof MainChannelAdapter)
 		{
-			readDummyItem(channel);
+			readMainChannel(channel);
 		}
-		else
+		else if (adapter instanceof MsgChannelAdapter)
 		{
-			if (adapter instanceof MainChannelAdapter)
-			{
-				readMainChannel(channel);
-			}
-			else if (adapter instanceof MsgChannelAdapter)
-			{
-				readChannel(channel);
-			}
+			readChannel(channel);
 		}
 	}
 
