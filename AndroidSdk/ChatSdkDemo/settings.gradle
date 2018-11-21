@@ -1,1 +1,1 @@
-include ':app', ':chatsdk', ':chatsdk', ':quickaction3d', ':swipemenulistview', ':pullrefresh', ':nineoldandroids'
+include ':app', ':chatsdk', ':swipemenulistview', ':pullrefresh', ':nineoldandroids', ':quickaction3d'

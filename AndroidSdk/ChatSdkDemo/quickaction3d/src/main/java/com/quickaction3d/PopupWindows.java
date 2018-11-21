@@ -24,6 +24,7 @@ public class PopupWindows {
 	protected View mRootView;
 	protected Drawable mBackground = null;
 	protected WindowManager mWindowManager;
+	private   boolean		showChildView;  //视图是否显示
 	
 	/**
 	 * Constructor.
@@ -39,7 +40,7 @@ public class PopupWindows {
 			public boolean onTouch(View v, MotionEvent event) {
 				if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
 					mWindow.dismiss();
-					
+					showChildView = false;
 					return true;
 				}
 				
@@ -130,5 +131,13 @@ public class PopupWindows {
 	 */
 	public void dismiss() {
 		mWindow.dismiss();
+	}
+
+	public boolean getShowChildView() {
+		return showChildView;
+	}
+
+	public void setShowChildView(boolean showChildView) {
+		this.showChildView = showChildView;
 	}
 }

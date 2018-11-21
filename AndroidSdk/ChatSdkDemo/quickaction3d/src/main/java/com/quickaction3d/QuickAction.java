@@ -89,6 +89,7 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 
         mAnimStyle 	= ANIM_NONE;
         mChildPos 	= 0;
+		setShowChildView(true);
     }
 
     /**

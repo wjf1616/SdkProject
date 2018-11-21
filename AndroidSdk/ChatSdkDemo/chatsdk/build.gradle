@@ -33,16 +33,15 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation(name: "quickaction3d-debug", ext: "aar")
-    implementation(name: "swipemenulistview-debug", ext: "aar")
-    implementation(name: "pullrefresh-debug", ext: "aar")
-    implementation(name: "nineoldandroids-debug", ext: "aar")
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-
     implementation files('libs/commons-lang-2.4.jar')
     implementation files('libs/fastjson-1.2.0.jar')
     implementation files('libs/activity_entry_name.jar')
     implementation files('libs/milinksdk_for_game-0.1.1.jar')
+    implementation project(':nineoldandroids')
+    implementation project(':pullrefresh')
+    implementation project(':swipemenulistview')
+    implementation project(':quickaction3d')
 }
