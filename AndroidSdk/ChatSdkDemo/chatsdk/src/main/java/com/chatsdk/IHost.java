@@ -1,4 +1,4 @@
-package com.chatsdk.host;
+package com.chatsdk;
 
 public interface IHost
 {

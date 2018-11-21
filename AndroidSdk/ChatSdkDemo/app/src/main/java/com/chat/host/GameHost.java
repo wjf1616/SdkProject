@@ -1,8 +1,9 @@
-package com.chatsdk.host;
+package com.chat.host;
 
+import com.chatsdk.IHost;
 import com.chatsdk.controller.ServiceInterface;
 
-public class DummyHost implements IHost
+public class GameHost implements IHost
 {
 	public boolean treatAsDummyHost = true;
 	@Override
